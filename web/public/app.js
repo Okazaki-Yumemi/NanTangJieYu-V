@@ -349,6 +349,8 @@
     if (region.status === 'available' || region.status === 'investigating') {
       if (region.closed) {
         actionsHtml = '<p class="helper-text">该区域暂时关闭，请留意现场广播。</p>';
+      } else if (!data.activity || data.activity.status !== 'running' || !data.activity.interaction_open) {
+        actionsHtml = '<p class="helper-text">当前活动未在进行中，请等待工作人员开放互动。</p>';
       } else {
         const actions = regionActions(region);
         actionsHtml = `

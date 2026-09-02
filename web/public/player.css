@@ -265,19 +265,6 @@ i.energy-dot.on {
 
 /* ---------- 地图 ---------- */
 
-.campus-map-wrap {
-  background: var(--paper);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.campus-map {
-  display: block;
-  width: 100%;
-  height: auto;
-  touch-action: manipulation;
-}
-
 .map-route {
   animation: route-dash 22s linear infinite;
 }

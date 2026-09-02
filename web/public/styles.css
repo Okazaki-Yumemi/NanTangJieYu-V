@@ -408,6 +408,21 @@ input {
   background: rgba(148, 44, 58, 0.95);
 }
 
+/* ---------- 校园地图（共享） ---------- */
+
+.campus-map-wrap {
+  background: var(--paper);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.campus-map {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: manipulation;
+}
+
 /* ---------- 排行榜 / 流水 ---------- */
 
 .board-row {

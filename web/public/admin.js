@@ -176,7 +176,7 @@
               const tagClass = region.closed ? 'bad' : (region.status === 'cleared' ? 'ok' : (region.status === 'locked' ? '' : 'warn'));
               return `
                 <tr data-region="${escapeHtml(region.id)}">
-                  <td><strong>${escapeHtml(region.name)}</strong><br /><span class="tag">${escapeHtml(NTJ.SEASON_STYLES[region.season]?.label || '')} ${escapeHtml(region.season)}</span></td>
+                  <td><strong>${escapeHtml(region.name)}</strong><br /><span class="tag">${escapeHtml(NTJ.SEASON_STYLES[region.season]?.label || '')}</span></td>
                   <td><span class="tag ${tagClass}">${escapeHtml(statusLabel)}</span></td>
                   <td class="num">${formatNumber(region.anomaly_remaining)} / ${formatNumber(region.max_anomaly)}<br /><span class="muted">${((region.anomaly_progress || 0) * 100).toFixed(1)}%</span></td>
                   <td><input class="anomaly-input" type="number" min="0" max="${region.max_anomaly}" value="${region.anomaly_remaining}" data-anomaly-input /></td>
