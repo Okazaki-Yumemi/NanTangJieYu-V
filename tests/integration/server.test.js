@@ -32,7 +32,7 @@ const app = createApp({
     dataDir,
     seedsDir: path.resolve(__dirname, '../../shared/seeds'),
     publicDir: path.resolve(__dirname, '../../web/public'),
-    admin: { password: 'test-admin-password', usingDefaultPassword: false, entryPath: '/test-admin-entry.html' },
+    admin: { password: 'test-admin-password', usingGeneratedPassword: false, entryPath: '/test-admin-entry.html' },
     cookieSecure: false,
     ledgerFileName: 'ledger.jsonl'
   }

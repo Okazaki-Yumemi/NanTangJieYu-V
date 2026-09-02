@@ -96,3 +96,31 @@ broken line
     D: 'single'
   });
 });
+
+test('missing admin password: generated at runtime, refused in production', () => {
+  const { createConfig, validateRuntimeConfig } = require('../../server/config');
+
+  const devConfig = createConfig({ env: {}, projectRoot: process.cwd() });
+  assert.ok(devConfig.admin.usingGeneratedPassword);
+  assert.ok(devConfig.admin.password.length >= 16);
+  assert.equal(devConfig.admin.password, devConfig.admin.password.trim());
+
+  // 每次创建配置都生成不同口令——源码与历史中不存在固定默认值
+  const another = createConfig({ env: {}, projectRoot: process.cwd() });
+  assert.notEqual(another.admin.password, devConfig.admin.password);
+
+  const prodConfig = createConfig({
+    env: { NODE_ENV: 'production' },
+    projectRoot: process.cwd()
+  });
+  const problems = validateRuntimeConfig(prodConfig, { warn: () => {} });
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /ADMIN_PASSWORD/);
+
+  const prodOk = createConfig({
+    env: { NODE_ENV: 'production', ADMIN_PASSWORD: 'real-secret' },
+    projectRoot: process.cwd()
+  });
+  assert.equal(prodOk.admin.usingGeneratedPassword, false);
+  assert.ok(!validateRuntimeConfig(prodOk, { warn: () => {} }).length);
+});

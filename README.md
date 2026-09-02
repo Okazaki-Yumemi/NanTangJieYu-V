@@ -202,7 +202,7 @@ data/
    ```env
    NODE_ENV=production
    ADMIN_PASSWORD=<足够长的随机密码>
-   ADMIN_ENTRY_PATH=/ntjv-admin-<随机串>.html
+   ADMIN_ENTRY_PATH=/secret-admin-<随机串>.html
    DATA_DIR=/data
    ```
 4. 为服务挂载持久卷到 `/data`（否则重启丢数据）。

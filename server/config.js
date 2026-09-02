@@ -2,8 +2,8 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const { newToken } = require('./auth');
 
-const DEFAULT_ADMIN_PASSWORD = 'ntjv-admin';
 const DEFAULT_ADMIN_ENTRY_PATH = '/nantang-admin.html';
 
 function parseEnvFile(content) {
@@ -75,6 +75,11 @@ function createConfig(options = {}) {
     env.ADMIN_ENTRY_PATH || DEFAULT_ADMIN_ENTRY_PATH
   );
 
+  // 源码中不保留任何已知默认口令：
+  // - 生产环境未设置 ADMIN_PASSWORD 时拒绝启动（validateRuntimeConfig）；
+  // - 开发环境未设置时随机生成，启动日志打印一次，仅本次进程有效。
+  const generatedPassword = adminPassword ? '' : newToken(9);
+
   return {
     projectRoot,
     isProduction,
@@ -84,8 +89,8 @@ function createConfig(options = {}) {
     seedsDir: options.seedsDir || path.join(projectRoot, 'shared', 'seeds'),
     publicDir: options.publicDir || path.join(projectRoot, 'web', 'public'),
     admin: {
-      password: adminPassword || DEFAULT_ADMIN_PASSWORD,
-      usingDefaultPassword: !adminPassword,
+      password: adminPassword || generatedPassword,
+      usingGeneratedPassword: !adminPassword,
       entryPath: adminEntryPath
     },
     cookieSecure: toBool(env.COOKIE_SECURE, isProduction),
@@ -103,14 +108,14 @@ function normalizeEntryPath(entryPath) {
 
 function validateRuntimeConfig(config, logger = console) {
   const problems = [];
-  if (config.isProduction && config.admin.usingDefaultPassword) {
+  if (config.isProduction && config.admin.usingGeneratedPassword) {
     problems.push(
       '生产环境（NODE_ENV=production）必须通过 ADMIN_PASSWORD 设置管理员口令。'
     );
   }
-  if (config.admin.usingDefaultPassword) {
+  if (config.admin.usingGeneratedPassword) {
     logger.warn(
-      '[config] 正在使用默认管理员口令，仅限本地开发使用。正式活动请设置 ADMIN_PASSWORD。'
+      `[config] 未设置 ADMIN_PASSWORD，本次启动的管理员口令为：${config.admin.password}（仅本次进程有效，重启更换）。`
     );
   }
   if (config.admin.entryPath === '/admin.html' || config.admin.entryPath === '/nantang-admin.html') {
