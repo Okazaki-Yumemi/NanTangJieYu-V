@@ -109,6 +109,44 @@ function sanitizeLedgerEntry(state, entry, seeds) {
   };
 }
 
+const MYSTERY_PRIZE_PLACEHOLDER = '/assets/regions/prize-placeholder.svg';
+
+/**
+ * 玩家/大屏侧的奖品视图：
+ * 终盘抽奖前奖品不现场抽取——区域击破后奖品仅「进入终盘奖池」；
+ * 未击破区域的奖品对玩家隐藏，显示为「神秘奖品」。
+ */
+function presentPrizesForPlayer(state, seeds) {
+  const withStatus = lottery.listPrizesWithStatus(state, seeds);
+  const order = new Map(seeds.regions.map((region) => [region.id, region.order]));
+  return withStatus
+    .sort((a, b) => {
+      const orderA = a.source === 'base' ? 0 : (order.get(a.source) || 99);
+      const orderB = b.source === 'base' ? 0 : (order.get(b.source) || 99);
+      return orderA - orderB;
+    })
+    .map((prize) => {
+      if (!prize.available) {
+        return {
+          id: prize.id,
+          source: prize.source,
+          available: false,
+          name: '神秘奖品',
+          description: '解决对应区域的异变后揭晓',
+          image: MYSTERY_PRIZE_PLACEHOLDER
+        };
+      }
+      return {
+        id: prize.id,
+        source: prize.source,
+        available: true,
+        name: prize.name,
+        description: prize.description,
+        image: prize.image
+      };
+    });
+}
+
 function buildPublicState(state, seeds) {
   const ctx = { seeds, now: nowSec() };
   return {
@@ -116,6 +154,7 @@ function buildPublicState(state, seeds) {
     teams: buildTeamViews(state, seeds),
     regions: buildRegionViews(state, seeds, ctx),
     top_players: buildOverallLeaderboard(state, 20),
+    prize_track: presentPrizesForPlayer(state, seeds),
     recent_contributions: contributions
       .recentGlobal(state, 15)
       .map((entry) => sanitizeLedgerEntry(state, entry, seeds)),
@@ -170,14 +209,7 @@ function buildPlayerHomeState(state, seeds, user) {
     my_logs: user
       ? contributions.recentForUser(state, user.id, 12).map((entry) => sanitizeLedgerEntry(state, entry, seeds))
       : [],
-    prizes: lottery.listPrizesWithStatus(state, seeds).map((prize) => ({
-      id: prize.id,
-      name: prize.name,
-      description: prize.description,
-      image: prize.image,
-      source: prize.source,
-      available: prize.available
-    })),
+    prizes: presentPrizesForPlayer(state, seeds),
     titles: seeds.titles,
     me,
     generated_at: Date.now()

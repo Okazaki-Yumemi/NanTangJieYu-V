@@ -32,7 +32,7 @@ function triggerStageEvent(state, event, ctx) {
       (user) => user.team === effect.team && !user.banned
     );
     for (const member of members) {
-      contributions.applyContribution(
+      const entry = contributions.applyContribution(
         state,
         contributions.buildLedgerEntry({
           kind: LEDGER_KINDS.STAGE,
@@ -44,7 +44,7 @@ function triggerStageEvent(state, event, ctx) {
           meta: { stage_event_id: event.id }
         }, now)
       );
-      ledgerEntries.push(member.id);
+      ledgerEntries.push(entry);
     }
     const team = state.teams[effect.team];
     if (members.length > 0) {
@@ -60,7 +60,7 @@ function triggerStageEvent(state, event, ctx) {
   }
 
   if (effect.type === 'team_pool_contribution') {
-    contributions.applyContribution(
+    const entry = contributions.applyContribution(
       state,
       contributions.buildLedgerEntry({
         kind: LEDGER_KINDS.STAGE,
@@ -70,9 +70,10 @@ function triggerStageEvent(state, event, ctx) {
         meta: { stage_event_id: event.id }
       }, now)
     );
+    ledgerEntries.push(entry);
     return {
       message: `节目「${event.name}」：${effect.team} 队伍总贡献 +${effect.amount}（不计个人）。`,
-      ledger_entries: []
+      ledger_entries: ledgerEntries
     };
   }
 
@@ -82,7 +83,7 @@ function triggerStageEvent(state, event, ctx) {
       return { error: 'REGION_NOT_FOUND', message: '事件引用的区域不存在。' };
     }
     const result = regions.reduceAnomaly(state, configRegion, effect.amount, now);
-    contributions.applyContribution(
+    const entry = contributions.applyContribution(
       state,
       contributions.buildLedgerEntry({
         kind: LEDGER_KINDS.STAGE,
@@ -92,9 +93,10 @@ function triggerStageEvent(state, event, ctx) {
         meta: { stage_event_id: event.id }
       }, now)
     );
+    ledgerEntries.push(entry);
     return {
       message: `节目「${event.name}」：${configRegion.name} 异变值 -${result.actual_reduction}${result.just_cleared ? '，区域已解决！' : ''}。`,
-      ledger_entries: []
+      ledger_entries: ledgerEntries
     };
   }
 

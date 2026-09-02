@@ -12,26 +12,30 @@
     "time_window": null,
     "outcomes": [
       {
-        "weight": 55,
-        "text": "你沿着异常的痕迹一路排查，为队伍标记出了几处关键位置。",
+        "weight": 40,
+        "character": { "id": "aya", "name": "射命丸文" },
+        "text": "你把看到的异常一五一十告诉了赶来的文文。她咔嚓几张照片后化作疾风飞向下一处现场——报道就是力量！",
         "contribution": [90, 130],
         "anomaly": [130, 190]
       },
       {
         "weight": 25,
-        "text": "大发现！你在异变的核心处找到了季节残留的印记，队伍士气大振。",
+        "character": { "id": "patchouli", "name": "帕秋莉" },
+        "text": "在图书馆的旧档案里，帕秋莉找到了季节流转的记载，锁定了异变的核心节点。",
         "contribution": [170, 240],
         "anomaly": [260, 340]
       },
       {
-        "weight": 15,
-        "text": "你绕了一大圈，只收集到零星的线索，但至少方向是对的。",
+        "weight": 25,
+        "character": { "id": "momiji", "name": "犬走椛" },
+        "text": "白狼巡逻的犬走椛陪你把整片区域筛了一遍，虽然只找到些零星线索，但至少方向没错。",
         "contribution": [40, 70],
         "anomaly": [60, 100]
       },
       {
-        "weight": 5,
-        "text": "你在路边捡到了一瓶热饮！能量恢复了一点，顺便还推进了调查。",
+        "weight": 10,
+        "character": { "id": "tewi", "name": "因幡帝" },
+        "text": "迷路的因幡帝把「捡到」的一瓶能量饮料塞给了你。是幸运还是陷阱？总之先喝了再说。",
         "contribution": [70, 110],
         "anomaly": [110, 160],
         "energy_delta": 1
@@ -51,20 +55,23 @@
     "time_window": null,
     "outcomes": [
       {
-        "weight": 60,
-        "text": "「异变的原因什么的，去了就知道了！」灵梦的御札精准命中异变核心。",
+        "weight": 55,
+        "character": { "id": "reimu", "name": "博丽灵梦" },
+        "text": "「异变的原因什么的，到了就知道了！」灵梦的御札精准命中异变核心。",
         "contribution": [110, 160],
         "anomaly": [170, 240]
       },
       {
         "weight": 30,
-        "text": "灵梦一边抱怨没有报酬一边放出符卡，异变被干净利落地削去一大块。",
+        "character": { "id": "reimu", "name": "博丽灵梦" },
+        "text": "灵梦一边抱怨赛钱箱空空一边放出符卡，异变被干净利落地削去一大块。",
         "contribution": [190, 260],
         "anomaly": [290, 380]
       },
       {
-        "weight": 10,
-        "text": "「今天神的指示好像不太灵……」灵梦罕见地失手了，不过也不是没收获。",
+        "weight": 15,
+        "character": { "id": "reimu", "name": "博丽灵梦" },
+        "text": "「今天神的指示好像不太灵……」灵梦罕见地失手了，不过也不是全无收获。",
         "contribution": [50, 80],
         "anomaly": [80, 120]
       }
@@ -83,19 +90,22 @@
     "time_window": null,
     "outcomes": [
       {
-        "weight": 60,
-        "text": "「 Katte 倾财 master spark——！」魔理沙的魔法光束把异变轰得七零八落。",
+        "weight": 55,
+        "character": { "id": "marisa", "name": "雾雨魔理沙" },
+        "text": "「恋符 Master Spark——！」魔理沙的魔法光束把异变轰得七零八落。",
         "contribution": [110, 160],
         "anomaly": [170, 240]
       },
       {
         "weight": 30,
-        "text": "魔理沙从八云紫的 gap 里顺来一件「宝具」，配合火力直接炸开了异变。",
+        "character": { "id": "marisa", "name": "雾雨魔理沙" },
+        "text": "魔理沙从八云紫的间隙里顺来一件「宝具」，配合火力直接炸开了异变。",
         "contribution": [190, 260],
         "anomaly": [290, 380]
       },
       {
-        "weight": 10,
+        "weight": 15,
+        "character": { "id": "marisa", "name": "雾雨魔理沙" },
         "text": "「迷你八卦炉过热了……！」火力全开变成了一场烟花表演。",
         "contribution": [50, 80],
         "anomaly": [80, 120]
@@ -115,14 +125,16 @@
     "time_window": null,
     "outcomes": [
       {
-        "weight": 80,
-        "text": "你完成了巡逻，把沿途的异常情况报告给了队伍。",
+        "weight": 65,
+        "character": { "id": "meiling", "name": "红美铃" },
+        "text": "门卫亭前的美铃难得清醒着，帮你把沿途的异常情况整理成了值班日志。",
         "contribution": [45, 75],
         "anomaly": [70, 110]
       },
       {
-        "weight": 20,
-        "text": "巡逻时你发现了一条近路，为队伍省下了不少脚程。",
+        "weight": 35,
+        "character": { "id": "meiling", "name": "红美铃" },
+        "text": "你发现美铃正在偷睡，作为交换不报告馆长，她告诉你了一条近路。",
         "contribution": [80, 120],
         "anomaly": [120, 170]
       }
@@ -141,16 +153,25 @@
     "time_window": null,
     "outcomes": [
       {
-        "weight": 70,
-        "text": "你把整片区域翻了个遍，异变被实实在在地压缩了一截。",
+        "weight": 60,
+        "character": { "id": "eirin", "name": "八意永琳" },
+        "text": "在永琳的仪器分析下，异变的季节残留浓度被完整测绘，队伍拿出了针对性的方案。",
         "contribution": [230, 320],
         "anomaly": [340, 460]
       },
       {
-        "weight": 30,
-        "text": "深度扫描找到了异变的节点，一击奏效！",
+        "weight": 25,
+        "character": { "id": "eirin", "name": "八意永琳" },
+        "text": "永琳临时调配出一剂「异变退散药」，一击奏效！副作用大概是接下来三天想看月亮。",
         "contribution": [330, 430],
         "anomaly": [500, 640]
+      },
+      {
+        "weight": 15,
+        "character": { "id": "koishi", "name": "古明地恋" },
+        "text": "「诶？我什么都没做哦？」恋的第三次之眼在无意识间戳中了异变的盲点。",
+        "contribution": [250, 330],
+        "anomaly": [380, 500]
       }
     ]
   },
@@ -167,22 +188,209 @@
     "time_window": null,
     "outcomes": [
       {
-        "weight": 50,
-        "text": "你从湖里捞起了一枚散发着季节气息的碎片。",
+        "weight": 40,
+        "character": { "id": "nitori", "name": "河城荷取" },
+        "text": "荷取的防水装甲大显神威，你从湖底捞起了一枚散发着季节气息的碎片。",
         "contribution": [130, 180],
         "anomaly": [200, 280]
       },
       {
-        "weight": 35,
-        "text": "网里只有水草和一只不高兴的河童玩偶……",
+        "weight": 30,
+        "character": { "id": "cirno", "name": "琪露诺" },
+        "text": "琪露诺一口气把湖面冻住了！「①是最强的！」——虽然方式离谱，但确实好走了不少。",
+        "contribution": [80, 120],
+        "anomaly": [120, 180]
+      },
+      {
+        "weight": 20,
+        "character": { "id": "chen", "name": "橙" },
+        "text": "网里只有水草和一只不高兴的猫又玩偶。橙表示这跟她没有任何关系。",
         "contribution": [40, 70],
         "anomaly": [60, 100]
       },
       {
-        "weight": 15,
-        "text": "捞上来一面古镜！镜中映出的季节正在流转。",
+        "weight": 10,
+        "character": { "id": "yukari", "name": "八云紫" },
+        "text": "捞上来一面古镜，镜中映出的却是一位摇着扇子的隙间妖怪。「要我帮忙？条件嘛……」",
         "contribution": [240, 320],
         "anomaly": [360, 480]
+      }
+    ]
+  },
+  {
+    "id": "faith_offering",
+    "enabled": true,
+    "name": "风祝的奉纳",
+    "description": "协助守矢神社的风祝采集信仰，借神德压制异变。",
+    "weight": 70,
+    "energy_cost": 1,
+    "cooldown_sec": 120,
+    "team_restriction": null,
+    "regions": null,
+    "time_window": null,
+    "outcomes": [
+      {
+        "weight": 55,
+        "character": { "id": "sanae", "name": "东风谷早苗" },
+        "text": "早苗在人群中潇洒地 Performing 了奇迹，顺势把大家的祈愿引导向了异变的核心。",
+        "contribution": [100, 150],
+        "anomaly": [150, 220]
+      },
+      {
+        "weight": 30,
+        "character": { "id": "kanako", "name": "八坂神奈子" },
+        "text": "神明大人的御柱降下神德，风之神的吹息把异常的季节吹散了一大片。",
+        "contribution": [160, 230],
+        "anomaly": [240, 320]
+      },
+      {
+        "weight": 15,
+        "character": { "id": "suwako", "name": "洩矢诹访子" },
+        "text": "土著神大人的「恶作剧」意外压实了异变的根基。土著神笑了，你也笑了。",
+        "contribution": [60, 100],
+        "anomaly": [90, 140],
+        "energy_delta": 1
+      }
+    ]
+  },
+  {
+    "id": "phoenix_grill",
+    "enabled": true,
+    "name": "不死鸟的烧烤摊",
+    "description": "帮妹红看一会儿烧烤摊，顺便给调查队补充体力。",
+    "weight": 55,
+    "energy_cost": 1,
+    "cooldown_sec": 180,
+    "team_restriction": null,
+    "regions": null,
+    "time_window": null,
+    "outcomes": [
+      {
+        "weight": 70,
+        "character": { "id": "mokou", "name": "藤原妹红" },
+        "text": "妹红的烤串香飘满整个区域，饥肠辘辘的调查员们重新集结——附带火属性异变压制。",
+        "contribution": [90, 140],
+        "anomaly": [130, 200]
+      },
+      {
+        "weight": 20,
+        "character": { "id": "kaguya", "name": "蓬莱山辉夜" },
+        "text": "辉夜大小姐带着永琳出现了。两位不死者围着烤摊斗了一整晚的气，异变倒是被火花燎掉不少。",
+        "contribution": [150, 220],
+        "anomaly": [230, 300]
+      },
+      {
+        "weight": 10,
+        "character": { "id": "mokou", "name": "藤原妹红" },
+        "text": "妹红和辉夜当场吵了起来，烤串倒是全部进了你的肚子。力量 +1，异变 -0。",
+        "contribution": [20, 50],
+        "anomaly": [30, 60],
+        "energy_delta": 1
+      }
+    ]
+  },
+  {
+    "id": "sword_training",
+    "enabled": true,
+    "name": "半灵剑技特训",
+    "description": "跟随魂魄妖梦修行剑技，以剑气削除异变。",
+    "weight": 50,
+    "energy_cost": 2,
+    "cooldown_sec": 240,
+    "team_restriction": null,
+    "regions": null,
+    "time_window": null,
+    "outcomes": [
+      {
+        "weight": 60,
+        "character": { "id": "youmu", "name": "魂魄妖梦" },
+        "text": "妖梦的居合快得看不清。一刀两断的不只是落叶，还有异变的触须。",
+        "contribution": [180, 250],
+        "anomaly": [260, 360]
+      },
+      {
+        "weight": 25,
+        "character": { "id": "youmu", "name": "魂魄妖梦" },
+        "text": "「楼观剑——！」银光一闪，斩击贯通了异变的核心。妖梦本人倒是红着耳朵收了剑。",
+        "contribution": [260, 350],
+        "anomaly": [390, 500]
+      },
+      {
+        "weight": 15,
+        "character": { "id": "yuyuko", "name": "西行寺幽幽子" },
+        "text": "「妖梦——肚子饿了——」大小姐的饿意打断了特训。不过樱色气流也顺带抚平了些异变。",
+        "contribution": [60, 100],
+        "anomaly": [90, 140]
+      }
+    ]
+  },
+  {
+    "id": "tengu_dash",
+    "enabled": true,
+    "name": "鸦天狗的取材冲刺",
+    "description": "搭上文文的顺风快讯，用新闻热度冲淡异变。",
+    "weight": 65,
+    "energy_cost": 1,
+    "cooldown_sec": 90,
+    "team_restriction": null,
+    "regions": null,
+    "time_window": null,
+    "outcomes": [
+      {
+        "weight": 60,
+        "character": { "id": "aya", "name": "射命丸文" },
+        "text": "「文文。新闻」的特刊出炉！全校都开始关注异变，调查热度直线上升。",
+        "contribution": [100, 150],
+        "anomaly": [150, 220]
+      },
+      {
+        "weight": 30,
+        "character": { "id": "aya", "name": "射命丸文" },
+        "text": "天狗相机连拍三百张，快门音浪直接把异变吹得摇摇欲坠。",
+        "contribution": [170, 240],
+        "anomaly": [250, 330]
+      },
+      {
+        "weight": 10,
+        "character": { "id": "aya", "name": "射命丸文" },
+        "text": "文文起飞时带起的旋风把你的调查记录吹散了。全新闻自由，但今天不太值。",
+        "contribution": [30, 60],
+        "anomaly": [50, 90]
+      }
+    ]
+  },
+  {
+    "id": "unguarded_wander",
+    "enabled": true,
+    "name": "无意识的游荡",
+    "description": "跟着古明地恋在区域内游荡，期待「什么都没做」的奇迹。",
+    "weight": 40,
+    "energy_cost": 1,
+    "cooldown_sec": 60,
+    "team_restriction": null,
+    "regions": null,
+    "time_window": null,
+    "outcomes": [
+      {
+        "weight": 55,
+        "character": { "id": "koishi", "name": "古明地恋" },
+        "text": "恋拉着你在区域内转了一大圈。「诶嘿嘿，我什么都没做哦？」——但异变确实松动了不少。",
+        "contribution": [90, 140],
+        "anomaly": [140, 200]
+      },
+      {
+        "weight": 30,
+        "character": { "id": "koishi", "name": "古明地恋" },
+        "text": "第三次之眼在无意识中替你解决了好几个麻烦。恋本人毫不知情。",
+        "contribution": [150, 220],
+        "anomaly": [220, 300]
+      },
+      {
+        "weight": 15,
+        "character": { "id": "satori", "name": "古明地觉" },
+        "text": "觉姐姐面无表情地把妹妹领了回去。你的调查笔记也被顺走了两页。",
+        "contribution": [30, 60],
+        "anomaly": [50, 90]
       }
     ]
   }
