@@ -31,10 +31,14 @@ function readSeedFile(seedsDir, fileName) {
   }
 }
 
+function toCamelCase(name) {
+  return name.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
+}
+
 function loadSeeds(seedsDir) {
   const seeds = {};
   for (const fileName of REQUIRED_SEED_FILES) {
-    seeds[path.basename(fileName, '.json')] = readSeedFile(seedsDir, fileName);
+    seeds[toCamelCase(path.basename(fileName, '.json'))] = readSeedFile(seedsDir, fileName);
   }
   const problems = validateSeeds(seeds);
   if (problems.length > 0) {
