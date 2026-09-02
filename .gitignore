@@ -1,0 +1,17 @@
+# Runtime data (never commit live activity state)
+data/*
+!data/.gitkeep
+
+# Local secrets
+.env
+data/admin.local.json
+
+# Exports produced by scripts
+exports/
+
+# Logs / temp / OS noise
+*.log
+tmp/
+.scratch/
+.DS_Store
+Thumbs.db
