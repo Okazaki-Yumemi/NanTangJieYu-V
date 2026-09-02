@@ -109,6 +109,28 @@ function sanitizeLedgerEntry(state, entry, seeds) {
   };
 }
 
+/**
+ * 互动的预期收益提示（展示用，不参与结算）。
+ */
+function interactionHint(interaction) {
+  let minContribution = Infinity;
+  let maxContribution = 0;
+  let minAnomaly = Infinity;
+  let maxAnomaly = 0;
+  for (const outcome of interaction.outcomes || []) {
+    const [cMin = 0, cMax = 0] = Array.isArray(outcome.contribution) ? outcome.contribution : [0, 0];
+    const [aMin = 0, aMax = 0] = Array.isArray(outcome.anomaly) ? outcome.anomaly : [0, 0];
+    minContribution = Math.min(minContribution, cMin);
+    maxContribution = Math.max(maxContribution, cMax);
+    minAnomaly = Math.min(minAnomaly, aMin);
+    maxAnomaly = Math.max(maxAnomaly, aMax);
+  }
+  return {
+    contribution: [Number.isFinite(minContribution) ? minContribution : 0, maxContribution],
+    anomaly: [Number.isFinite(minAnomaly) ? minAnomaly : 0, maxAnomaly]
+  };
+}
+
 const MYSTERY_PRIZE_PLACEHOLDER = '/assets/regions/prize-placeholder.svg';
 
 /**
@@ -180,12 +202,7 @@ function buildPlayerHomeState(state, seeds, user) {
       cooldown_sec: interaction.cooldown_sec || 0,
       team_restriction: interaction.team_restriction || null,
       regions: interaction.regions || null,
-      outcomes_hint: interaction.outcomes
-        ? interaction.outcomes.map((outcome) => ({
-            contribution: outcome.contribution || [0, 0],
-            anomaly: outcome.anomaly || [0, 0]
-          }))
-        : []
+      contribution_hint: interactionHint(interaction)
     }));
 
   const me = user

@@ -1,0 +1,620 @@
+/* 玩家端专属样式 */
+
+.player-body {
+  min-height: 100vh;
+}
+
+/* ---------- 阵营选择卡 ---------- */
+
+.team-picks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.team-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  background: #fffef9;
+  transition: all 0.15s;
+}
+
+.team-pick.picked {
+  border-color: var(--team-color);
+  background: var(--team-soft);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--team-color) 18%, transparent);
+}
+
+.team-pick-portrait {
+  width: 84px;
+  height: 96px;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: var(--team-soft);
+}
+
+.team-pick-portrait img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.team-pick strong {
+  font-size: 15px;
+  color: var(--team-color);
+}
+
+/* ---------- 主视图头部 ---------- */
+
+.home-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px 14px;
+}
+
+.home-header-side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.display-link {
+  font-size: 12.5px;
+  color: var(--gold);
+  text-decoration: none;
+  border: 1px solid #e3cf9a;
+  border-radius: 999px;
+  padding: 3px 10px;
+  background: #fdf6e4;
+}
+
+/* ---------- 阵营对战条 ---------- */
+
+.team-battle {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px;
+}
+
+.battle-side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.battle-side.right {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.battle-portrait {
+  width: 52px;
+  height: 62px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 3px rgba(90, 60, 40, 0.25));
+}
+
+.battle-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.battle-info strong {
+  font-size: 13.5px;
+  color: var(--team-color);
+  white-space: nowrap;
+}
+
+.battle-info span {
+  font-size: 16px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.battle-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 96px;
+}
+
+.battle-bar {
+  height: 9px;
+  border-radius: 999px;
+  background: #efe9da;
+  overflow: hidden;
+}
+
+.battle-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+
+.battle-counts {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+/* ---------- 个人信息卡 ---------- */
+
+.me-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px 14px;
+}
+
+.me-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.me-identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.me-name {
+  font-size: 17px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-badge {
+  flex: none;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--team-soft, #eee);
+  color: var(--team-color, #666);
+}
+
+.team-badge.banned {
+  background: #fbecec;
+  color: var(--down);
+}
+
+.me-title {
+  font-size: 12.5px;
+  max-width: 40%;
+  text-align: right;
+}
+
+.me-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.me-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: #faf6ea;
+  border-radius: 10px;
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.me-stats span {
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.me-stats strong {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.energy-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.energy-dots,
+.energy-dot {
+  display: inline-block;
+}
+
+i.energy-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ddd5c2;
+  margin: 0 1.5px;
+}
+
+i.energy-dot.on {
+  background: #e0a33c;
+  box-shadow: 0 0 4px rgba(224, 163, 60, 0.6);
+}
+
+/* ---------- 地图 ---------- */
+
+.campus-map-wrap {
+  background: var(--paper);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.campus-map {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: manipulation;
+}
+
+.map-route {
+  animation: route-dash 22s linear infinite;
+}
+
+@keyframes route-dash {
+  to {
+    stroke-dashoffset: -260;
+  }
+}
+
+.map-node {
+  cursor: pointer;
+}
+
+.node-hit {
+  cursor: pointer;
+}
+
+.node-pulse {
+  fill: none;
+  stroke-width: 2;
+  opacity: 0;
+}
+
+.map-node.is-available .node-pulse {
+  opacity: 0.8;
+  animation: node-pulse 1.8s ease-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+@keyframes node-pulse {
+  0% { transform: scale(1); opacity: 0.7; }
+  70% { transform: scale(1.7); opacity: 0; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+
+.map-node.is-locked .node-body {
+  filter: grayscale(0.9) opacity(0.55);
+}
+
+.map-node.is-locked .node-label,
+.map-node.is-locked .node-status-label {
+  fill: #a09880;
+}
+
+.map-node.is-closed .node-body {
+  filter: grayscale(0.6);
+}
+
+.node-label,
+.node-status-label {
+  fill: var(--ink);
+  font-weight: 600;
+  paint-order: stroke;
+  stroke: #fffdf7;
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.node-status-label {
+  fill: var(--ink-soft);
+  font-weight: 500;
+}
+
+.node-order {
+  paint-order: stroke;
+  stroke: #fffdf7;
+  stroke-width: 3px;
+  pointer-events: none;
+}
+
+.node-glyph {
+  font-weight: 800;
+  pointer-events: none;
+}
+
+.node-body {
+  stroke-width: 2.2;
+  transition: stroke-width 0.15s;
+}
+
+.node-progress-ring {
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.map-node.is-selected .node-body {
+  stroke-width: 3.6;
+}
+
+.map-node.is-selected .node-hit + .node-body {
+  filter: url(#ntj-node-shadow);
+}
+
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: -1px;
+}
+
+.legend-available {
+  background: #e0a33c;
+}
+
+.legend-investigating {
+  background: #4a7fb5;
+}
+
+.legend-cleared {
+  background: #2e7d4f;
+}
+
+.legend-locked {
+  background: #c9c2b0;
+}
+
+/* ---------- 区域详情 ---------- */
+
+.region-detail {
+  margin-top: 12px;
+  border-top: 2px solid var(--season-soft, var(--line));
+  padding-top: 12px;
+}
+
+.region-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.region-head h3 {
+  margin: 0 0 2px;
+  font-size: 17px;
+  color: var(--season-color, var(--ink));
+}
+
+.region-anomaly {
+  text-align: right;
+  flex: none;
+}
+
+.region-anomaly strong {
+  font-size: 19px;
+  color: var(--season-color, var(--ink));
+  font-variant-numeric: tabular-nums;
+}
+
+.anomaly-bar {
+  height: 12px;
+  border-radius: 999px;
+  background: #efe9da;
+  overflow: hidden;
+  margin: 8px 0;
+}
+
+.anomaly-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--season-color, #b3374a), color-mix(in srgb, var(--season-color, #b3374a) 55%, #ffffff));
+  transition: width 0.5s ease;
+}
+
+.region-story {
+  font-size: 13.5px;
+  color: #5c554a;
+  background: #faf6ea;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 8px 0;
+}
+
+/* ---------- 互动按钮 ---------- */
+
+.action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  text-align: left;
+  border: 1.6px solid var(--line);
+  border-radius: 12px;
+  background: #fffef9;
+  padding: 10px 12px;
+  transition: border-color 0.15s, transform 0.05s;
+}
+
+.action-btn:not(:disabled):active {
+  transform: scale(0.985);
+  border-color: var(--accent);
+}
+
+.action-name {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.action-tag {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background: #f0ecdf;
+  border-radius: 999px;
+  padding: 1px 7px;
+  margin-left: 6px;
+  vertical-align: 1px;
+}
+
+.action-desc {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.action-meta {
+  font-size: 11.5px;
+}
+
+/* ---------- 奖品进度条 ---------- */
+
+.prize-track {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 2px 8px;
+  scroll-snap-type: x proximity;
+}
+
+.prize-card {
+  flex: 0 0 108px;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+  border: 1.6px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 6px;
+  background: #f6f2e6;
+}
+
+.prize-card.unlocked {
+  border-color: var(--gold);
+  background: #fdf6e4;
+}
+
+.prize-card strong {
+  font-size: 12px;
+  line-height: 1.3;
+  min-height: 31px;
+  display: flex;
+  align-items: center;
+}
+
+.prize-card.mystery strong {
+  color: var(--ink-soft);
+  letter-spacing: 0.1em;
+}
+
+.prize-image {
+  width: 64px;
+  height: 52px;
+  border-radius: 8px;
+  background: #fffdf7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.prize-image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.prize-state {
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  background: #efe9da;
+  padding: 1px 8px;
+  border-radius: 999px;
+}
+
+.prize-card.unlocked .prize-state {
+  background: #f3e3b3;
+  color: #8a6a08;
+}
+
+/* ---------- 区域榜单 ---------- */
+
+.region-board {
+  margin-top: 10px;
+}
+
+.board-title {
+  margin: 0 0 4px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+/* ---------- 桌面端微调 ---------- */
+
+@media (min-width: 700px) {
+  .player-shell {
+    max-width: 640px;
+  }
+
+  .brand-title {
+    font-size: 34px;
+  }
+
+  .battle-bar-wrap {
+    width: 150px;
+  }
+}

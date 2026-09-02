@@ -188,6 +188,7 @@ function performInteraction(state, user, payload, ctx) {
     region_id: regionId,
     region_name: configRegion.name,
     text: outcome.text || interaction.description || '',
+    character: outcome.character ? { ...outcome.character } : null,
     contribution_gain: contributionGain,
     anomaly_reduction: anomalyResult.actual_reduction,
     region_just_cleared: anomalyResult.just_cleared,

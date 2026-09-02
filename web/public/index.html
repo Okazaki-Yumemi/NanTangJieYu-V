@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="东方南堂界域 V —— 上海交通大学东方 Project 活动线上系统" />
+    <title>东方南堂界域 V</title>
+    <link rel="stylesheet" href="/styles.css?v=1" />
+    <link rel="stylesheet" href="/player.css?v=1" />
+  </head>
+  <body class="player-body">
+    <main class="player-shell">
+      <!-- 注册 / 登录视图 -->
+      <section id="register-view" class="panel hidden">
+        <div class="brand-head">
+          <p class="brand-eyebrow">上海交通大学东方 Project 活动</p>
+          <h1 class="brand-title">东方南堂界域 V</h1>
+          <p class="brand-subtitle">被隐匿的交通大学 / Hidden SJTU in Four Seasons</p>
+        </div>
+
+        <div class="panel-block">
+          <h2 class="block-title">第一步 · 加入调查队</h2>
+          <div class="field-group">
+            <label for="register-code">注册码</label>
+            <input id="register-code" type="text" autocomplete="off" autocapitalize="characters"
+              placeholder="请输入或扫描物料上的注册码" />
+            <p id="code-hint" class="helper-text hidden">已从二维码读入注册码，请确认后选择阵营。</p>
+          </div>
+
+          <div class="field-group">
+            <span class="field-label">选择阵营</span>
+            <div id="team-picks" class="team-picks"></div>
+          </div>
+
+          <div class="field-group">
+            <label for="register-name">昵称</label>
+            <input id="register-name" type="text" maxlength="16" placeholder="现场唯一的昵称" />
+          </div>
+          <div class="field-group">
+            <label for="register-password">密码</label>
+            <input id="register-password" type="password" placeholder="至少 4 位，用于重新登录" />
+          </div>
+          <div class="field-group">
+            <label for="register-password-confirm">确认密码</label>
+            <input id="register-password-confirm" type="password" placeholder="再输入一次密码" />
+          </div>
+
+          <p id="register-error" class="error-text hidden"></p>
+          <button id="register-btn" class="primary-btn" type="button">确认注册</button>
+          <p class="helper-text center">注册码仅能使用一次。请牢记昵称和密码，换手机也能重新登录。</p>
+        </div>
+
+        <div class="panel-block">
+          <h2 class="block-title">已有账号</h2>
+          <div class="field-group">
+            <label for="login-name">昵称</label>
+            <input id="login-name" type="text" placeholder="注册时使用的昵称" />
+          </div>
+          <div class="field-group">
+            <label for="login-password">密码</label>
+            <input id="login-password" type="password" placeholder="注册时设置的密码" />
+          </div>
+          <p id="login-error" class="error-text hidden"></p>
+          <button id="login-btn" class="ghost-btn wide-btn" type="button">用昵称和密码登录</button>
+        </div>
+      </section>
+
+      <!-- 主视图 -->
+      <section id="home-view" class="hidden">
+        <header class="home-header">
+          <div class="home-title-wrap">
+            <p class="brand-eyebrow">上海交通大学东方 Project 活动</p>
+            <h1 class="brand-title small">东方南堂界域 V</h1>
+          </div>
+          <div class="home-header-side">
+            <span id="activity-status-chip" class="status-chip"></span>
+            <a class="display-link" href="/display.html" target="_blank" rel="noopener">大屏</a>
+          </div>
+        </header>
+
+        <section id="team-battle" class="team-battle" aria-label="双方阵营进度"></section>
+
+        <section id="me-card" class="me-card" aria-label="个人信息"></section>
+
+        <section class="panel-block">
+          <div class="section-head">
+            <h2 class="block-title">校园地图</h2>
+            <span id="map-progress" class="muted"></span>
+          </div>
+          <div id="campus-map"></div>
+          <div class="map-legend">
+            <span><i class="legend-dot legend-available"></i>可调查</span>
+            <span><i class="legend-dot legend-investigating"></i>调查中</span>
+            <span><i class="legend-dot legend-cleared"></i>已解决</span>
+            <span><i class="legend-dot legend-locked"></i>未解锁</span>
+          </div>
+          <div id="region-detail"></div>
+        </section>
+
+        <section class="panel-block">
+          <div class="section-head">
+            <h2 class="block-title">终盘奖池解锁进度</h2>
+            <span class="muted">解决区域 → 解锁对应奖品</span>
+          </div>
+          <div id="prize-track" class="prize-track"></div>
+        </section>
+
+        <section class="panel-block">
+          <div class="section-head">
+            <h2 class="block-title">贡献排行榜</h2>
+            <span id="me-rank" class="muted"></span>
+          </div>
+          <div id="leaderboard-list" class="leaderboard-list"></div>
+        </section>
+
+        <section class="panel-block">
+          <div class="section-head">
+            <h2 class="block-title">我的记录</h2>
+          </div>
+          <div id="my-logs" class="feed"></div>
+        </section>
+
+        <section class="panel-block">
+          <div class="section-head">
+            <h2 class="block-title">全场动态</h2>
+          </div>
+          <div id="recent-feed" class="feed"></div>
+        </section>
+
+        <button id="logout-btn" class="ghost-btn wide-btn subtle" type="button">退出登录</button>
+        <p class="footer-note">东方南堂界域 V · 现场如有问题请联系工作人员</p>
+      </section>
+    </main>
+
+    <!-- 互动结果弹窗 -->
+    <div id="result-modal" class="modal hidden">
+      <div class="modal-card">
+        <button id="close-result" class="close-btn" type="button">×</button>
+        <p class="eyebrow" id="result-eyebrow">调查结果</p>
+        <div id="result-character-box" class="result-character hidden">
+          <span class="character-frame"><img id="result-character-img" alt="" /></span>
+          <strong id="result-character-name"></strong>
+        </div>
+        <h3 id="result-title"></h3>
+        <p id="result-text" class="result-text"></p>
+        <div class="result-stats">
+          <span id="result-contribution" class="stat-chip stat-up"></span>
+          <span id="result-anomaly" class="stat-chip stat-down"></span>
+          <span id="result-energy" class="stat-chip"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 区域解决弹窗 -->
+    <div id="cleared-modal" class="modal hidden">
+      <div class="modal-card cleared">
+        <p class="eyebrow">异变解决</p>
+        <h3 id="cleared-title"></h3>
+        <p id="cleared-story" class="result-text"></p>
+        <p id="cleared-prize" class="helper-text"></p>
+        <button id="close-cleared" class="primary-btn" type="button">继续调查</button>
+      </div>
+    </div>
+
+    <script src="/common.js?v=1"></script>
+    <script src="/map.js?v=1"></script>
+    <script src="/app.js?v=1"></script>
+  </body>
+</html>
