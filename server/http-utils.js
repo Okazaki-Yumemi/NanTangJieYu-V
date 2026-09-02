@@ -103,10 +103,12 @@ function resolvePublicFilePath(publicDir, routePath) {
 
 function serveStatic(res, pathname, { publicDir, adminEntryPath }) {
   let routePath = pathname === '/' ? '/index.html' : pathname;
-  if (adminEntryPath && routePath === adminEntryPath) {
+  const isAdminEntry = Boolean(adminEntryPath) && routePath === adminEntryPath;
+  if (isAdminEntry) {
     routePath = '/admin.html';
   }
-  if (routePath === '/admin.html' && routePath !== adminEntryPath) {
+  if (routePath === '/admin.html' && !isAdminEntry) {
+    // 管理后台只能通过随机入口路径访问
     res.writeHead(404);
     res.end('Not Found');
     return;

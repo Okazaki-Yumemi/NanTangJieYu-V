@@ -1,0 +1,348 @@
+/* 大屏样式（16:9 投影优先） */
+
+.display-body {
+  background:
+    radial-gradient(1400px 600px at 50% -180px, #3d3428 0%, transparent 70%),
+    linear-gradient(160deg, #241f18 0%, #2e2820 60%, #26211a 100%);
+  color: #f3eddd;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.display-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px 10px;
+  border-bottom: 1px solid rgba(243, 237, 221, 0.14);
+}
+
+.display-eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  color: #cdb374;
+}
+
+.display-title h1 {
+  margin: 0;
+  font-size: 30px;
+  letter-spacing: 0.1em;
+  color: #f6e7c8;
+}
+
+.display-title small {
+  font-size: 14px;
+  color: #b7ad95;
+  letter-spacing: 0.2em;
+  margin-left: 10px;
+}
+
+.display-header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.display-progress {
+  font-size: 15px;
+  color: #cdb374;
+  font-variant-numeric: tabular-nums;
+}
+
+.display-btn {
+  border: 1px solid rgba(243, 237, 221, 0.35);
+  background: transparent;
+  color: #f3eddd;
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 13px;
+}
+
+.display-btn:hover {
+  background: rgba(243, 237, 221, 0.12);
+}
+
+.display-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(280px, 1.05fr) minmax(360px, 1.35fr) minmax(300px, 1fr);
+  gap: 16px;
+  padding: 16px 28px 22px;
+  min-height: 0;
+}
+
+.display-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+
+.display-card {
+  background: rgba(253, 250, 240, 0.06);
+  border: 1px solid rgba(243, 237, 221, 0.16);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.display-card.grow {
+  flex: 1;
+  overflow: hidden;
+}
+
+.display-card h2 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  letter-spacing: 0.12em;
+  color: #e5d6ae;
+  font-weight: 600;
+}
+
+.display-card h2 .small {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+
+/* ---------- VS 面板 ---------- */
+
+.vs-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(253, 250, 240, 0.06);
+  border: 1px solid rgba(243, 237, 221, 0.16);
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.vs-row {
+  display: grid;
+  grid-template-columns: 92px 1fr auto;
+  align-items: center;
+  gap: 14px;
+}
+
+.vs-row.right {
+  grid-template-columns: auto 1fr 92px;
+}
+
+.vs-row.right .vs-team {
+  text-align: right;
+}
+
+.vs-portrait {
+  width: 92px;
+  height: 118px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
+}
+
+.vs-team strong {
+  display: block;
+  font-size: 21px;
+  letter-spacing: 0.06em;
+}
+
+.vs-team .vs-captain {
+  font-size: 12.5px;
+  color: #b7ad95;
+}
+
+.vs-score {
+  font-size: 44px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.vs-score small {
+  display: block;
+  font-size: 12px;
+  color: #b7ad95;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.vs-bar {
+  height: 16px;
+  border-radius: 999px;
+  overflow: hidden;
+  display: flex;
+  background: rgba(243, 237, 221, 0.12);
+}
+
+.vs-bar span {
+  display: block;
+  height: 100%;
+  transition: width 0.8s ease;
+}
+
+.vs-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #b7ad95;
+}
+
+/* ---------- 排行榜 ---------- */
+
+.display-ranking {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.display-ranking .board-row {
+  border-bottom: 1px dashed rgba(243, 237, 221, 0.14);
+  font-size: 15.5px;
+  padding: 8px 6px;
+}
+
+.display-ranking .board-rank {
+  color: #cdb374;
+}
+
+.display-ranking .muted {
+  color: #b7ad95;
+}
+
+/* ---------- 地图卡 ---------- */
+
+.map-card .campus-map-wrap {
+  background: #f7f4ec;
+  border-radius: 12px;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.map-card h2 .small {
+  margin-left: 10px;
+}
+
+/* ---------- 奖品进度 ---------- */
+
+.display-prizes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.display-prize {
+  flex: 1 1 120px;
+  max-width: 170px;
+  border: 1.4px solid rgba(243, 237, 221, 0.2);
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+  background: rgba(253, 250, 240, 0.05);
+}
+
+.display-prize.unlocked {
+  border-color: #d9b64a;
+  background: rgba(217, 182, 74, 0.12);
+}
+
+.display-prize strong {
+  display: block;
+  font-size: 13.5px;
+  margin-top: 6px;
+}
+
+.display-prize .source {
+  font-size: 11.5px;
+  color: #b7ad95;
+}
+
+.display-prize.mystery strong {
+  color: #b7ad95;
+  letter-spacing: 0.2em;
+}
+
+.display-prize img {
+  width: 62px;
+  height: 46px;
+  object-fit: contain;
+}
+
+/* ---------- 区域状态列表 ---------- */
+
+.display-regions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: auto;
+}
+
+.display-region {
+  border: 1px solid rgba(243, 237, 221, 0.14);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.display-region .region-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.display-region strong {
+  font-size: 15.5px;
+}
+
+.display-region .nums {
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  color: #cdb374;
+}
+
+.display-region .anomaly-bar {
+  background: rgba(243, 237, 221, 0.12);
+}
+
+.display-region .tag {
+  background: rgba(243, 237, 221, 0.14);
+  color: #e5d6ae;
+}
+
+/* ---------- 动态 ---------- */
+
+.display-feed {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.display-feed .feed-row {
+  border-bottom: 1px dashed rgba(243, 237, 221, 0.14);
+  font-size: 14px;
+}
+
+.display-feed .muted,
+.display-feed .feed-time {
+  color: #9d947e;
+}
+
+/* 覆用全局组件在暗色下的适配 */
+.display-body .anomaly-bar span {
+  background: linear-gradient(90deg, #d9b64a, #e8d494);
+}
+
+.display-body .status-chip {
+  background: rgba(217, 182, 74, 0.2);
+  color: #e8d494;
+}
+
+@media (max-width: 1000px) {
+  .display-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .display-title h1 {
+    font-size: 22px;
+  }
+}

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>管理后台 · 东方南堂界域 V</title>
+    <link rel="stylesheet" href="/styles.css?v=1" />
+    <link rel="stylesheet" href="/admin.css?v=1" />
+  </head>
+  <body class="admin-body">
+    <!-- 登录门 -->
+    <main id="admin-login" class="admin-login">
+      <div class="login-card">
+        <p class="brand-eyebrow">东方南堂界域 V</p>
+        <h1>管理后台</h1>
+        <input id="admin-password" type="password" placeholder="管理员口令" />
+        <p id="login-error" class="error-text hidden"></p>
+        <button id="login-btn" class="primary-btn" type="button">登录</button>
+      </div>
+    </main>
+
+    <!-- 控制台 -->
+    <main id="admin-shell" class="admin-shell hidden">
+      <header class="admin-header">
+        <div>
+          <strong>东方南堂界域 V · 管理后台</strong>
+          <span id="admin-activity-chip" class="status-chip"></span>
+        </div>
+        <div class="admin-header-actions">
+          <a href="/" target="_blank" rel="noopener">玩家端</a>
+          <a href="/display.html" target="_blank" rel="noopener">大屏</a>
+          <button id="refresh-btn" class="mini-btn" type="button">刷新</button>
+          <button id="logout-btn" class="mini-btn" type="button">退出</button>
+        </div>
+      </header>
+
+      <nav class="admin-tabs" id="admin-tabs">
+        <button class="tab-btn active" data-tab="overview" type="button">活动状态</button>
+        <button class="tab-btn" data-tab="regions" type="button">地图区域</button>
+        <button class="tab-btn" data-tab="players" type="button">玩家管理</button>
+        <button class="tab-btn" data-tab="codes" type="button">注册码</button>
+        <button class="tab-btn" data-tab="lottery" type="button">抽奖</button>
+        <button class="tab-btn" data-tab="stage" type="button">节目事件</button>
+        <button class="tab-btn" data-tab="logs" type="button">操作日志</button>
+      </nav>
+
+      <section id="tab-overview" class="tab-panel"></section>
+      <section id="tab-regions" class="tab-panel hidden"></section>
+      <section id="tab-players" class="tab-panel hidden"></section>
+      <section id="tab-codes" class="tab-panel hidden"></section>
+      <section id="tab-lottery" class="tab-panel hidden"></section>
+      <section id="tab-stage" class="tab-panel hidden"></section>
+      <section id="tab-logs" class="tab-panel hidden"></section>
+    </main>
+
+    <div id="toast-container"></div>
+
+    <script src="/common.js?v=1"></script>
+    <script src="/admin.js?v=1"></script>
+  </body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>大屏 · 东方南堂界域 V</title>
+    <link rel="stylesheet" href="/styles.css?v=1" />
+    <link rel="stylesheet" href="/display.css?v=1" />
+  </head>
+  <body class="display-body">
+    <header class="display-header">
+      <div class="display-title">
+        <span class="display-eyebrow">上海交通大学东方 Project 活动</span>
+        <h1>东方南堂界域 V <small>被隐匿的交通大学</small></h1>
+      </div>
+      <div class="display-header-right">
+        <span id="display-status" class="status-chip"></span>
+        <span id="display-progress" class="display-progress"></span>
+        <button id="fullscreen-btn" class="display-btn" type="button">全屏</button>
+      </div>
+    </header>
+
+    <main class="display-grid">
+      <section class="display-col left">
+        <div id="vs-panel" class="vs-panel"></div>
+        <div class="display-card grow">
+          <h2>贡献排行榜</h2>
+          <div id="display-top" class="display-ranking"></div>
+        </div>
+      </section>
+
+      <section class="display-col center">
+        <div class="display-card map-card">
+          <h2>校园异变地图 <span class="muted small">点击大屏地图无效，请使用手机参与</span></h2>
+          <div id="display-map"></div>
+        </div>
+        <div class="display-card">
+          <h2>终盘奖池 <span class="muted small">解决区域 → 解锁奖品</span></h2>
+          <div id="display-prizes" class="display-prizes"></div>
+        </div>
+      </section>
+
+      <section class="display-col right">
+        <div class="display-card grow">
+          <h2>区域异变状态</h2>
+          <div id="display-regions" class="display-regions"></div>
+        </div>
+        <div class="display-card grow">
+          <h2>最新动态</h2>
+          <div id="display-feed" class="display-feed"></div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/common.js?v=1"></script>
+    <script src="/map.js?v=1"></script>
+    <script src="/display.js?v=1"></script>
+  </body>
+</html>
