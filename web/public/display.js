@@ -49,8 +49,8 @@
       <div class="vs-row">
         <img class="vs-portrait" src="${escapeHtml(first.portrait_url)}" alt="" onerror="this.style.visibility='hidden'" />
         <div class="vs-team">
-          <strong style="color: ${escapeHtml(first.color)}">${escapeHtml(first.name)}</strong>
-          <span class="vs-captain">队长 · ${escapeHtml(first.captain)}</span>
+          <strong style="color: ${escapeHtml(first.color)}">${escapeHtml(first.short_name)}</strong>
+          <span class="vs-captain">${escapeHtml(first.captain)}</span>
         </div>
         <div class="vs-score" style="color: ${escapeHtml(first.color)}">
           ${formatNumber(first.total_contribution)}
@@ -72,8 +72,8 @@
           <small>${formatNumber(second.member_count)} 名队员</small>
         </div>
         <div class="vs-team">
-          <strong style="color: ${escapeHtml(second.color)}">${escapeHtml(second.name)}</strong>
-          <span class="vs-captain">队长 · ${escapeHtml(second.captain)}</span>
+          <strong style="color: ${escapeHtml(second.color)}">${escapeHtml(second.short_name)}</strong>
+          <span class="vs-captain">${escapeHtml(second.captain)}</span>
         </div>
         <img class="vs-portrait" src="${escapeHtml(second.portrait_url)}" alt="" onerror="this.style.visibility='hidden'" />
       </div>
