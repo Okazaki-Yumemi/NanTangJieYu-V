@@ -1,0 +1,189 @@
+[
+  {
+    "id": "investigate",
+    "enabled": true,
+    "name": "调查异常点",
+    "description": "在区域内四处打探，收集季节异变的线索。",
+    "weight": 100,
+    "energy_cost": 1,
+    "cooldown_sec": 0,
+    "team_restriction": null,
+    "regions": null,
+    "time_window": null,
+    "outcomes": [
+      {
+        "weight": 55,
+        "text": "你沿着异常的痕迹一路排查，为队伍标记出了几处关键位置。",
+        "contribution": [90, 130],
+        "anomaly": [130, 190]
+      },
+      {
+        "weight": 25,
+        "text": "大发现！你在异变的核心处找到了季节残留的印记，队伍士气大振。",
+        "contribution": [170, 240],
+        "anomaly": [260, 340]
+      },
+      {
+        "weight": 15,
+        "text": "你绕了一大圈，只收集到零星的线索，但至少方向是对的。",
+        "contribution": [40, 70],
+        "anomaly": [60, 100]
+      },
+      {
+        "weight": 5,
+        "text": "你在路边捡到了一瓶热饮！能量恢复了一点，顺便还推进了调查。",
+        "contribution": [70, 110],
+        "anomaly": [110, 160],
+        "energy_delta": 1
+      }
+    ]
+  },
+  {
+    "id": "ask_reimu",
+    "enabled": true,
+    "name": "协助灵梦讨伐",
+    "description": "跟随博丽灵梦，用最直接的巫女方式解决异变。",
+    "weight": 90,
+    "energy_cost": 1,
+    "cooldown_sec": 0,
+    "team_restriction": "reimu",
+    "regions": null,
+    "time_window": null,
+    "outcomes": [
+      {
+        "weight": 60,
+        "text": "「异变的原因什么的，去了就知道了！」灵梦的御札精准命中异变核心。",
+        "contribution": [110, 160],
+        "anomaly": [170, 240]
+      },
+      {
+        "weight": 30,
+        "text": "灵梦一边抱怨没有报酬一边放出符卡，异变被干净利落地削去一大块。",
+        "contribution": [190, 260],
+        "anomaly": [290, 380]
+      },
+      {
+        "weight": 10,
+        "text": "「今天神的指示好像不太灵……」灵梦罕见地失手了，不过也不是没收获。",
+        "contribution": [50, 80],
+        "anomaly": [80, 120]
+      }
+    ]
+  },
+  {
+    "id": "ask_marisa",
+    "enabled": true,
+    "name": "协助魔理沙扫场",
+    "description": "和雾雨魔理沙一起，用最大火力轰开异变。",
+    "weight": 90,
+    "energy_cost": 1,
+    "cooldown_sec": 0,
+    "team_restriction": "marisa",
+    "regions": null,
+    "time_window": null,
+    "outcomes": [
+      {
+        "weight": 60,
+        "text": "「 Katte 倾财 master spark——！」魔理沙的魔法光束把异变轰得七零八落。",
+        "contribution": [110, 160],
+        "anomaly": [170, 240]
+      },
+      {
+        "weight": 30,
+        "text": "魔理沙从八云紫的 gap 里顺来一件「宝具」，配合火力直接炸开了异变。",
+        "contribution": [190, 260],
+        "anomaly": [290, 380]
+      },
+      {
+        "weight": 10,
+        "text": "「迷你八卦炉过热了……！」火力全开变成了一场烟花表演。",
+        "contribution": [50, 80],
+        "anomaly": [80, 120]
+      }
+    ]
+  },
+  {
+    "id": "patrol",
+    "enabled": true,
+    "name": "校园巡逻",
+    "description": "沿路巡视，顺手帮队伍分担一点调查工作。",
+    "weight": 80,
+    "energy_cost": 1,
+    "cooldown_sec": 0,
+    "team_restriction": null,
+    "regions": null,
+    "time_window": null,
+    "outcomes": [
+      {
+        "weight": 80,
+        "text": "你完成了巡逻，把沿途的异常情况报告给了队伍。",
+        "contribution": [45, 75],
+        "anomaly": [70, 110]
+      },
+      {
+        "weight": 20,
+        "text": "巡逻时你发现了一条近路，为队伍省下了不少脚程。",
+        "contribution": [80, 120],
+        "anomaly": [120, 170]
+      }
+    ]
+  },
+  {
+    "id": "deep_scan",
+    "enabled": true,
+    "name": "集中调查",
+    "description": "投入大量精力对该区域进行一次彻底调查。",
+    "weight": 45,
+    "energy_cost": 2,
+    "cooldown_sec": 300,
+    "team_restriction": null,
+    "regions": null,
+    "time_window": null,
+    "outcomes": [
+      {
+        "weight": 70,
+        "text": "你把整片区域翻了个遍，异变被实实在在地压缩了一截。",
+        "contribution": [230, 320],
+        "anomaly": [340, 460]
+      },
+      {
+        "weight": 30,
+        "text": "深度扫描找到了异变的节点，一击奏效！",
+        "contribution": [330, 430],
+        "anomaly": [500, 640]
+      }
+    ]
+  },
+  {
+    "id": "lake_netting",
+    "enabled": true,
+    "name": "湖底打捞",
+    "description": "在湖区打捞随季节漂来的可疑物品（仅限湖区）。",
+    "weight": 60,
+    "energy_cost": 1,
+    "cooldown_sec": 60,
+    "team_restriction": null,
+    "regions": ["siyuan_lake", "hanze_lake"],
+    "time_window": null,
+    "outcomes": [
+      {
+        "weight": 50,
+        "text": "你从湖里捞起了一枚散发着季节气息的碎片。",
+        "contribution": [130, 180],
+        "anomaly": [200, 280]
+      },
+      {
+        "weight": 35,
+        "text": "网里只有水草和一只不高兴的河童玩偶……",
+        "contribution": [40, 70],
+        "anomaly": [60, 100]
+      },
+      {
+        "weight": 15,
+        "text": "捞上来一面古镜！镜中映出的季节正在流转。",
+        "contribution": [240, 320],
+        "anomaly": [360, 480]
+      }
+    ]
+  }
+]

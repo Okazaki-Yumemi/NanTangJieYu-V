@@ -1,0 +1,28 @@
+[
+  {
+    "id": "reimu",
+    "name": "博丽灵梦队",
+    "short_name": "灵梦队",
+    "captain": "博丽灵梦",
+    "slogan": "异变什么的，最讨厌了——但有赏金的话就另说！",
+    "color": "#e0344c",
+    "color_soft": "#fdeef0",
+    "portrait_url": "/assets/characters/reimu.png",
+    "member_count": 0,
+    "total_contribution": 0,
+    "updated_at": 0
+  },
+  {
+    "id": "marisa",
+    "name": "雾雨魔理沙队",
+    "short_name": "魔理沙队",
+    "captain": "雾雨魔理沙",
+    "slogan": "不论是什么异变，先轰一炮再说！",
+    "color": "#f0a800",
+    "color_soft": "#fff7e0",
+    "portrait_url": "/assets/characters/marisa.png",
+    "member_count": 0,
+    "total_contribution": 0,
+    "updated_at": 0
+  }
+]

@@ -1,0 +1,66 @@
+[
+  {
+    "id": "prize_base_bookmark",
+    "name": "参与奖・符卡书签",
+    "description": "面向全体玩家的基础奖池奖品。",
+    "image": "/assets/regions/prize-placeholder.svg",
+    "source": "base",
+    "count": 2
+  },
+  {
+    "id": "prize_base_postcard",
+    "name": "参与奖・四季明信片套装",
+    "description": "面向全体玩家的基础奖池奖品。",
+    "image": "/assets/regions/prize-placeholder.svg",
+    "source": "base",
+    "count": 1
+  },
+  {
+    "id": "prize_siyuan_gate",
+    "name": "思源门限定・春樱挂件",
+    "description": "解决思源门异变后解锁。",
+    "image": "/assets/regions/prize-placeholder.svg",
+    "source": "siyuan_gate",
+    "count": 1
+  },
+  {
+    "id": "prize_siyuan_lake",
+    "name": "思源湖限定・夏湖徽章",
+    "description": "解决思源湖异变后解锁。",
+    "image": "/assets/regions/prize-placeholder.svg",
+    "source": "siyuan_lake",
+    "count": 1
+  },
+  {
+    "id": "prize_kaixuan_gate",
+    "name": "凯旋门限定・银杏书签",
+    "description": "解决凯旋门异变后解锁。",
+    "image": "/assets/regions/prize-placeholder.svg",
+    "source": "kaixuan_gate",
+    "count": 1
+  },
+  {
+    "id": "prize_diancao",
+    "name": "电草限定・初雪抱枕",
+    "description": "解决电草异变后解锁。",
+    "image": "/assets/regions/prize-placeholder.svg",
+    "source": "diancao",
+    "count": 1
+  },
+  {
+    "id": "prize_hanze_lake",
+    "name": "涵泽湖限定・四色湖水色纸",
+    "description": "解决涵泽湖异变后解锁。",
+    "image": "/assets/regions/prize-placeholder.svg",
+    "source": "hanze_lake",
+    "count": 1
+  },
+  {
+    "id": "prize_admin_building",
+    "name": "行政楼限定・终局大奖",
+    "description": "解决行政楼最终异变后解锁。",
+    "image": "/assets/regions/prize-placeholder.svg",
+    "source": "admin_building",
+    "count": 1
+  }
+]

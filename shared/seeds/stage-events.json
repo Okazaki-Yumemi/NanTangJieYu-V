@@ -1,0 +1,38 @@
+[
+  {
+    "id": "stg_reimu_win",
+    "name": "STG 对决・灵梦队获胜",
+    "description": "灵梦队每位成员贡献 +1500，全队总贡献 +1500×人数。",
+    "effect": { "type": "team_contribution", "team": "reimu", "amount": 1500 }
+  },
+  {
+    "id": "stg_marisa_win",
+    "name": "STG 对决・魔理沙队获胜",
+    "description": "魔理沙队每位成员贡献 +1500，全队总贡献 +1500×人数。",
+    "effect": { "type": "team_contribution", "team": "marisa", "amount": 1500 }
+  },
+  {
+    "id": "quiz_bonus_reimu",
+    "name": "QUIZ 大赛・灵梦队应援胜利",
+    "description": "灵梦队总贡献 +3000。",
+    "effect": { "type": "team_pool_contribution", "team": "reimu", "amount": 3000 }
+  },
+  {
+    "id": "quiz_bonus_marisa",
+    "name": "QUIZ 大赛・魔理沙队应援胜利",
+    "description": "魔理沙队总贡献 +3000。",
+    "effect": { "type": "team_pool_contribution", "team": "marisa", "amount": 3000 }
+  },
+  {
+    "id": "weaken_siyuan_gate",
+    "name": "现场节目・思源门异变减弱",
+    "description": "思源门异变值 -2000。",
+    "effect": { "type": "reduce_anomaly", "region": "siyuan_gate", "amount": 2000 }
+  },
+  {
+    "id": "unlock_hanze_early",
+    "name": "特殊节目・提前解锁涵泽湖",
+    "description": "无视解锁条件，立刻开放涵泽湖。",
+    "effect": { "type": "unlock_region", "region": "hanze_lake" }
+  }
+]

@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "name": "东方南堂界域 V",
+  "subtitle": "被隐匿的交通大学 / Hidden SJTU in Four Seasons",
+  "tagline": "摩多罗隐岐奈的后门连接了异界的四季——校园正在失控。选择你的阵营，协助灵梦或魔理沙找回失落的季节。",
+  "story_intro": "校园各处出现了违背常理的季节异变。调查显示，幕后黑手是掌管「后门」与季节的摩多罗隐岐奈。为了不让交通大学被彻底「隐匿」，博丽灵梦与雾雨魔理沙分别带队进入校园。调查从思源门开始，一路向着行政楼推进。",
+  "registration_open": true,
+  "energy_cap": 5,
+  "energy_regen_interval_sec": 90,
+  "team_join_max_diff": 15,
+  "interaction_open": true,
+  "nickname_min_length": 1,
+  "nickname_max_length": 16,
+  "password_min_length": 4,
+  "ledger_recent_limit": 500,
+  "request_lock_limit": 1000,
+  "request_lock_ttl_sec": 1800,
+  "session_ttl_sec": 43200,
+  "admin_session_ttl_sec": 28800,
+  "interact_rate_limit_ms": 400
+}

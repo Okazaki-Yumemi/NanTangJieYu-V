@@ -1,0 +1,10 @@
+[
+  { "min_contribution": 0, "title": "初来乍到的异变见习生" },
+  { "min_contribution": 500, "title": "门前的巡查员" },
+  { "min_contribution": 1500, "title": "湖畔的观察者" },
+  { "min_contribution": 3000, "title": "凯旋的门下客" },
+  { "min_contribution": 5000, "title": "踏雪寻踪者" },
+  { "min_contribution": 8000, "title": "追赶季节的人" },
+  { "min_contribution": 12000, "title": "四季的旅人" },
+  { "min_contribution": 20000, "title": "传说中的界域探索者" }
+]
