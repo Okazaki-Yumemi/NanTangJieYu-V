@@ -15,29 +15,29 @@
         "weight": 40,
         "character": { "id": "aya", "name": "射命丸文" },
         "text": "你把看到的异常一五一十告诉了赶来的文文。她咔嚓几张照片后化作疾风飞向下一处现场——报道就是力量！",
-        "contribution": [90, 130],
-        "anomaly": [130, 190]
+        "contribution": [110, 160],
+        "anomaly": [150, 210]
       },
       {
         "weight": 25,
         "character": { "id": "patchouli", "name": "帕秋莉" },
         "text": "在图书馆的旧档案里，帕秋莉找到了季节流转的记载，锁定了异变的核心节点。",
-        "contribution": [170, 240],
-        "anomaly": [260, 340]
+        "contribution": [200, 280],
+        "anomaly": [300, 380]
       },
       {
         "weight": 25,
         "character": { "id": "momiji", "name": "犬走椛" },
         "text": "白狼巡逻的犬走椛陪你把整片区域筛了一遍，虽然只找到些零星线索，但至少方向没错。",
-        "contribution": [40, 70],
-        "anomaly": [60, 100]
+        "contribution": [60, 100],
+        "anomaly": [80, 120]
       },
       {
         "weight": 10,
         "character": { "id": "tewi", "name": "因幡帝" },
         "text": "迷路的因幡帝把「捡到」的一瓶能量饮料塞给了你。是幸运还是陷阱？总之先喝了再说。",
-        "contribution": [70, 110],
-        "anomaly": [110, 160],
+        "contribution": [90, 140],
+        "anomaly": [130, 180],
         "energy_delta": 1
       }
     ]
@@ -128,15 +128,15 @@
         "weight": 65,
         "character": { "id": "meiling", "name": "红美铃" },
         "text": "门卫亭前的美铃难得清醒着，帮你把沿途的异常情况整理成了值班日志。",
-        "contribution": [45, 75],
-        "anomaly": [70, 110]
+        "contribution": [60, 100],
+        "anomaly": [90, 130]
       },
       {
         "weight": 35,
         "character": { "id": "meiling", "name": "红美铃" },
         "text": "你发现美铃正在偷睡，作为交换不报告馆长，她告诉你了一条近路。",
-        "contribution": [80, 120],
-        "anomaly": [120, 170]
+        "contribution": [100, 150],
+        "anomaly": [140, 190]
       }
     ]
   },

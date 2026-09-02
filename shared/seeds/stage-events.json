@@ -26,8 +26,8 @@
   {
     "id": "weaken_siyuan_gate",
     "name": "现场节目・思源门异变减弱",
-    "description": "思源门异变值 -2000。",
-    "effect": { "type": "reduce_anomaly", "region": "siyuan_gate", "amount": 2000 }
+    "description": "思源门异变值 -20000（约为该区域的 10%）。",
+    "effect": { "type": "reduce_anomaly", "region": "siyuan_gate", "amount": 20000 }
   },
   {
     "id": "unlock_hanze_early",

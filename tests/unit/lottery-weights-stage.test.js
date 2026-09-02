@@ -22,9 +22,10 @@ test('base weight prefers stored base and falls back to code type', () => {
 
   user.code_type = 'ordinary';
   assert.equal(weights.calcContributionBonus(0, config.contribution_bonus_tiers), 0);
-  assert.equal(weights.calcContributionBonus(999, config.contribution_bonus_tiers), 0);
-  assert.equal(weights.calcContributionBonus(1000, config.contribution_bonus_tiers), 0.5);
-  assert.equal(weights.calcContributionBonus(10000, config.contribution_bonus_tiers), 3);
+  assert.equal(weights.calcContributionBonus(4999, config.contribution_bonus_tiers), 0);
+  assert.equal(weights.calcContributionBonus(5000, config.contribution_bonus_tiers), 0.5);
+  assert.equal(weights.calcContributionBonus(12000, config.contribution_bonus_tiers), 1);
+  assert.equal(weights.calcContributionBonus(35000, config.contribution_bonus_tiers), 3);
 });
 
 test('region rank bonus counts only cleared regions by default', () => {
@@ -55,7 +56,7 @@ test('calculateUserWeight combines base, tiers, rank bonus and admin override wi
 
   user.region_contributions[first.id] = 100;
   regions.reduceAnomaly(fixture.state, first, first.max_anomaly, fixture.now);
-  user.total_contribution = 3500;
+  user.total_contribution = 13000;
 
   // base 1 + contribution 1 + rank 3 = 5
   assert.equal(weights.calculateUserWeight(fixture.state, user, config), 5);
@@ -183,7 +184,7 @@ test('stage reduce_anomaly and unlock_region affect region runtime', () => {
   const weaken = stage.getStageEvent(fixture.seeds, 'weaken_siyuan_gate');
   const result = stage.triggerStageEvent(fixture.state, weaken, fixture.ctx);
   assert.ok(!result.error);
-  assert.equal(fixture.state.regions.siyuan_gate.anomaly_remaining, 10000 - 2000);
+  assert.equal(fixture.state.regions.siyuan_gate.anomaly_remaining, 200000 - 20000);
 
   const unlock = stage.getStageEvent(fixture.seeds, 'unlock_hanze_early');
   const unlockResult = stage.triggerStageEvent(fixture.state, unlock, fixture.ctx);
