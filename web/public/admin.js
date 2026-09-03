@@ -97,7 +97,22 @@
     const panel = elements.panels.overview;
     const started = activity.status === 'running';
     const paused = activity.status === 'paused';
+    const ordered = [...admin.regions].sort((a, b) => a.order - b.order);
+    const currentRegion = ordered.find((region) => region.status !== 'cleared');
     panel.innerHTML = `
+      ${currentRegion ? `
+      <div class="admin-card">
+        <h2>阶段控制</h2>
+        <div class="btn-row">
+          <span>当前阶段：<strong>${escapeHtml(currentRegion.name)}</strong>
+            <span class="tag">${escapeHtml(NTJ.REGION_STATUS_LABELS[currentRegion.status] || '')}</span>
+            <span class="muted small">异变 ${formatNumber(currentRegion.anomaly_remaining)} / ${formatNumber(currentRegion.max_anomaly)}</span>
+          </span>
+          <button class="action-btn warn" data-activity="advance_stage">强制 CLEAR 当前区域，进入下一阶段</button>
+        </div>
+        <p class="helper-text">适用于现场节目直接推进剧情；按推进顺序清除当前区域并解锁下一区域，操作会写入系统播报与日志。</p>
+      </div>
+      ` : '<div class="admin-card"><h2>阶段控制</h2><p class="muted">全部区域已解决，剧情流程已完结。</p></div>'}
       <div class="admin-card">
         <h2>活动控制</h2>
         <div class="btn-row">
@@ -144,7 +159,9 @@
     for (const button of panel.querySelectorAll('[data-activity]')) {
       button.addEventListener('click', async () => {
         const action = button.dataset.activity;
-        const confirmText = action === 'end' ? '确定要结束活动吗？结束后玩家无法继续互动。' : null;
+        const confirmText = action === 'end'
+          ? '确定要结束活动吗？结束后玩家无法继续互动。'
+          : (action === 'advance_stage' ? `确认强制解决「${currentRegion ? currentRegion.name : ''}」的异变并进入下一阶段吗？` : null);
         try {
           const res = await post('/api/admin/activity', { action }, { confirmText });
           if (res) {
@@ -264,6 +281,10 @@
                     <button class="action-btn" data-op="adjust">调整贡献</button>
                     <button class="action-btn" data-op="weight">调权重</button>
                     <button class="action-btn" data-op="energy">回能量</button>
+                    <button class="action-btn" data-op="rename">改名</button>
+                    <button class="action-btn" data-op="switch_team">换阵营</button>
+                    <button class="action-btn" data-op="rebind_code">换绑码</button>
+                    <button class="action-btn" data-op="force_logout">强制下线</button>
                     <button class="action-btn" data-op="reset_password">改密码</button>
                     ${player.banned
                       ? '<button class="action-btn" data-op="unban">解封</button>'
@@ -304,6 +325,28 @@
               return;
             }
             body = { ...body, value: Number(value) };
+          } else if (op === 'rename') {
+            const displayName = window.prompt(`修改 ${name} 的昵称（敏感词会被拒绝）：`);
+            if (!displayName) {
+              return;
+            }
+            body = { ...body, display_name: displayName };
+          } else if (op === 'switch_team') {
+            const team = window.prompt(`将 ${name} 换到哪个阵营？输入 reimu 或 marisa\n（个人贡献会随人迁移到新阵营的队伍总量，播报类队伍加成不迁移）`, player.team);
+            if (!team) {
+              return;
+            }
+            body = { ...body, team: team.trim() };
+          } else if (op === 'rebind_code') {
+            const code = window.prompt(`为 ${name} 换绑新的注册码（旧码会退役禁用）：\n新码必须是未使用的可用码`);
+            if (!code) {
+              return;
+            }
+            body = { ...body, code: code.trim().toUpperCase() };
+          } else if (op === 'force_logout') {
+            if (!window.confirm(`强制下线 ${name}？该玩家所有登录会话会被清除，需要重新登录。`)) {
+              return;
+            }
           } else if (op === 'reset_password') {
             const password = window.prompt(`为 ${name} 设置新密码：`);
             if (!password) {
@@ -460,10 +503,50 @@
 
   function renderLottery() {
     const panel = elements.panels.lottery;
+    const statusLabels = {
+      pending: '<span class="tag warn">待确认</span>',
+      confirmed: '<span class="tag ok">已确认</span>',
+      claimed: '<span class="tag ok">已领取</span>',
+      void: '<span class="tag bad">已作废</span>'
+    };
+    const sourceOptions = (selected) => [
+      '<option value="base">基础奖池</option>',
+      ...admin.regions.map((region) =>
+        `<option value="${escapeHtml(region.id)}" ${region.id === selected ? 'selected' : ''}>${escapeHtml(region.name)}</option>`
+      )
+    ].join('');
+
     panel.innerHTML = `
       <div class="admin-card">
+        <h2>奖品编辑</h2>
+        <p class="helper-text">现场可直接填写 / 修正奖品信息：名称、说明、图片地址、份数、绑定区域。修改立即对玩家端与大屏生效并写入日志。</p>
+        <div class="inline-form">
+          <select id="prize-edit-select">
+            ${admin.prizes.map((prize) => `<option value="${escapeHtml(prize.id)}">${escapeHtml(prize.name)}（${prize.source === 'base' ? '基础' : (admin.regions.find((r) => r.id === prize.source) || {}).name || prize.source}）</option>`).join('')}
+          </select>
+        </div>
+        <div class="inline-form">
+          <input id="prize-edit-name" class="wide" type="text" placeholder="奖品名称" />
+          <input id="prize-edit-count" class="narrow" type="number" min="1" max="999" placeholder="份数" />
+          <select id="prize-edit-source"></select>
+        </div>
+        <div class="inline-form">
+          <input id="prize-edit-desc" style="min-width: 320px;" type="text" placeholder="奖品说明" />
+          <input id="prize-edit-image" style="min-width: 260px;" type="text" placeholder="图片地址（可留空）" />
+          <button id="prize-edit-save" class="action-btn primary">保存修改</button>
+        </div>
+        <div class="inline-form" style="border-top: 1px dashed var(--line); padding-top: 10px; margin-top: 4px;">
+          <strong class="muted small">新增奖品：</strong>
+          <input id="prize-add-name" class="wide" type="text" placeholder="新奖品名称" />
+          <input id="prize-add-count" class="narrow" type="number" min="1" max="999" value="1" />
+          <select id="prize-add-source">${sourceOptions('base')}</select>
+          <button id="prize-add-save" class="action-btn">添加奖品</button>
+        </div>
+      </div>
+
+      <div class="admin-card">
         <h2>奖池</h2>
-        <p class="helper-text">终盘抽奖按玩家当前权重加权随机。已中奖玩家默认不再参与（可作废释放）。</p>
+        <p class="helper-text">流程：抽取 → 找到玩家「确认有效」→ 领奖时「标记领取」。玩家不在场就「作废重抽」，作废后玩家重新进入候选池。</p>
         <table class="admin-table">
           <thead><tr><th>奖品</th><th>来源</th><th>状态</th><th>已抽 / 总数</th><th>操作</th></tr></thead>
           <tbody>
@@ -509,16 +592,15 @@
             ${admin.draws.map((draw) => `
               <tr>
                 <td class="muted">${formatTime(draw.drawn_at)}</td>
-                <td>${escapeHtml(draw.prize_name)}</td>
+                <td><strong>${escapeHtml(draw.prize_name)}</strong></td>
                 <td><strong>${escapeHtml(draw.winner_display_name)}</strong> <span class="muted">${escapeHtml(teamName(draw.winner_team))}</span></td>
                 <td class="num">${draw.weight_snapshot} / 总 ${draw.total_weight_snapshot}</td>
-                <td>${draw.status === 'claimed'
-                  ? '<span class="tag ok">已领取</span>'
-                  : (draw.status === 'void' ? '<span class="tag bad">已作废</span>' : '<span class="tag warn">待领取</span>')}</td>
+                <td>${statusLabels[draw.status] || escapeHtml(draw.status)}</td>
                 <td>
                   <div class="btn-row">
-                    ${draw.status === 'pending' ? `<button class="action-btn" data-record="claim" data-draw-id="${escapeHtml(draw.id)}">标记领取</button>` : ''}
-                    ${draw.status !== 'void' ? `<button class="action-btn danger" data-record="void" data-draw-id="${escapeHtml(draw.id)}">作废重抽</button>` : ''}
+                    ${draw.status === 'pending' ? `<button class="action-btn primary" data-record="confirm" data-draw-id="${escapeHtml(draw.id)}">确认有效</button>` : ''}
+                    ${draw.status === 'confirmed' ? `<button class="action-btn" data-record="claim" data-draw-id="${escapeHtml(draw.id)}">标记领取</button>` : ''}
+                    ${(draw.status === 'pending' || draw.status === 'confirmed') ? `<button class="action-btn danger" data-record="void" data-draw-id="${escapeHtml(draw.id)}">作废重抽</button>` : ''}
                   </div>
                 </td>
               </tr>
@@ -527,6 +609,59 @@
         </table>
       </div>
     `;
+
+    // ---- 奖品编辑器 ----
+    const select = panel.querySelector('#prize-edit-select');
+    const fillEditor = () => {
+      const prize = admin.prizes.find((item) => item.id === select.value);
+      if (!prize) {
+        return;
+      }
+      panel.querySelector('#prize-edit-name').value = prize.name;
+      panel.querySelector('#prize-edit-desc').value = prize.description || '';
+      panel.querySelector('#prize-edit-image').value = prize.image || '';
+      panel.querySelector('#prize-edit-count').value = prize.count;
+      panel.querySelector('#prize-edit-source').innerHTML = sourceOptions(prize.source);
+    };
+    fillEditor();
+    select.addEventListener('change', fillEditor);
+
+    panel.querySelector('#prize-edit-save').addEventListener('click', async () => {
+      try {
+        const res = await post('/api/admin/lottery/prize', {
+          op: 'update',
+          prize_id: select.value,
+          name: panel.querySelector('#prize-edit-name').value,
+          description: panel.querySelector('#prize-edit-desc').value,
+          image: panel.querySelector('#prize-edit-image').value,
+          count: Number(panel.querySelector('#prize-edit-count').value),
+          source: panel.querySelector('#prize-edit-source').value
+        });
+        if (res) {
+          toast(res.message, 'success');
+        }
+      } catch (error) {
+        toast(error.message || '保存失败', 'error');
+      }
+    });
+
+    panel.querySelector('#prize-add-save').addEventListener('click', async () => {
+      try {
+        const res = await post('/api/admin/lottery/prize', {
+          op: 'add',
+          name: panel.querySelector('#prize-add-name').value,
+          description: '',
+          image: '',
+          count: Number(panel.querySelector('#prize-add-count').value),
+          source: panel.querySelector('#prize-add-source').value
+        });
+        if (res) {
+          toast(res.message, 'success');
+        }
+      } catch (error) {
+        toast(error.message || '添加失败', 'error');
+      }
+    });
 
     for (const button of panel.querySelectorAll('[data-draw]')) {
       button.addEventListener('click', async () => {

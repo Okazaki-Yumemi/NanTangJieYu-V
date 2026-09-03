@@ -107,6 +107,20 @@
   }
 
   function renderPrizes(data) {
+    const latest = document.getElementById('display-latest-draw');
+    if (data.latest_draw) {
+      latest.classList.remove('hidden');
+      latest.innerHTML = `
+        <span class="draw-label">刚刚抽出</span>
+        <strong>${escapeHtml(data.latest_draw.prize_name)}</strong>
+        <span>→</span>
+        <strong style="color: ${escapeHtml((teamById(data.teams, data.latest_draw.winner_team)).color)}">
+          ${escapeHtml(data.latest_draw.winner_display_name)}
+        </strong>
+      `;
+    } else {
+      latest.classList.add('hidden');
+    }
     elements.prizes.innerHTML = data.prize_track
       .map((prize) => `
         <div class="display-prize${prize.available ? ' unlocked' : ' mystery'}">

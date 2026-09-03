@@ -9,7 +9,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const { TEAM_IDS, CODE_TYPES, ACTIVITY_STATUS } = require('../shared/constants');
+const { compileWordList } = require('../shared/sensitive-words');
+const { TEAM_IDS, CODE_TYPES } = require('../shared/constants');
 
 const REQUIRED_SEED_FILES = [
   'activity.json',
@@ -19,7 +20,8 @@ const REQUIRED_SEED_FILES = [
   'prizes.json',
   'lottery.json',
   'stage-events.json',
-  'titles.json'
+  'titles.json',
+  'sensitive-words.json'
 ];
 
 function readSeedFile(seedsDir, fileName) {
@@ -46,12 +48,13 @@ function loadSeeds(seedsDir) {
       `种子配置校验失败：\n- ${problems.join('\n- ')}`
     );
   }
+  seeds.sensitiveWords = compileWordList(seeds.sensitiveWords);
   return seeds;
 }
 
 function validateSeeds(seeds) {
   const problems = [];
-  const { activity, teams, regions, interactions, prizes, lottery, stageEvents, titles } = seeds;
+  const { activity, teams, regions, interactions, prizes, lottery, stageEvents, titles, sensitiveWords } = seeds;
 
   if (!activity || typeof activity !== 'object') {
     problems.push('activity.json 必须是对象');
@@ -282,6 +285,16 @@ function validateSeeds(seeds) {
     for (const title of titles) {
       if (!Number.isFinite(title.min_contribution) || !title.title) {
         problems.push('titles.json 存在缺少 min_contribution/title 的条目');
+      }
+    }
+  }
+
+  if (!sensitiveWords || typeof sensitiveWords !== 'object' || !sensitiveWords.categories) {
+    problems.push('sensitive-words.json 必须包含 categories 对象');
+  } else {
+    for (const [category, words] of Object.entries(sensitiveWords.categories)) {
+      if (!Array.isArray(words) || words.some((word) => typeof word !== 'string')) {
+        problems.push(`sensitive-words.json 的分类 ${category} 必须是字符串数组`);
       }
     }
   }

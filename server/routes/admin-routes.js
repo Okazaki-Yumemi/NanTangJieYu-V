@@ -190,6 +190,33 @@ function registerRoutes(router, appCtx) {
           );
           return { ok: true, message: activity.registration_open ? '已开放注册。' : '已关闭注册。' };
         }
+        if (action === 'advance_stage') {
+          // 强制进入下一阶段：按推进顺序找到第一个未解决的区域，强制 CLEAR。
+          const ordered = [...seeds.regions].sort((a, b) => a.order - b.order);
+          const current = ordered.find((region) => state.regions[region.id] && !state.regions[region.id].cleared);
+          if (!current) {
+            return { error: ERROR_CODES.NO_CHANGE, message: '全部区域都已经解决，没有可推进的阶段。' };
+          }
+          const result = regions.forceClear(state, current, ctx.now);
+          if (result.error) {
+            return result;
+          }
+          const next = ordered.find((region) => {
+            const runtime = state.regions[region.id];
+            return runtime && !runtime.cleared;
+          });
+          const message = next
+            ? `已强制解决「${current.name}」，下一阶段「${next.name}」开启。`
+            : `已强制解决「${current.name}」，全部区域解决完毕！`;
+          regions.pushSystemEvent(state, { kind: 'stage_advanced', region_id: current.id, message }, ctx.now);
+          adminLog.logAdminAction(
+            state,
+            'advance_stage',
+            { cleared_region: current.id, next_region: next ? next.id : null },
+            ctx.now
+          );
+          return { ok: true, message };
+        }
         const transition = transitions[action];
         if (!transition) {
           return { error: ERROR_CODES.BAD_REQUEST, message: '未知的活动操作。' };
@@ -368,6 +395,79 @@ function registerRoutes(router, appCtx) {
             state,
             'player_restore_energy',
             { user_id: user.id, display_name: user.display_name },
+            ctx.now
+          );
+        } else if (op === 'rename') {
+          const result = players.renamePlayer(state, user, String(body.display_name || ''), seeds);
+          if (result.error) {
+            return result;
+          }
+          adminLog.logAdminAction(
+            state,
+            'player_rename',
+            {
+              user_id: user.id,
+              previous_display_name: result.previous_display_name,
+              display_name: user.display_name
+            },
+            ctx.now
+          );
+        } else if (op === 'switch_team') {
+          const teamId = String(body.team || '');
+          const result = players.switchTeam(state, user, teamId);
+          if (result.error) {
+            return result;
+          }
+          contributions.applyContribution(
+            state,
+            contributions.buildLedgerEntry({
+              kind: 'admin',
+              user_id: user.id,
+              team: user.team,
+              reason: `管理员调整阵营（${result.previous_team} → ${user.team}）`,
+              user_delta: 0,
+              team_delta: 0,
+              meta: {
+                previous_team: result.previous_team,
+                moved_contribution: result.moved_contribution
+              }
+            }, ctx.now)
+          );
+          adminLog.logAdminAction(
+            state,
+            'player_switch_team',
+            {
+              user_id: user.id,
+              display_name: user.display_name,
+              previous_team: result.previous_team,
+              team: user.team,
+              moved_contribution: result.moved_contribution
+            },
+            ctx.now
+          );
+        } else if (op === 'force_logout') {
+          const removed = players.forceLogout(state, user.id);
+          adminLog.logAdminAction(
+            state,
+            'player_force_logout',
+            { user_id: user.id, display_name: user.display_name, sessions_removed: removed },
+            ctx.now
+          );
+        } else if (op === 'rebind_code') {
+          const result = codesModule.rebindPlayerCode(state, user, body.code, seeds, ctx.now);
+          if (result.error) {
+            return result;
+          }
+          adminLog.logAdminAction(
+            state,
+            'player_rebind_code',
+            {
+              user_id: user.id,
+              display_name: user.display_name,
+              previous_code: result.previous_code,
+              code: result.new_code,
+              code_type: result.new_type
+            },
             ctx.now
           );
         } else if (op === 'set_weight_override') {
@@ -591,7 +691,9 @@ function registerRoutes(router, appCtx) {
       const result = await adminTransact(appCtx, req, (state, ctx) => {
         const op = String(body.op || '');
         let opResult;
-        if (op === 'claim') {
+        if (op === 'confirm') {
+          opResult = lottery.markConfirmed(state, String(body.draw_id || ''), ctx.now);
+        } else if (op === 'claim') {
           opResult = lottery.markClaimed(state, String(body.draw_id || ''), ctx.now);
         } else if (op === 'void') {
           opResult = lottery.voidDraw(state, String(body.draw_id || ''), body.reason, ctx.now);
@@ -612,7 +714,12 @@ function registerRoutes(router, appCtx) {
           },
           ctx.now
         );
-        return { ok: true, message: op === 'claim' ? '已标记领取。' : '已作废。' };
+        const messages = {
+          confirm: '已确认中奖有效。',
+          claim: '已标记领取。',
+          void: '已作废。'
+        };
+        return { ok: true, message: messages[op] };
       });
       if (result.error) {
         sendJson(res, 400, result);
@@ -621,6 +728,56 @@ function registerRoutes(router, appCtx) {
       sendJson(res, 200, { ...result, admin: views.buildAdminState(store.getLatest(), seeds) });
     } catch (error) {
       console.error('[admin] 抽奖记录操作失败:', error);
+      sendJson(res, 500, { error: ERROR_CODES.INTERNAL_ERROR, message: '操作失败。' });
+    }
+  });
+
+  router.post('/api/admin/lottery/prize', async (req, res) => {
+    let body;
+    try {
+      body = await collectBody(req);
+    } catch {
+      sendJson(res, 400, { error: ERROR_CODES.BAD_REQUEST, message: '请求格式错误。' });
+      return;
+    }
+    try {
+      const result = await adminTransact(appCtx, req, (state, ctx) => {
+        const op = String(body.op || '');
+        let outcome;
+        if (op === 'add') {
+          outcome = lottery.addCustomPrize(state, seeds, body, ctx.now);
+          if (outcome.error) {
+            return outcome;
+          }
+          adminLog.logAdminAction(state, 'lottery_prize_add', {
+            prize_id: outcome.prize.id,
+            name: outcome.prize.name,
+            source: outcome.prize.source,
+            count: outcome.prize.count
+          }, ctx.now);
+          return { ok: true, message: `已添加奖品「${outcome.prize.name}」。`, prize: outcome.prize };
+        }
+        if (op === 'update') {
+          outcome = lottery.updatePrize(state, seeds, String(body.prize_id || ''), body);
+          if (outcome.error) {
+            return outcome;
+          }
+          adminLog.logAdminAction(state, 'lottery_prize_update', {
+            prize_id: body.prize_id,
+            applied: outcome.applied,
+            previous: outcome.previous
+          }, ctx.now);
+          return { ok: true, message: '奖品信息已更新。' };
+        }
+        return { error: ERROR_CODES.BAD_REQUEST, message: '未知操作。' };
+      });
+      if (result.error) {
+        sendJson(res, result.error === 'PRIZE_NOT_FOUND' ? 404 : 400, result);
+        return;
+      }
+      sendJson(res, 200, { ...result, admin: views.buildAdminState(store.getLatest(), seeds) });
+    } catch (error) {
+      console.error('[admin] 奖品操作失败:', error);
       sendJson(res, 500, { error: ERROR_CODES.INTERNAL_ERROR, message: '操作失败。' });
     }
   });

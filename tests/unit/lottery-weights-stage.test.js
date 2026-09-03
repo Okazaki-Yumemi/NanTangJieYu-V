@@ -127,24 +127,84 @@ test('drawPrize rejects locked and exhausted prizes', () => {
   assert.equal(unknown.error, 'PRIZE_NOT_FOUND');
 });
 
-test('markClaimed and voidDraw update draw lifecycle', () => {
+test('draw lifecycle: confirm before claim, void frees winner', () => {
   const fixture = createFixture({ userCount: 2 });
   const draw = lottery.drawPrize(fixture.state, 'prize_base_bookmark', fixture.seeds, fixture.now);
 
-  const claimed = lottery.markClaimed(fixture.state, draw.draw.id, fixture.now);
+  // 未确认不能直接领取
+  const premature = lottery.markClaimed(fixture.state, draw.draw.id, fixture.now);
+  assert.equal(premature.error, 'NO_CHANGE');
+
+  const confirmed = lottery.markConfirmed(fixture.state, draw.draw.id, fixture.now + 5);
+  assert.equal(confirmed.draw.status, 'confirmed');
+
+  const claimed = lottery.markClaimed(fixture.state, draw.draw.id, fixture.now + 10);
   assert.equal(claimed.draw.status, 'claimed');
 
   // 已领取的奖品也允许作废（现场发错奖时需要）
-  const voided = lottery.voidDraw(fixture.state, draw.draw.id, '发错奖', fixture.now + 10);
+  const voided = lottery.voidDraw(fixture.state, draw.draw.id, '发错奖', fixture.now + 20);
   assert.equal(voided.draw.status, 'void');
   assert.equal(voided.draw.void_reason, '发错奖');
 
-  const voidAgain = lottery.voidDraw(fixture.state, draw.draw.id, '重复', fixture.now + 11);
+  const voidAgain = lottery.voidDraw(fixture.state, draw.draw.id, '重复', fixture.now + 21);
   assert.equal(voidAgain.error, 'NO_CHANGE');
 
-  const another = lottery.drawPrize(fixture.state, 'prize_base_postcard', fixture.seeds, fixture.now + 20);
-  const voided2 = lottery.voidDraw(fixture.state, another.draw.id, '测试', fixture.now + 30);
+  const another = lottery.drawPrize(fixture.state, 'prize_base_postcard', fixture.seeds, fixture.now + 30);
+  const voided2 = lottery.voidDraw(fixture.state, another.draw.id, '测试', fixture.now + 40);
   assert.equal(voided2.draw.status, 'void');
+});
+
+test('latestDraw returns the most recent non-void draw', () => {
+  const fixture = createFixture({ userCount: 3 });
+  const first = lottery.drawPrize(fixture.state, 'prize_base_bookmark', fixture.seeds, fixture.now);
+  const second = lottery.drawPrize(fixture.state, 'prize_base_postcard', fixture.seeds, fixture.now + 10);
+  lottery.voidDraw(fixture.state, second.draw.id, '不在场', fixture.now + 20);
+
+  const latest = lottery.latestDraw(fixture.state, fixture.seeds);
+  assert.equal(latest.id, first.draw.id);
+  assert.equal(latest.status, 'pending');
+  assert.ok(latest.prize_name);
+  assert.ok(latest.winner_display_name);
+});
+
+test('admin can add and edit prizes at runtime', () => {
+  const fixture = createFixture({ userCount: 2 });
+  const added = lottery.addCustomPrize(
+    fixture.state,
+    fixture.seeds,
+    { name: '现场加赠・神秘色纸', source: 'base', count: 2 },
+    fixture.now
+  );
+  assert.ok(!added.error, added.message);
+  assert.equal(added.prize.custom, true);
+  assert.equal(added.prize.count, 2);
+
+  // 目录包含自定义奖品，且立即可抽
+  const catalog = lottery.getPrizeCatalog(fixture.state, fixture.seeds);
+  assert.ok(catalog.some((prize) => prize.id === added.prize.id));
+  const drawn = lottery.drawPrize(fixture.state, added.prize.id, fixture.seeds, fixture.now + 1);
+  assert.ok(!drawn.error, drawn.message);
+
+  // 修改种子奖品走覆盖表，不破坏原始定义
+  const target = fixture.seeds.prizes[0].id;
+  const updated = lottery.updatePrize(
+    fixture.state,
+    fixture.seeds,
+    target,
+    { name: '现场确认的真实奖品', count: 3 }
+  );
+  assert.ok(!updated.error, updated.message);
+  assert.equal(updated.previous.name, fixture.seeds.prizes[0].name);
+  const merged = lottery.getPrize(fixture.state, fixture.seeds, target);
+  assert.equal(merged.name, '现场确认的真实奖品');
+  assert.equal(merged.count, 3);
+  assert.equal(fixture.seeds.prizes[0].name, updated.previous.name, '种子定义保持不变');
+
+  // 非法输入被拒绝
+  assert.ok(lottery.addCustomPrize(fixture.state, fixture.seeds, { name: '  ' }, fixture.now).error);
+  assert.ok(lottery.addCustomPrize(fixture.state, fixture.seeds, { name: 'X', count: 0 }, fixture.now).error);
+  assert.ok(lottery.addCustomPrize(fixture.state, fixture.seeds, { name: 'X', source: 'ghost' }, fixture.now).error);
+  assert.equal(lottery.updatePrize(fixture.state, fixture.seeds, 'nope', { name: 'X' }).error, 'PRIZE_NOT_FOUND');
 });
 
 test('stage team_contribution grants each member and the team pool', () => {

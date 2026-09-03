@@ -6,6 +6,7 @@
  */
 
 const { ACTIVITY_STATUS, ERROR_CODES, TEAM_IDS } = require('../../shared/constants');
+const { findSensitiveWord } = require('../../shared/sensitive-words');
 const { hashPassword, newId, newToken, normalizeDisplayName, verifyPassword } = require('../auth');
 const codes = require('./codes');
 
@@ -71,12 +72,17 @@ function canJoinTeam(state, teamId, maxDiff) {
   return { allowed: true, message: '' };
 }
 
-function validateDisplayName(value, activityConfig) {
+function validateDisplayName(value, activityConfig, sensitiveWords) {
   const displayName = String(value || '').trim();
   const min = Math.max(1, Number(activityConfig.nickname_min_length) || 1);
   const max = Math.max(min, Number(activityConfig.nickname_max_length) || 16);
   if (displayName.length < min || displayName.length > max) {
     return { error: `昵称需要 ${min}-${max} 个字符。` };
+  }
+  const hit = findSensitiveWord(displayName, sensitiveWords);
+  if (hit) {
+    // 不回显命中词，避免展示不当内容或提示绕过方式
+    return { error: '这个昵称包含不允许的内容，请换一个。' };
   }
   return { displayName };
 }
@@ -108,7 +114,7 @@ function registerPlayer(state, payload, ctx, nowSec) {
     return { error: ERROR_CODES.BAD_REQUEST, message: '阵营不存在。' };
   }
 
-  const nameCheck = validateDisplayName(displayNameInput, activityConfig);
+  const nameCheck = validateDisplayName(displayNameInput, activityConfig, seeds.sensitiveWords);
   if (nameCheck.error) {
     return { error: ERROR_CODES.VALIDATION_FAILED, message: nameCheck.error };
   }
@@ -218,6 +224,61 @@ function destroySession(state, sessionId) {
   }
 }
 
+/**
+ * 管理员修改玩家昵称（昵称唯一性与其他玩家一致）。
+ */
+function renamePlayer(state, user, displayName, seeds) {
+  const check = validateDisplayName(displayName, seeds.activity, seeds.sensitiveWords);
+  if (check.error) {
+    return { error: 'VALIDATION_FAILED', message: check.error };
+  }
+  const existing = findUserByDisplayName(state, check.displayName);
+  if (existing && existing.id !== user.id) {
+    return { error: 'DUPLICATE_DISPLAY_NAME', message: '这个昵称已经被使用。' };
+  }
+  const previous = user.display_name;
+  user.display_name = check.displayName;
+  user.display_name_lower = normalizeDisplayName(check.displayName);
+  return { user, previous_display_name: previous };
+}
+
+/**
+ * 管理员更换玩家阵营：人数与个人贡献随人迁移。
+ * 注意：队伍池贡献（如 QUIZ 应援）属于队伍本身，不随个人迁移。
+ */
+function switchTeam(state, user, teamId) {
+  const team = state.teams[teamId];
+  if (!team) {
+    return { error: 'BAD_REQUEST', message: '目标阵营不存在。' };
+  }
+  if (user.team === teamId) {
+    return { error: 'NO_CHANGE', message: '玩家已经在这个阵营。' };
+  }
+  const previousTeam = state.teams[user.team];
+  const moved = user.total_contribution;
+  previousTeam.member_count = Math.max(0, previousTeam.member_count - 1);
+  previousTeam.total_contribution = Math.max(0, previousTeam.total_contribution - moved);
+  team.member_count += 1;
+  team.total_contribution += moved;
+  const previous = user.team;
+  user.team = teamId;
+  return { user, previous_team: previous, moved_contribution: moved };
+}
+
+/**
+ * 强制下线：清除该玩家的全部会话（换设备 / 账号异常时使用）。
+ */
+function forceLogout(state, userId) {
+  let removed = 0;
+  for (const [sessionId, session] of Object.entries(state.sessions)) {
+    if (session.user_id === userId) {
+      delete state.sessions[sessionId];
+      removed += 1;
+    }
+  }
+  return removed;
+}
+
 function getTitleForContribution(total, titles) {
   let current = titles[0] ? titles[0].title : '';
   for (const tier of titles) {
@@ -276,6 +337,9 @@ module.exports = {
   createSession,
   getSessionUser,
   destroySession,
+  renamePlayer,
+  switchTeam,
+  forceLogout,
   getTitleForContribution,
   buildPlayerView,
   TEAM_IDS

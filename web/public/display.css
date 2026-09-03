@@ -225,6 +225,31 @@
   margin-left: 10px;
 }
 
+/* ---------- 最新抽奖播报 ---------- */
+
+.latest-draw {
+  border: 1.6px solid #d9b64a;
+  background: rgba(217, 182, 74, 0.16);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-size: 19px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.latest-draw .draw-label {
+  font-size: 13px;
+  color: #cdb374;
+  letter-spacing: 0.15em;
+}
+
+.latest-draw strong {
+  color: #f6e7c8;
+}
+
 /* ---------- 奖品进度 ---------- */
 
 .display-prizes {

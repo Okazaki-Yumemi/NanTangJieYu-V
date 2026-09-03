@@ -303,6 +303,19 @@ describe('HTTP integration: full event journey', () => {
     assert.equal(first.status, 200, first.text);
     const drawId = first.json.draw.id;
 
+    // 新流程：抽出后需先「确认有效」才能标记领取
+    const premature = await request('POST', '/api/admin/lottery/record', {
+      body: { draw_id: drawId, op: 'claim' },
+      headers: { Cookie: adminCookie }
+    });
+    assert.equal(premature.status, 400);
+
+    const confirmed = await request('POST', '/api/admin/lottery/record', {
+      body: { draw_id: drawId, op: 'confirm' },
+      headers: { Cookie: adminCookie }
+    });
+    assert.equal(confirmed.status, 200, confirmed.text);
+
     const claimed = await request('POST', '/api/admin/lottery/record', {
       body: { draw_id: drawId, op: 'claim' },
       headers: { Cookie: adminCookie }

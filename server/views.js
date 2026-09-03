@@ -171,12 +171,21 @@ function presentPrizesForPlayer(state, seeds) {
 
 function buildPublicState(state, seeds) {
   const ctx = { seeds, now: nowSec() };
+  const latestDrawView = lottery.latestDraw(state, seeds);
   return {
     activity: buildActivityView(state, seeds),
     teams: buildTeamViews(state, seeds),
     regions: buildRegionViews(state, seeds, ctx),
     top_players: buildOverallLeaderboard(state, 20),
     prize_track: presentPrizesForPlayer(state, seeds),
+    latest_draw: latestDrawView
+      ? {
+        prize_name: latestDrawView.prize_name,
+        winner_display_name: latestDrawView.winner_display_name,
+        winner_team: latestDrawView.winner_team,
+        drawn_at: latestDrawView.drawn_at
+      }
+      : null,
     recent_contributions: contributions
       .recentGlobal(state, 15)
       .map((entry) => sanitizeLedgerEntry(state, entry, seeds)),
@@ -227,6 +236,18 @@ function buildPlayerHomeState(state, seeds, user) {
       ? contributions.recentForUser(state, user.id, 12).map((entry) => sanitizeLedgerEntry(state, entry, seeds))
       : [],
     prizes: presentPrizesForPlayer(state, seeds),
+    latest_draw: (() => {
+      const view = lottery.latestDraw(state, seeds);
+      return view
+        ? {
+          prize_name: view.prize_name,
+          winner_display_name: view.winner_display_name,
+          winner_team: view.winner_team,
+          drawn_at: view.drawn_at
+        }
+        : null;
+    })(),
+    system_events: state.system_events.slice(-6).reverse(),
     titles: seeds.titles,
     me,
     generated_at: Date.now()

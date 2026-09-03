@@ -418,6 +418,20 @@
   }
 
   function renderPrizeTrack(data) {
+    const latestBox = document.getElementById('latest-draw');
+    if (data.latest_draw) {
+      latestBox.classList.remove('hidden');
+      latestBox.innerHTML = `
+        <span class="draw-label">刚刚抽出</span>
+        <strong>${escapeHtml(data.latest_draw.prize_name)}</strong>
+        <span>→</span>
+        <strong>${escapeHtml(data.latest_draw.winner_display_name)}</strong>
+        <span class="muted small">${formatTime(data.latest_draw.drawn_at)}</span>
+      `;
+    } else {
+      latestBox.classList.add('hidden');
+    }
+
     const regionName = (sourceId) => {
       if (sourceId === 'base') {
         return '基础奖池';
@@ -438,6 +452,22 @@
         </div>
       `)
       .join('');
+
+    const broadcast = document.getElementById('broadcast');
+    if (data.system_events && data.system_events.length > 0) {
+      broadcast.classList.remove('hidden');
+      broadcast.innerHTML = data.system_events
+        .map((event) => `
+          <div class="broadcast-row">
+            <span class="tag">播报</span>
+            <span>${escapeHtml(event.message)}</span>
+            <span class="muted small">${formatTime(event.created_at)}</span>
+          </div>
+        `)
+        .join('');
+    } else {
+      broadcast.classList.add('hidden');
+    }
   }
 
   function renderLeaderboard(data) {

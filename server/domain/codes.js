@@ -83,6 +83,41 @@ function setCodeDisabled(state, code, disabled) {
 }
 
 /**
+ * 管理员为玩家换绑注册码：旧码退役（禁用保留历史），新码必须可用。
+ * 票种变化时同步更新基础抽奖权重。返回 { user }，调用方负责写 AdminLog。
+ */
+function rebindPlayerCode(state, user, newCode, seeds, nowSec) {
+  const normalized = normalizeCode(newCode);
+  if (!normalized) {
+    return { error: 'VALIDATION_FAILED', message: '请输入新的注册码。' };
+  }
+  const entry = findCode(state, normalized);
+  if (!entry) {
+    return { error: 'INVALID_CODE', message: '新注册码不存在。' };
+  }
+  if (entry.disabled) {
+    return { error: 'CODE_DISABLED', message: '新注册码已被禁用。' };
+  }
+  if (!isUsable(entry)) {
+    return { error: 'CODE_ALREADY_USED', message: '新注册码已经被使用。' };
+  }
+  const previousCode = user.code;
+  const previousEntry = state.codes[previousCode];
+  if (previousEntry) {
+    previousEntry.disabled = true;
+  }
+  bindCode(state, entry, user.id, nowSec);
+  user.code = entry.code;
+  user.code_type = entry.type;
+  const lotteryConfig = seeds.lottery;
+  const baseWeight = Number(lotteryConfig.code_type_base_weights[entry.type])
+    || lotteryConfig.default_base_weight
+    || 1;
+  user.weight_base = baseWeight;
+  return { user, previous_code: previousCode, new_code: entry.code, new_type: entry.type };
+}
+
+/**
  * 查询注册码（管理端）。支持按码 / 绑定者昵称模糊过滤。
  */
 function queryCodes(state, { query = '', status = '', type = '', batch_id = '', limit = 200 }, displayNameOf) {
@@ -154,6 +189,7 @@ module.exports = {
   generateCodes,
   bindCode,
   setCodeDisabled,
+  rebindPlayerCode,
   queryCodes,
   codeSummary,
   exportRows

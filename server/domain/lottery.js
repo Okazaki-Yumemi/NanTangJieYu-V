@@ -10,14 +10,161 @@
  */
 
 const { ERROR_CODES, LEDGER_KINDS } = require('../../shared/constants');
-const { newId } = require('../auth');
+const { newId, newToken } = require('../auth');
 const { randomUnit, weightedPick } = require('../../shared/random');
 const contributions = require('./contributions');
 const regions = require('./regions');
 const weights = require('./weights');
 
-function getPrize(seeds, prizeId) {
-  return seeds.prizes.find((prize) => prize.id === prizeId) || null;
+const MYSTERY_PLACEHOLDER = '/assets/regions/prize-placeholder.svg';
+
+function normalizeOverrides(state) {
+  if (!state.lottery.prize_overrides || typeof state.lottery.prize_overrides !== 'object') {
+    state.lottery.prize_overrides = {};
+  }
+  if (!Array.isArray(state.lottery.custom_prizes)) {
+    state.lottery.custom_prizes = [];
+  }
+  return { overrides: state.lottery.prize_overrides, custom: state.lottery.custom_prizes };
+}
+
+/**
+ * 完整奖品目录 = 种子奖品 + 管理员自定义奖品，再套用管理员的修改覆盖。
+ * 管理员可在现场直接填写 / 修正奖品信息，无需改配置重启。
+ */
+function getPrizeCatalog(state, seeds) {
+  const { overrides, custom } = normalizeOverrides(state);
+  return [...seeds.prizes, ...custom].map((prize) => {
+    const override = overrides[prize.id] || {};
+    const merged = { ...prize };
+    for (const field of ['name', 'description', 'image', 'count', 'source']) {
+      if (override[field] !== undefined && override[field] !== null && override[field] !== '') {
+        merged[field] = override[field];
+      }
+    }
+    if (!merged.image) {
+      merged.image = MYSTERY_PLACEHOLDER;
+    }
+    return merged;
+  });
+}
+
+function getPrize(state, seeds, prizeId) {
+  return getPrizeCatalog(state, seeds).find((prize) => prize.id === prizeId) || null;
+}
+
+function validatePrizePatch(state, seeds, patch) {
+  if (patch.name !== undefined && String(patch.name).trim() === '') {
+    return { error: 'VALIDATION_FAILED', message: '奖品名称不能为空。' };
+  }
+  if (patch.count !== undefined) {
+    const count = Math.floor(Number(patch.count));
+    if (!Number.isFinite(count) || count < 1 || count > 999) {
+      return { error: 'VALIDATION_FAILED', message: '数量需要是 1 ~ 999 的整数。' };
+    }
+  }
+  if (patch.source !== undefined && patch.source !== 'base') {
+    const region = seeds.regions.find((region) => region.id === patch.source);
+    if (!region) {
+      return { error: 'VALIDATION_FAILED', message: '绑定的区域不存在。' };
+    }
+  }
+  return {};
+}
+
+/**
+ * 新增自定义奖品（管理员现场填写）。
+ */
+function addCustomPrize(state, seeds, payload, nowSec) {
+  const { custom } = normalizeOverrides(state);
+  const patch = {
+    name: payload.name,
+    description: payload.description,
+    image: payload.image,
+    count: payload.count === undefined ? 1 : payload.count,
+    source: payload.source === undefined ? 'base' : payload.source
+  };
+  const invalid = validatePrizePatch(state, seeds, patch);
+  if (invalid.error) {
+    return invalid;
+  }
+  const prize = {
+    id: `prize_custom_${newToken(4)}`,
+    name: String(patch.name).trim().slice(0, 60),
+    description: String(patch.description || '').trim().slice(0, 200),
+    image: String(patch.image || '').trim() || MYSTERY_PLACEHOLDER,
+    source: patch.source,
+    count: Math.floor(Number(patch.count)),
+    custom: true,
+    created_at: nowSec
+  };
+  custom.push(prize);
+  return { prize };
+}
+
+/**
+ * 修改奖品信息（种子奖品与自定义奖品都走覆盖表，原始定义保留可回溯）。
+ */
+function updatePrize(state, seeds, prizeId, payload) {
+  const { overrides } = normalizeOverrides(state);
+  const prize = getPrize(state, seeds, prizeId);
+  if (!prize) {
+    return { error: 'PRIZE_NOT_FOUND', message: '奖品不存在。' };
+  }
+  const patch = {};
+  for (const field of ['name', 'description', 'image', 'count', 'source']) {
+    if (payload[field] !== undefined) {
+      patch[field] = payload[field];
+    }
+  }
+  const invalid = validatePrizePatch(state, seeds, patch);
+  if (invalid.error) {
+    return invalid;
+  }
+  const previous = {
+    name: prize.name,
+    description: prize.description,
+    image: prize.image,
+    count: prize.count,
+    source: prize.source
+  };
+  const applied = {};
+  if (patch.name !== undefined) {
+    overrides[prizeId] = overrides[prizeId] || {};
+    overrides[prizeId].name = String(patch.name).trim().slice(0, 60);
+    applied.name = overrides[prizeId].name;
+  }
+  if (patch.description !== undefined) {
+    overrides[prizeId] = overrides[prizeId] || {};
+    overrides[prizeId].description = String(patch.description).trim().slice(0, 200);
+    applied.description = overrides[prizeId].description;
+  }
+  if (patch.image !== undefined) {
+    overrides[prizeId] = overrides[prizeId] || {};
+    overrides[prizeId].image = String(patch.image).trim().slice(0, 200) || MYSTERY_PLACEHOLDER;
+    applied.image = overrides[prizeId].image;
+  }
+  if (patch.count !== undefined) {
+    overrides[prizeId] = overrides[prizeId] || {};
+    overrides[prizeId].count = Math.floor(Number(patch.count));
+    applied.count = overrides[prizeId].count;
+  }
+  if (patch.source !== undefined) {
+    overrides[prizeId] = overrides[prizeId] || {};
+    overrides[prizeId].source = patch.source;
+    applied.source = patch.source;
+  }
+  return { previous, applied };
+}
+
+function latestDraw(state, seeds) {
+  for (const draw of [...state.lottery.draws].reverse()) {
+    if (draw.status === 'void') {
+      continue;
+    }
+    return buildDrawView(state, draw, seeds);
+  }
+  return null;
 }
 
 function drawnCount(state, prizeId) {
@@ -27,7 +174,7 @@ function drawnCount(state, prizeId) {
 }
 
 function listPrizesWithStatus(state, seeds) {
-  return seeds.prizes.map((prize) => {
+  return getPrizeCatalog(state, seeds).map((prize) => {
     const drawn = drawnCount(state, prize.id);
     return {
       ...prize,
@@ -68,7 +215,7 @@ function buildEligiblePool(state, seeds, { preventRepeatWinners }) {
  * 执行一次抽奖。
  */
 function drawPrize(state, prizeId, seeds, nowSec) {
-  const prize = getPrize(seeds, prizeId);
+  const prize = getPrize(state, seeds, prizeId);
   if (!prize) {
     return { error: ERROR_CODES.PRIZE_NOT_FOUND, message: '奖品不存在。' };
   }
@@ -115,13 +262,32 @@ function getDraw(state, drawId) {
   return state.lottery.draws.find((draw) => draw.id === drawId) || null;
 }
 
+function markConfirmed(state, drawId, nowSec) {
+  const draw = getDraw(state, drawId);
+  if (!draw) {
+    return { error: 'NOT_FOUND', message: '抽奖记录不存在。' };
+  }
+  if (draw.status === 'void') {
+    return { error: 'NO_CHANGE', message: '该记录已作废，不能确认。' };
+  }
+  if (draw.status !== 'pending') {
+    return { error: 'NO_CHANGE', message: '该记录已经确认过。' };
+  }
+  draw.status = 'confirmed';
+  draw.confirmed_at = nowSec;
+  return { draw };
+}
+
 function markClaimed(state, drawId, nowSec) {
   const draw = getDraw(state, drawId);
   if (!draw) {
-    return { error: ERROR_CODES.NOT_FOUND, message: '抽奖记录不存在。' };
+    return { error: 'NOT_FOUND', message: '抽奖记录不存在。' };
   }
   if (draw.status === 'void') {
-    return { error: ERROR_CODES.NO_CHANGE, message: '该记录已作废，不能标记领取。' };
+    return { error: 'NO_CHANGE', message: '该记录已作废，不能标记领取。' };
+  }
+  if (draw.status === 'pending') {
+    return { error: 'NO_CHANGE', message: '请先「确认有效」再标记领取。' };
   }
   draw.status = 'claimed';
   draw.claimed_at = nowSec;
@@ -143,7 +309,7 @@ function voidDraw(state, drawId, reason, nowSec) {
 }
 
 function buildDrawView(state, draw, seeds) {
-  const prize = getPrize(seeds, draw.prize_id);
+  const prize = getPrize(state, seeds, draw.prize_id);
   const user = state.users[draw.user_id];
   return {
     ...draw,
@@ -182,12 +348,17 @@ function buildDrawLedgerEntry({ draw, prize, winner }, nowSec) {
 
 module.exports = {
   getPrize,
+  getPrizeCatalog,
+  addCustomPrize,
+  updatePrize,
+  latestDraw,
   drawnCount,
   listPrizesWithStatus,
   hasActiveWin,
   buildEligiblePool,
   drawPrize,
   getDraw,
+  markConfirmed,
   markClaimed,
   voidDraw,
   buildDrawView,
