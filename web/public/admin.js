@@ -17,7 +17,8 @@
     pendingPrizeName: '',
     pendingPrizeId: '',
     winner: null,
-    animationId: 0
+    animationId: 0,
+    animationEvent: ''
   };
 
   const elements = {
@@ -531,6 +532,25 @@
 
   const LOTTERY_ITEM_WIDTH_FALLBACK = 184;
   const LOTTERY_ANIMATION_MS = 6000;
+  const LOTTERY_SPECIAL_EVENT_RATE = 0.1;
+  const LOTTERY_EVENT_LABELS = {
+    slide: '大地球滑步',
+    brake: '大地球急停'
+  };
+  const LOTTERY_REEL_EASE = 'cubic-bezier(0.1, 0.82, 0.16, 1)';
+  const LOTTERY_REEL_SLIDE_EASE = 'cubic-bezier(0.24, 0.88, 0.38, 1)';
+  const LOTTERY_REEL_BRAKE_EASE = 'cubic-bezier(0.04, 0.94, 0.1, 1)';
+
+  function pickLotteryAnimationEvent() {
+    const roll = Math.random();
+    if (roll < LOTTERY_SPECIAL_EVENT_RATE) {
+      return 'slide';
+    }
+    if (roll < LOTTERY_SPECIAL_EVENT_RATE * 2) {
+      return 'brake';
+    }
+    return '';
+  }
 
   function lotterySourceOptions(selected) {
     return [
@@ -616,6 +636,8 @@
     const isDrawing = lotteryState.isDrawing;
     const status = isDrawing ? '滚动抽取中' : (winner ? '结果已锁定' : '等待抽取');
     const statusClass = isDrawing ? 'is-drawing' : (winner ? 'is-winner' : 'is-ready');
+    const eventLabel = LOTTERY_EVENT_LABELS[lotteryState.animationEvent] || '';
+    const eventClass = eventLabel ? ` is-event-${lotteryState.animationEvent}` : '';
     const winnerTeam = winner
       ? (admin.teams || []).find((team) => team.id === winner.winner_team)
       : null;
@@ -646,8 +668,9 @@
 
         ${renderLotteryQuickPicks()}
 
-        <div class="lottery-stage" data-lottery-stage aria-live="polite" aria-busy="${isDrawing ? 'true' : 'false'}">
+        <div class="lottery-stage${eventClass}" data-lottery-stage aria-live="polite" aria-busy="${isDrawing ? 'true' : 'false'}">
           <span class="lottery-stage-label">${escapeHtml(lotteryState.pendingPrizeName || (winner ? winner.prize_name : '抽奖结果'))}</span>
+          <span class="lottery-event-flag${eventLabel ? '' : ' hidden'}" data-lottery-event-flag>${eventLabel ? `本局彩蛋 · ${escapeHtml(eventLabel)}` : ''}</span>
           <div class="lottery-reel-window" data-lottery-reel-window>
             <div class="lottery-reel${isDrawing ? '' : ' is-idle'}" data-lottery-reel>
               ${lotteryRollItem(initialCandidate, { winner: Boolean(winner) })}
@@ -917,6 +940,7 @@
         lotteryState.pendingPrizeName = button.dataset.prizeName || '当前奖品';
         lotteryState.pendingPrizeId = button.dataset.draw || '';
         lotteryState.winner = null;
+        lotteryState.animationEvent = '';
         renderLottery();
 
         try {
@@ -1021,18 +1045,62 @@
     const itemWidth = item ? item.getBoundingClientRect().width : LOTTERY_ITEM_WIDTH_FALLBACK;
     const windowWidth = reelWindow.getBoundingClientRect().width || itemWidth;
     const centerOffset = Math.max(0, (windowWidth - itemWidth) / 2);
-    const shift = Math.max(0, winnerIndex * itemWidth - centerOffset);
+    const targetShift = Math.max(0, winnerIndex * itemWidth - centerOffset);
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const duration = reduceMotion ? 80 : LOTTERY_ANIMATION_MS;
-    reel.style.setProperty('--lottery-duration', `${duration}ms`);
-    await nextFrame();
-    if (animationId !== lotteryState.animationId || !reel.isConnected) {
-      return;
+    const animationEvent = reduceMotion ? '' : pickLotteryAnimationEvent();
+    lotteryState.animationEvent = animationEvent;
+    const eventLabel = LOTTERY_EVENT_LABELS[animationEvent] || '';
+    const eventFlag = stage.querySelector('[data-lottery-event-flag]');
+    stage.classList.remove('is-event-slide', 'is-event-brake');
+    if (eventLabel) {
+      stage.classList.add(`is-event-${animationEvent}`);
+      if (eventFlag) {
+        eventFlag.textContent = `本局彩蛋 · ${eventLabel}`;
+        eventFlag.classList.remove('hidden');
+      }
     }
-    reel.style.setProperty('--lottery-shift', `-${shift}px`);
-    reel.classList.add('is-rolling');
-    await sleep(duration + 80);
-    if (animationId !== lotteryState.animationId || !reel.isConnected) {
+
+    const animationIsActive = () => animationId === lotteryState.animationId && reel.isConnected;
+    let isFirstPhase = true;
+    const moveReelTo = async (shift, duration, easing) => {
+      reel.style.setProperty('--lottery-duration', `${duration}ms`);
+      reel.style.setProperty('--lottery-ease', easing);
+      await nextFrame();
+      if (!animationIsActive()) {
+        return false;
+      }
+      if (isFirstPhase) {
+        reel.classList.add('is-rolling');
+        isFirstPhase = false;
+      }
+      reel.style.setProperty('--lottery-shift', `-${shift}px`);
+      await sleep(duration + 70);
+      return animationIsActive();
+    };
+
+    const duration = reduceMotion ? 80 : LOTTERY_ANIMATION_MS;
+    let completed = false;
+    if (animationEvent === 'slide') {
+      const beforeWinnerShift = Math.max(0, targetShift - itemWidth);
+      completed = await moveReelTo(beforeWinnerShift, duration - 650, LOTTERY_REEL_EASE);
+      if (completed) {
+        await sleep(120);
+        completed = animationIsActive();
+      }
+      if (completed) {
+        completed = await moveReelTo(targetShift, 380, LOTTERY_REEL_SLIDE_EASE);
+      }
+    } else if (animationEvent === 'brake') {
+      const brakeDistance = Math.min(itemWidth * 0.24, 44);
+      const beforeBrakeShift = Math.max(0, targetShift - brakeDistance);
+      completed = await moveReelTo(beforeBrakeShift, duration - 350, LOTTERY_REEL_BRAKE_EASE);
+      if (completed) {
+        completed = await moveReelTo(targetShift, 280, LOTTERY_REEL_BRAKE_EASE);
+      }
+    } else {
+      completed = await moveReelTo(targetShift, duration, LOTTERY_REEL_EASE);
+    }
+    if (!completed) {
       return;
     }
     reel.classList.remove('is-rolling');
