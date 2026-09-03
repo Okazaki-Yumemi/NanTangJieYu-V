@@ -31,20 +31,29 @@
 }
 
 .team-pick-portrait {
+  position: relative;
   width: 84px;
-  height: 96px;
-  border-radius: 10px;
+  height: 104px;
+  aspect-ratio: 4 / 5;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
   overflow: hidden;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: var(--team-soft);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.15), transparent 45%),
+    var(--team-soft);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.2);
 }
 
 .team-pick-portrait img {
-  max-width: 100%;
-  max-height: 100%;
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
+  object-position: center bottom;
+  padding: 4px 3px 0;
 }
 
 .team-pick strong {
@@ -108,8 +117,10 @@
 }
 
 .battle-portrait {
-  width: 52px;
-  height: 62px;
+  flex: 0 0 58px;
+  width: 58px;
+  height: 72px;
+  object-position: center bottom;
   object-fit: contain;
   filter: drop-shadow(0 2px 3px rgba(90, 60, 40, 0.25));
 }
@@ -532,37 +543,46 @@ i.energy-dot.on {
 
 .prize-track {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   overflow-x: auto;
-  padding: 2px 2px 8px;
+  padding: 2px 2px 10px;
   scroll-snap-type: x proximity;
 }
 
 .prize-card {
-  flex: 0 0 108px;
+  flex: 0 0 126px;
   scroll-snap-align: start;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 5px;
   text-align: center;
-  border: 1.6px solid var(--line);
-  border-radius: 12px;
-  padding: 10px 6px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px 8px;
   background: rgba(255,255,255,0.05);
+  transition: border-color 0.18s, transform 0.18s, background 0.18s;
 }
 
 .prize-card.unlocked {
   border-color: var(--gold);
   background: rgba(255,209,102,0.12);
+  box-shadow: 0 8px 18px rgba(255, 209, 102, 0.08);
+}
+
+.prize-card.unlocked:hover {
+  transform: translateY(-2px);
+  background: rgba(255,209,102,0.16);
 }
 
 .prize-card strong {
   font-size: 12px;
   line-height: 1.3;
-  min-height: 31px;
+  min-height: 34px;
   display: flex;
   align-items: center;
+  justify-content: center;
+  overflow-wrap: anywhere;
 }
 
 .prize-card.mystery strong {
@@ -571,9 +591,11 @@ i.energy-dot.on {
 }
 
 .prize-image {
-  width: 64px;
-  height: 52px;
-  border-radius: 8px;
+  width: 86px;
+  aspect-ratio: 4 / 3;
+  height: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
   background: rgba(255,255,255,0.07);
   display: flex;
   align-items: center;
@@ -582,9 +604,11 @@ i.energy-dot.on {
 }
 
 .prize-image img {
-  max-width: 100%;
-  max-height: 100%;
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
+  padding: 5px;
 }
 
 .prize-state {

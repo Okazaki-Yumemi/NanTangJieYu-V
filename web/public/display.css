@@ -26,6 +26,7 @@
   font-size: 30px;
   letter-spacing: 0.1em;
   color: #f6e7c8;
+  line-height: 1.2;
 }
 
 .display-title small {
@@ -132,9 +133,12 @@
 }
 
 .vs-portrait {
+  display: block;
   width: 92px;
   height: 118px;
   object-fit: contain;
+  object-position: center bottom;
+  padding: 3px 3px 0;
   filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
 }
 
@@ -302,11 +306,12 @@
 }
 
 .display-prize {
-  flex: 1 1 120px;
-  max-width: 170px;
-  border: 1.4px solid rgba(243, 237, 221, 0.2);
-  border-radius: 12px;
-  padding: 10px;
+  flex: 1 1 138px;
+  max-width: 184px;
+  min-height: 142px;
+  border: 1px solid rgba(243, 237, 221, 0.2);
+  border-radius: 14px;
+  padding: 10px 9px;
   text-align: center;
   background: rgba(253, 250, 240, 0.05);
 }
@@ -317,12 +322,17 @@
 }
 
 .display-prize strong {
-  display: block;
-  font-size: 13.5px;
-  margin-top: 6px;
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .display-prize .source {
+  display: block;
   font-size: 11.5px;
   color: #b7ad95;
 }
@@ -333,8 +343,14 @@
 }
 
 .display-prize img {
-  width: 62px;
-  height: 46px;
+  display: block;
+  width: 84px;
+  height: 63px;
+  margin: 0 auto 5px;
+  border: 1px solid rgba(243, 237, 221, 0.12);
+  border-radius: 9px;
+  padding: 5px;
+  background: rgba(253, 250, 240, 0.07);
   object-fit: contain;
 }
 

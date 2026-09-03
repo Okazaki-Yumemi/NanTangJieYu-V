@@ -17,6 +17,7 @@
   --up: #4ade80;
   --down: #ff6b81;
   --radius: 14px;
+  --font-sans: 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei UI', 'Microsoft YaHei', system-ui, sans-serif;
   --glass-blur: blur(16px) saturate(1.35);
   --shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
   --map-halo: rgba(5, 6, 12, 0.88);
@@ -33,10 +34,12 @@ html {
 
 body {
   margin: 0;
-  font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  font-family: var(--font-sans);
   background: var(--bg);
   color: var(--ink);
   line-height: 1.55;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
 }
 
 button {
@@ -507,8 +510,10 @@ input {
   display: inline-flex;
   align-items: flex-end;
   justify-content: center;
-  width: 74px;
-  height: 74px;
+  flex: 0 0 78px;
+  width: 78px;
+  aspect-ratio: 1;
+  height: auto;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--line);
@@ -516,9 +521,12 @@ input {
 }
 
 .character-frame img {
-  max-width: 100%;
-  max-height: 100%;
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
+  object-position: center bottom;
+  padding: 3px 3px 0;
 }
 
 /* ---------- Toast ---------- */
