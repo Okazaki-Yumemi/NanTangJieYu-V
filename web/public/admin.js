@@ -529,7 +529,7 @@
 
   // ---------- 抽奖 ----------
 
-  const LOTTERY_ITEM_HEIGHT_FALLBACK = 88;
+  const LOTTERY_ITEM_WIDTH_FALLBACK = 184;
   const LOTTERY_ANIMATION_MS = 6000;
 
   function lotterySourceOptions(selected) {
@@ -549,9 +549,14 @@
         continue;
       }
       seen.add(row.display_name);
+      const team = (admin.teams || []).find((item) => item.id === row.team);
       candidates.push({
         displayName: row.display_name,
-        team: teamName(row.team),
+        team: team ? team.short_name : teamName(row.team),
+        teamId: row.team,
+        portrait: team ? team.portrait_url : '',
+        color: team ? team.color : '#ffd166',
+        colorSoft: team ? team.color_soft : '#fff4d1',
         weight: row.weight
       });
     }
@@ -559,10 +564,15 @@
   }
 
   function lotteryRollItem(candidate, { winner = false } = {}) {
+    const portrait = candidate.portrait
+      ? `<img src="${escapeHtml(candidate.portrait)}" alt="" loading="lazy" />`
+      : '<span aria-hidden="true">✦</span>';
     return `
-      <div class="lottery-reel-item${winner ? ' is-winner' : ''}" ${winner ? '' : 'aria-hidden="true"'}>
-        <strong>${escapeHtml(candidate.displayName)}</strong>
-        <span>${escapeHtml(candidate.team || '调查队')}<small>${candidate.weight ? `权重 ${escapeHtml(candidate.weight)}` : '候选玩家'}</small></span>
+      <div class="lottery-reel-item${winner ? ' is-winner' : ''}" style="--lottery-team-color: ${escapeHtml(candidate.color || '#ffd166')}; --lottery-team-soft: ${escapeHtml(candidate.colorSoft || '#fff4d1')};" ${winner ? '' : 'aria-hidden="true"'}>
+        <span class="lottery-reel-badge"><i></i>${winner ? 'WINNER DROP' : 'PLAYER DROP'}</span>
+        <span class="lottery-reel-avatar">${portrait}</span>
+        <strong class="lottery-reel-name">${escapeHtml(candidate.displayName)}</strong>
+        <span class="lottery-reel-meta"><b>${escapeHtml(candidate.team || '调查队')}</b><small>${candidate.weight ? `权重 ${escapeHtml(candidate.weight)}` : '候选玩家'}</small></span>
       </div>
     `;
   }
@@ -605,10 +615,17 @@
     const isDrawing = lotteryState.isDrawing;
     const status = isDrawing ? '滚动抽取中' : (winner ? '结果已锁定' : '等待抽取');
     const statusClass = isDrawing ? 'is-drawing' : (winner ? 'is-winner' : 'is-ready');
+    const winnerTeam = winner
+      ? (admin.teams || []).find((team) => team.id === winner.winner_team)
+      : null;
     const initialCandidate = winner
       ? {
         displayName: winner.winner_display_name,
         team: teamName(winner.winner_team),
+        teamId: winner.winner_team,
+        portrait: winnerTeam ? winnerTeam.portrait_url : '',
+        color: winnerTeam ? winnerTeam.color : '#ffd166',
+        colorSoft: winnerTeam ? winnerTeam.color_soft : '#fff4d1',
         weight: winner.weight_snapshot
       }
       : { displayName: isDrawing ? '准备滚动…' : '等待选择奖品', team: '现场抽奖台', weight: 0 };
@@ -630,13 +647,13 @@
 
         <div class="lottery-stage" data-lottery-stage aria-live="polite" aria-busy="${isDrawing ? 'true' : 'false'}">
           <span class="lottery-stage-label">${escapeHtml(lotteryState.pendingPrizeName || (winner ? winner.prize_name : '抽奖结果'))}</span>
-          <div class="lottery-reel-window">
-            <div class="lottery-reel" data-lottery-reel>
+          <div class="lottery-reel-window" data-lottery-reel-window>
+            <div class="lottery-reel${isDrawing ? '' : ' is-idle'}" data-lottery-reel>
               ${lotteryRollItem(initialCandidate, { winner: Boolean(winner) })}
             </div>
           </div>
-          <span class="lottery-pointer lottery-pointer-left" aria-hidden="true"></span>
-          <span class="lottery-pointer lottery-pointer-right" aria-hidden="true"></span>
+          <span class="lottery-pointer lottery-pointer-top" aria-hidden="true"></span>
+          <span class="lottery-pointer lottery-pointer-bottom" aria-hidden="true"></span>
         </div>
 
         ${winner ? `
@@ -646,7 +663,7 @@
             <div><span>本次权重</span><strong>${escapeHtml(winner.weight_snapshot)}</strong></div>
             <div><span>奖品</span><strong>${escapeHtml(winner.prize_name)}</strong></div>
           </div>
-        ` : '<p class="lottery-console-note">抽奖动画只展示昵称与阵营；中奖结果、权重快照和记录仍以服务端返回为准。</p>'}
+        ` : '<p class="lottery-console-note">中央指针停靠在中奖玩家；中奖结果、权重快照和记录仍以服务端返回为准。</p>'}
       </div>
     `;
   }
@@ -724,7 +741,7 @@
           </div>
           <span class="muted small">${admin.prizes.filter((prize) => prize.available && prize.remaining > 0).length} 个奖品可抽</span>
         </div>
-        <p class="helper-text">流程：抽取 → 找到玩家「确认有效」→ 领奖时「标记领取」。玩家不在场就「作废重抽」，作废后玩家重新进入候选池。</p>
+        <p class="helper-text">同一玩家可以中奖多个不同奖品，但同一个奖品每人最多中奖一次。流程：抽取 → 找到玩家「确认有效」→ 领奖时「标记领取」；不在场就「作废重抽」。</p>
         <div class="admin-table-wrap">
           <table class="admin-table">
             <thead><tr><th>奖品</th><th>来源</th><th>状态</th><th>已抽 / 总数</th><th>操作</th></tr></thead>
@@ -957,13 +974,19 @@
     const panel = elements.panels.lottery;
     const stage = panel.querySelector('[data-lottery-stage]');
     const reel = panel.querySelector('[data-lottery-reel]');
-    if (!stage || !reel || !draw) {
+    const reelWindow = panel.querySelector('[data-lottery-reel-window]');
+    if (!stage || !reel || !reelWindow || !draw) {
       return;
     }
 
+    const winnerTeam = (admin.teams || []).find((team) => team.id === draw.winner_team);
     const winner = {
       displayName: draw.winner_display_name,
       team: teamName(draw.winner_team),
+      teamId: draw.winner_team,
+      portrait: winnerTeam ? winnerTeam.portrait_url : '',
+      color: winnerTeam ? winnerTeam.color : '#ffd166',
+      colorSoft: winnerTeam ? winnerTeam.color_soft : '#fff4d1',
       weight: draw.weight_snapshot
     };
     const candidates = lotteryRollCandidates();
@@ -971,8 +994,12 @@
       candidates.push(winner);
     }
     const safeCandidates = candidates.length ? candidates : [winner];
-    const rounds = Math.max(28, Math.min(56, safeCandidates.length * 3));
-    const items = Array.from({ length: rounds }, (_, index) => safeCandidates[index % safeCandidates.length]);
+    const rounds = Math.max(36, Math.min(72, safeCandidates.length * 4));
+    const startIndex = Math.floor(Math.random() * safeCandidates.length);
+    const items = Array.from(
+      { length: rounds },
+      (_, index) => safeCandidates[(startIndex + index) % safeCandidates.length]
+    );
     items.push(winner);
     reel.innerHTML = `${items.slice(0, -1).map((candidate) => lotteryRollItem(candidate)).join('')}${lotteryRollItem(winner, { winner: true })}`;
     reel.style.setProperty('--lottery-shift', '0px');
@@ -981,8 +1008,10 @@
     reel.getBoundingClientRect();
 
     const item = reel.querySelector('.lottery-reel-item');
-    const itemHeight = item ? item.getBoundingClientRect().height : LOTTERY_ITEM_HEIGHT_FALLBACK;
-    const shift = Math.max(0, (items.length - 1) * itemHeight);
+    const itemWidth = item ? item.getBoundingClientRect().width : LOTTERY_ITEM_WIDTH_FALLBACK;
+    const windowWidth = reelWindow.getBoundingClientRect().width || itemWidth;
+    const centerOffset = Math.max(0, (windowWidth - itemWidth) / 2);
+    const shift = Math.max(0, (items.length - 1) * itemWidth - centerOffset);
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const duration = reduceMotion ? 80 : LOTTERY_ANIMATION_MS;
     reel.style.setProperty('--lottery-duration', `${duration}ms`);

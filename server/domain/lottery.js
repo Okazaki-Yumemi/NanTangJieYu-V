@@ -6,7 +6,7 @@
  * 奖品来自 shared/seeds/prizes.json：
  * - source: 'base'    → 基础奖池，活动即可抽取
  * - source: <区域id>  → 该区域异变解决后解锁
- * 防重复中奖、权重快照、作废重抽均在此处理。
+ * 同一奖品内防重复中奖、权重快照、作废重抽均在此处理。
  */
 
 const { ERROR_CODES, LEDGER_KINDS } = require('../../shared/constants');
@@ -194,13 +194,28 @@ function hasActiveWin(state, userId) {
   );
 }
 
-function buildEligiblePool(state, seeds, { preventRepeatWinners }) {
+/**
+ * 检查玩家是否已经赢得过指定奖品；作废记录不占用该奖品名额。
+ */
+function hasActiveWinForPrize(state, userId, prizeId) {
+  return state.lottery.draws.some(
+    (draw) =>
+      draw.user_id === userId &&
+      draw.prize_id === prizeId &&
+      draw.status !== 'void'
+  );
+}
+
+function buildEligiblePool(state, seeds, { preventRepeatWinners, prizeId = '' } = {}) {
   const pool = [];
   for (const user of Object.values(state.users)) {
     if (user.banned) {
       continue;
     }
-    if (preventRepeatWinners && hasActiveWin(state, user.id)) {
+    const hasWon = prizeId
+      ? hasActiveWinForPrize(state, user.id, prizeId)
+      : hasActiveWin(state, user.id);
+    if (preventRepeatWinners && hasWon) {
       continue;
     }
     const weight = weights.calculateUserWeight(state, user, seeds.lottery);
@@ -230,7 +245,10 @@ function drawPrize(state, prizeId, seeds, nowSec) {
   }
 
   const preventRepeat = seeds.lottery.prevent_repeat_winners !== false;
-  const pool = buildEligiblePool(state, seeds, { preventRepeatWinners: preventRepeat });
+  const pool = buildEligiblePool(state, seeds, {
+    preventRepeatWinners: preventRepeat,
+    prizeId: prize.id
+  });
   if (pool.length === 0) {
     return { error: ERROR_CODES.NO_ELIGIBLE_PLAYERS, message: '当前没有可参与的玩家。' };
   }
@@ -355,6 +373,7 @@ module.exports = {
   drawnCount,
   listPrizesWithStatus,
   hasActiveWin,
+  hasActiveWinForPrize,
   buildEligiblePool,
   drawPrize,
   getDraw,

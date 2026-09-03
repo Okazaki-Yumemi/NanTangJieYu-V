@@ -81,13 +81,17 @@ test('prizes stay locked until their region clears; base pool always available',
   assert.equal(statuses.find((prize) => prize.source === first.id).remaining, 1);
 });
 
-test('drawPrize records snapshot and respects repeat-winner policy', () => {
+test('drawPrize allows repeat winners across prizes but not the same prize', () => {
   const fixture = createFixture({ userCount: 3 });
   const [a, b] = fixture.registered;
   a.total_contribution = 10000; // 权重 1 + 3
   b.total_contribution = 3000;  // 权重 1 + 1
 
-  const poolBefore = lottery.buildEligiblePool(fixture.state, fixture.seeds, { preventRepeatWinners: true });
+  const poolBefore = lottery.buildEligiblePool(
+    fixture.state,
+    fixture.seeds,
+    { preventRepeatWinners: true, prizeId: 'prize_base_bookmark' }
+  );
   assert.equal(poolBefore.length, 3);
 
   const firstDraw = lottery.drawPrize(fixture.state, 'prize_base_bookmark', fixture.seeds, fixture.now);
@@ -96,18 +100,37 @@ test('drawPrize records snapshot and respects repeat-winner policy', () => {
   assert.equal(firstDraw.draw.status, 'pending');
   const winner = firstDraw.winner;
 
-  // 默认 prevent_repeat_winners：已中奖玩家退出候选池
-  const poolAfter = lottery.buildEligiblePool(fixture.state, fixture.seeds, { preventRepeatWinners: true });
-  assert.equal(poolAfter.length, 2);
-  assert.ok(!poolAfter.some((item) => item.user.id === winner.id));
+  // 同一奖品：已中奖玩家退出候选池
+  const poolAfterSamePrize = lottery.buildEligiblePool(
+    fixture.state,
+    fixture.seeds,
+    { preventRepeatWinners: true, prizeId: 'prize_base_bookmark' }
+  );
+  assert.equal(poolAfterSamePrize.length, 2);
+  assert.ok(!poolAfterSamePrize.some((item) => item.user.id === winner.id));
+
+  // 不同奖品：同一玩家仍然可以再次进入候选池
+  const poolForOtherPrize = lottery.buildEligiblePool(
+    fixture.state,
+    fixture.seeds,
+    { preventRepeatWinners: true, prizeId: 'prize_base_postcard' }
+  );
+  assert.equal(poolForOtherPrize.length, 3);
+  assert.ok(poolForOtherPrize.some((item) => item.user.id === winner.id));
+  assert.equal(lottery.hasActiveWinForPrize(fixture.state, winner.id, 'prize_base_bookmark'), true);
+  assert.equal(lottery.hasActiveWinForPrize(fixture.state, winner.id, 'prize_base_postcard'), false);
 
   const secondDraw = lottery.drawPrize(fixture.state, 'prize_base_bookmark', fixture.seeds, fixture.now);
   assert.ok(!secondDraw.error, secondDraw.message);
   assert.notEqual(secondDraw.winner.id, winner.id);
 
-  // 作废后重新进入候选池，占坑释放；首个赢家仍持有有效记录
+  // 作废后重新进入同一奖品候选池，占坑释放；首个赢家仍持有有效记录
   lottery.voidDraw(fixture.state, secondDraw.draw.id, '测试作废', fixture.now);
-  const poolAfterVoid = lottery.buildEligiblePool(fixture.state, fixture.seeds, { preventRepeatWinners: true });
+  const poolAfterVoid = lottery.buildEligiblePool(
+    fixture.state,
+    fixture.seeds,
+    { preventRepeatWinners: true, prizeId: 'prize_base_bookmark' }
+  );
   assert.equal(poolAfterVoid.length, 2);
   assert.ok(poolAfterVoid.some((item) => item.user.id === secondDraw.winner.id), '被作废者重新可选');
   assert.ok(!poolAfterVoid.some((item) => item.user.id === winner.id), '首个赢家仍被排除');

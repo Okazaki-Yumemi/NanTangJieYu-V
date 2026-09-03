@@ -284,7 +284,7 @@ describe('HTTP integration: full event journey', () => {
     assert.ok(ledger.json.rows.some((row) => row.kind === 'admin' && row.user_delta === 500));
   });
 
-  it('base prize draw works and respects repeat-winner policy', async () => {
+  it('base prize draw works with the prize-specific repeat-winner policy', async () => {
     const first = await request('POST', '/api/admin/lottery/draw', {
       body: { prize_id: 'prize_base_bookmark' },
       headers: { Cookie: adminCookie }
