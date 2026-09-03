@@ -2,7 +2,7 @@
   "name": "nantang-jieyu-v",
   "version": "1.0.0",
   "private": true,
-  "description": "东方南堂界域 V —— 上海交通大学东方 Project 同人活动线上系统（地图探索 / 异变值 / 贡献 / 抽奖 / 大屏）",
+  "description": "东方南堂界遇 V —— 上海交通大学东方 Project 同人活动线上系统（地图探索 / 异变值 / 贡献 / 抽奖 / 大屏）",
   "engines": {
     "node": ">=18"
   },

@@ -9,7 +9,7 @@ const { loadSeeds, validateSeeds } = require('../../server/seed-loader');
 test('bundled seeds load and validate cleanly', () => {
   const seeds = loadSeeds(path.resolve(__dirname, '../../shared/seeds'));
 
-  assert.equal(seeds.activity.name, '东方南堂界域 V');
+  assert.equal(seeds.activity.name, '东方南堂界遇 V');
   assert.equal(seeds.teams.length, 2);
   assert.equal(seeds.regions.length, 6);
   assert.ok(seeds.interactions.length >= 4);

@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * 东方南堂界域 V —— 服务入口。
+ * 东方南堂界遇 V —— 服务入口。
  *
  * 零第三方依赖的单实例 Node.js HTTP 服务：
  * - shared/seeds/*.json 提供活动规则（修改后重启生效）；
@@ -98,7 +98,7 @@ function createApp(overrides = {}) {
 function startServer(app, logger = console) {
   const server = http.createServer(app.requestHandler);
   server.listen(app.config.port, app.config.host, () => {
-    logger.info(`东方南堂界域 V 服务已启动: http://${app.config.host}:${app.config.port}`);
+    logger.info(`东方南堂界遇 V 服务已启动: http://${app.config.host}:${app.config.port}`);
     logger.info(`管理员入口: http://${app.config.host}:${app.config.port}${app.config.admin.entryPath}`);
     logger.info(`数据目录: ${app.config.dataDir}`);
   });
