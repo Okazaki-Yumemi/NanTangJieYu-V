@@ -15,6 +15,7 @@
   const lotteryState = {
     isDrawing: false,
     pendingPrizeName: '',
+    pendingPrizeId: '',
     winner: null,
     animationId: 0
   };
@@ -529,7 +530,7 @@
   // ---------- 抽奖 ----------
 
   const LOTTERY_ITEM_HEIGHT_FALLBACK = 88;
-  const LOTTERY_ANIMATION_MS = 3600;
+  const LOTTERY_ANIMATION_MS = 6000;
 
   function lotterySourceOptions(selected) {
     return [
@@ -566,6 +567,39 @@
     `;
   }
 
+  function renderLotteryQuickPicks() {
+    const availableCount = admin.prizes.filter((prize) => prize.available && prize.remaining > 0).length;
+    return `
+      <div class="lottery-quick-picks">
+        <div class="lottery-quick-picks-head">
+          <div>
+            <span class="lottery-quick-eyebrow">Quick Pick</span>
+            <strong>选择本次奖品</strong>
+          </div>
+          <span class="muted small">${availableCount} 个可抽</span>
+        </div>
+        <div class="lottery-pick-list">
+          ${admin.prizes.map((prize) => {
+            const disabled = !prize.available || prize.remaining <= 0 || lotteryState.isDrawing;
+            const selected = lotteryState.pendingPrizeId === prize.id;
+            return `
+              <button class="lottery-pick${selected ? ' is-selected' : ''}" type="button"
+                data-draw="${escapeHtml(prize.id)}" data-prize-name="${escapeHtml(prize.name)}"
+                ${disabled ? 'disabled' : ''} aria-label="${escapeHtml(prize.name)}${disabled ? '，不可抽取' : '，开始抽取'}">
+                <span class="lottery-pick-thumb"><img data-prize-image src="${escapeHtml(prize.image)}" alt="" loading="lazy" /></span>
+                <span class="lottery-pick-copy">
+                  <strong>${escapeHtml(prize.name)}</strong>
+                  <small>${prize.available && prize.remaining > 0 ? `剩余 ${prize.remaining} · ${escapeHtml(regionName(prize.source))}` : '尚未解锁或已抽完'}</small>
+                </span>
+                <span class="lottery-pick-action">${selected ? '抽取中' : '抽取'}</span>
+              </button>
+            `;
+          }).join('') || '<p class="muted small">暂无奖品。</p>'}
+        </div>
+      </div>
+    `;
+  }
+
   function renderLotteryConsole() {
     const winner = lotteryState.winner;
     const isDrawing = lotteryState.isDrawing;
@@ -587,10 +621,12 @@
             <h2>抽奖台</h2>
             <p class="helper-text">${isDrawing
               ? `正在从「${escapeHtml(lotteryState.pendingPrizeName || '当前奖品')}」的候选玩家中滚动抽取。`
-              : '点击下方奖池中的「抽取」，候选昵称会滚动减速并停在服务端已确定的结果。'}</p>
+              : '可直接点击上方快速选择，或在下方奖池表操作；候选昵称会滚动减速并停在服务端已确定的结果。'}</p>
           </div>
           <span class="lottery-status ${statusClass}"><i></i>${status}</span>
         </div>
+
+        ${renderLotteryQuickPicks()}
 
         <div class="lottery-stage" data-lottery-stage aria-live="polite" aria-busy="${isDrawing ? 'true' : 'false'}">
           <span class="lottery-stage-label">${escapeHtml(lotteryState.pendingPrizeName || (winner ? winner.prize_name : '抽奖结果'))}</span>
@@ -861,6 +897,7 @@
         const animationId = ++lotteryState.animationId;
         lotteryState.isDrawing = true;
         lotteryState.pendingPrizeName = button.dataset.prizeName || '当前奖品';
+        lotteryState.pendingPrizeId = button.dataset.draw || '';
         lotteryState.winner = null;
         renderLottery();
 
@@ -878,6 +915,7 @@
           if (animationId === lotteryState.animationId) {
             lotteryState.isDrawing = false;
             lotteryState.pendingPrizeName = '';
+            lotteryState.pendingPrizeId = '';
             renderLottery();
           }
         }

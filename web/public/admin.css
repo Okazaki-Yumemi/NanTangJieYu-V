@@ -489,6 +489,141 @@ table.admin-table tr:hover td {
   50% { opacity: 0.45; transform: scale(0.78); }
 }
 
+.lottery-quick-picks {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 13px;
+  background: rgba(7, 8, 16, 0.48);
+}
+
+.lottery-quick-picks-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lottery-quick-picks-head > div {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  min-width: 0;
+}
+
+.lottery-quick-eyebrow {
+  color: var(--gold);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.lottery-quick-picks-head strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-pick-list {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 1px 1px 4px;
+  scrollbar-color: rgba(255, 209, 102, 0.42) transparent;
+  scrollbar-width: thin;
+}
+
+.lottery-pick {
+  display: flex;
+  flex: 0 0 min(250px, 72vw);
+  min-width: 220px;
+  align-items: center;
+  gap: 10px;
+  padding: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 11px;
+  color: var(--ink);
+  text-align: left;
+  background: rgba(255, 255, 255, 0.055);
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease, opacity 160ms ease;
+}
+
+.lottery-pick:hover:not(:disabled),
+.lottery-pick.is-selected {
+  border-color: rgba(255, 209, 102, 0.64);
+  background: linear-gradient(135deg, rgba(255, 209, 102, 0.13), rgba(255, 255, 255, 0.075));
+  box-shadow: 0 0 0 1px rgba(255, 209, 102, 0.08), 0 8px 18px rgba(0, 0, 0, 0.16);
+  transform: translateY(-1px);
+}
+
+.lottery-pick:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.lottery-pick:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.lottery-pick-thumb {
+  display: grid;
+  flex: 0 0 48px;
+  width: 48px;
+  aspect-ratio: 4 / 3;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.lottery-pick-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 3px;
+}
+
+.lottery-pick-copy {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 2px;
+  min-width: 0;
+}
+
+.lottery-pick-copy strong,
+.lottery-pick-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-pick-copy strong {
+  font-size: 12.5px;
+}
+
+.lottery-pick-copy small {
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+
+.lottery-pick-action {
+  flex: none;
+  color: var(--gold);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
 .lottery-stage {
   position: relative;
   display: grid;
@@ -579,7 +714,7 @@ table.admin-table tr:hover td {
 
 .lottery-reel.is-rolling {
   transform: translateY(var(--lottery-shift));
-  transition: transform var(--lottery-duration, 3600ms) cubic-bezier(0.1, 0.82, 0.16, 1);
+  transition: transform var(--lottery-duration, 6000ms) cubic-bezier(0.1, 0.82, 0.16, 1);
 }
 
 .lottery-reel.is-settled {
