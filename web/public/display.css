@@ -1,9 +1,6 @@
 /* 大屏样式（16:9 投影优先） */
 
 .display-body {
-  background:
-    radial-gradient(1400px 600px at 50% -180px, #3d3428 0%, transparent 70%),
-    linear-gradient(160deg, #241f18 0%, #2e2820 60%, #26211a 100%);
   color: #f3eddd;
   min-height: 100vh;
   display: flex;
@@ -196,12 +193,55 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  flex: 1;
+  justify-content: space-around;
 }
 
 .display-ranking .board-row {
   border-bottom: 1px dashed rgba(243, 237, 221, 0.14);
   font-size: 15.5px;
   padding: 8px 6px;
+  animation: rank-row-in 0.45s ease both;
+}
+
+@keyframes rank-row-in {
+  from { opacity: 0; transform: translateX(14px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.rank-pages {
+  text-align: right;
+  padding-top: 8px;
+  border-top: 1px solid rgba(243, 237, 221, 0.14);
+}
+
+.rank-medal .board-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 14px;
+  margin-right: 4px;
+}
+
+.rank-1 .board-rank {
+  background: linear-gradient(160deg, #ffe08a, #d4a017);
+  color: #ffe9b0;
+  box-shadow: 0 0 12px rgba(255, 224, 138, 0.7);
+}
+
+.rank-2 .board-rank {
+  background: linear-gradient(160deg, #f3f6fb, #aeb8c4);
+  color: #262c33;
+  box-shadow: 0 0 10px rgba(220, 230, 245, 0.5);
+}
+
+.rank-3 .board-rank {
+  background: linear-gradient(160deg, #f0b98a, #b0793c);
+  color: #33200a;
+  box-shadow: 0 0 10px rgba(240, 185, 138, 0.55);
 }
 
 .display-ranking .board-rank {
@@ -215,7 +255,7 @@
 /* ---------- 地图卡 ---------- */
 
 .map-card .campus-map-wrap {
-  background: #f7f4ec;
+  background: rgba(10, 12, 20, 0.4);
   border-radius: 12px;
   max-width: 620px;
   margin: 0 auto;
@@ -341,7 +381,10 @@
 .display-feed {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  scrollbar-width: thin;
 }
 
 .display-feed .feed-row {

@@ -11,6 +11,7 @@
   let activeTab = 'overview';
   let playerQuery = '';
   let codeQuery = { query: '', status: '', type: '' };
+  let lastGeneratedCodes = [];
 
   const elements = {
     login: document.getElementById('admin-login'),
@@ -28,7 +29,6 @@
       players: document.getElementById('tab-players'),
       codes: document.getElementById('tab-codes'),
       lottery: document.getElementById('tab-lottery'),
-      stage: document.getElementById('tab-stage'),
       logs: document.getElementById('tab-logs')
     }
   };
@@ -68,7 +68,6 @@
       players: renderPlayers,
       codes: renderCodes,
       lottery: renderLottery,
-      stage: renderStage,
       logs: renderLogs
     };
     (renderers[activeTab] || renderOverview)();
@@ -278,9 +277,9 @@
                 <td>${player.banned ? '<span class="tag bad">封禁</span>' : '<span class="tag ok">正常</span>'}</td>
                 <td>
                   <div class="btn-row">
-                    <button class="action-btn" data-op="adjust">调整贡献</button>
-                    <button class="action-btn" data-op="weight">调权重</button>
-                    <button class="action-btn" data-op="energy">回能量</button>
+                    <button class="action-btn" data-op="adjust_contribution">调整贡献</button>
+                    <button class="action-btn" data-op="set_weight_override">调权重</button>
+                    <button class="action-btn" data-op="restore_energy">回能量</button>
                     <button class="action-btn" data-op="rename">改名</button>
                     <button class="action-btn" data-op="switch_team">换阵营</button>
                     <button class="action-btn" data-op="rebind_code">换绑码</button>
@@ -312,14 +311,14 @@
           const op = button.dataset.op;
           const name = row.querySelector('strong').textContent;
           let body = { user_id: userId, op };
-          if (op === 'adjust') {
+          if (op === 'adjust_contribution') {
             const amount = window.prompt(`调整 ${name} 的贡献值（正数增加，负数扣减）：`);
             if (amount === null) {
               return;
             }
             const reason = window.prompt('调整原因（会写入流水，如「舞台补发」「数据修正」）：') || '管理员调整';
             body = { ...body, amount: Number(amount), reason };
-          } else if (op === 'weight') {
+          } else if (op === 'set_weight_override') {
             const value = window.prompt(`设置 ${name} 的抽奖权重调整量（在当前权重基础上 +/-）：`, '0');
             if (value === null) {
               return;
@@ -409,7 +408,21 @@
       </div>
     `;
 
-    let generatedCodes = [];
+    let generatedCodes = lastGeneratedCodes;
+
+    const showGenerated = () => {
+      const wrap = panel.querySelector('#codes-generated');
+      if (!wrap) {
+        return;
+      }
+      if (lastGeneratedCodes.length > 0) {
+        wrap.classList.remove('hidden');
+        panel.querySelector('#codes-list').textContent = lastGeneratedCodes.join('\n');
+      } else {
+        wrap.classList.add('hidden');
+      }
+    };
+    showGenerated();
 
     panel.querySelector('#codes-generate').addEventListener('click', async () => {
       const count = Number(panel.querySelector('#codes-count').value);
@@ -417,10 +430,10 @@
       const note = panel.querySelector('#codes-note').value;
       try {
         const res = await api('POST', '/api/admin/codes/generate', { count, type, note });
-        generatedCodes = res.codes;
-        const wrap = panel.querySelector('#codes-generated');
-        wrap.classList.remove('hidden');
-        panel.querySelector('#codes-list').textContent = generatedCodes.join('\n');
+        lastGeneratedCodes = res.codes;
+        generatedCodes = lastGeneratedCodes;
+        showGenerated();
+        panel.querySelector('#codes-generated').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         toast(res.message, 'success');
         refresh();
       } catch (error) {
@@ -696,43 +709,6 @@
           }
         } catch (error) {
           toast(error.message || '操作失败', 'error');
-        }
-      });
-    }
-  }
-
-  // ---------- 节目事件 ----------
-
-  function renderStage() {
-    const panel = elements.panels.stage;
-    panel.innerHTML = `
-      <div class="admin-card">
-        <h2>现场节目联动</h2>
-        <p class="helper-text">事件清单来自 shared/seeds/stage-events.json，修改配置并重启即可更新。</p>
-        <table class="admin-table">
-          <thead><tr><th>事件</th><th>效果</th><th>操作</th></tr></thead>
-          <tbody>
-            ${admin.stage_events.map((event) => `
-              <tr>
-                <td><strong>${escapeHtml(event.name)}</strong></td>
-                <td class="muted">${escapeHtml(event.description)}</td>
-                <td><button class="action-btn primary" data-event="${escapeHtml(event.id)}">触发</button></td>
-              </tr>
-            `).join('') || '<tr><td colspan="3" class="muted">没有配置节目事件。</td></tr>'}
-          </tbody>
-        </table>
-      </div>
-    `;
-
-    for (const button of panel.querySelectorAll('[data-event]')) {
-      button.addEventListener('click', async () => {
-        try {
-          const res = await post('/api/admin/stage', { event_id: button.dataset.event });
-          if (res) {
-            toast(res.message, 'success');
-          }
-        } catch (error) {
-          toast(error.message || '触发失败', 'error');
         }
       });
     }

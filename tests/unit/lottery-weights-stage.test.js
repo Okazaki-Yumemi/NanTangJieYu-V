@@ -7,7 +7,6 @@ const { createFixture } = require('../helpers/fixture');
 const weights = require('../../server/domain/weights');
 const regions = require('../../server/domain/regions');
 const lottery = require('../../server/domain/lottery');
-const stage = require('../../server/domain/stage');
 const contributions = require('../../server/domain/contributions');
 
 test('base weight prefers stored base and falls back to code type', () => {
@@ -205,53 +204,6 @@ test('admin can add and edit prizes at runtime', () => {
   assert.ok(lottery.addCustomPrize(fixture.state, fixture.seeds, { name: 'X', count: 0 }, fixture.now).error);
   assert.ok(lottery.addCustomPrize(fixture.state, fixture.seeds, { name: 'X', source: 'ghost' }, fixture.now).error);
   assert.equal(lottery.updatePrize(fixture.state, fixture.seeds, 'nope', { name: 'X' }).error, 'PRIZE_NOT_FOUND');
-});
-
-test('stage team_contribution grants each member and the team pool', () => {
-  const fixture = createFixture({ userCount: 4 });
-  const event = stage.getStageEvent(fixture.seeds, 'stg_reimu_win');
-  const reimuMembers = fixture.registered.filter((user) => user.team === 'reimu');
-  const beforeTotals = Object.fromEntries(
-    reimuMembers.map((user) => [user.id, user.total_contribution])
-  );
-  const teamBefore = fixture.state.teams.reimu.total_contribution;
-
-  const result = stage.triggerStageEvent(fixture.state, event, fixture.ctx);
-  assert.ok(!result.error, result.message);
-
-  for (const member of reimuMembers) {
-    assert.equal(member.total_contribution, beforeTotals[member.id] + 1500);
-  }
-  assert.equal(fixture.state.teams.reimu.total_contribution, teamBefore + 1500 * reimuMembers.length);
-  assert.equal(result.ledger_entries.length, reimuMembers.length);
-});
-
-test('stage team_pool_contribution only affects the team total', () => {
-  const fixture = createFixture({ userCount: 2 });
-  const event = stage.getStageEvent(fixture.seeds, 'quiz_bonus_marisa');
-  const marisaUser = fixture.registered.find((user) => user.team === 'marisa');
-  const personalBefore = marisaUser.total_contribution;
-  const teamBefore = fixture.state.teams.marisa.total_contribution;
-
-  const result = stage.triggerStageEvent(fixture.state, event, fixture.ctx);
-  assert.ok(!result.error);
-  assert.equal(marisaUser.total_contribution, personalBefore);
-  assert.equal(fixture.state.teams.marisa.total_contribution, teamBefore + 3000);
-});
-
-test('stage reduce_anomaly and unlock_region affect region runtime', () => {
-  const fixture = createFixture();
-  const weaken = stage.getStageEvent(fixture.seeds, 'weaken_siyuan_gate');
-  const result = stage.triggerStageEvent(fixture.state, weaken, fixture.ctx);
-  assert.ok(!result.error);
-  assert.equal(fixture.state.regions.siyuan_gate.anomaly_remaining, 200000 - 20000);
-
-  const unlock = stage.getStageEvent(fixture.seeds, 'unlock_hanze_early');
-  const unlockResult = stage.triggerStageEvent(fixture.state, unlock, fixture.ctx);
-  assert.ok(!unlockResult.error);
-  assert.equal(fixture.state.regions.hanze_lake.forced_unlock, true);
-  const regionsStatus = regions.deriveStatus(fixture.state, fixture.seeds.regions[4]);
-  assert.equal(regionsStatus, 'available');
 });
 
 test('ledger file roundtrip tolerates corrupt tails', () => {

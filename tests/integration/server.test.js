@@ -284,17 +284,6 @@ describe('HTTP integration: full event journey', () => {
     assert.ok(ledger.json.rows.some((row) => row.kind === 'admin' && row.user_delta === 500));
   });
 
-  it('admin triggers a stage event', async () => {
-    const res = await request('POST', '/api/admin/stage', {
-      body: { event_id: 'unlock_hanze_early' },
-      headers: { Cookie: adminCookie }
-    });
-    assert.equal(res.status, 200, res.text);
-    assert.match(res.json.message, /涵泽湖/);
-    const region = res.json.admin.regions.find((item) => item.id === 'hanze_lake');
-    assert.equal(region.status, 'available');
-  });
-
   it('base prize draw works and respects repeat-winner policy', async () => {
     const first = await request('POST', '/api/admin/lottery/draw', {
       body: { prize_id: 'prize_base_bookmark' },

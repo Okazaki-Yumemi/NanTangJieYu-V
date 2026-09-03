@@ -10,6 +10,9 @@ const {
   generateRegistrationCode,
   normalizeDisplayName
 } = require('../../server/auth');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 const { parseEnvFile } = require('../../server/config');
 
 test('randomIntInclusive is inclusive on both ends', () => {
@@ -98,20 +101,23 @@ broken line
 });
 
 test('missing admin password: generated at runtime, refused in production', () => {
+  const os = require('node:os');
   const { createConfig, validateRuntimeConfig } = require('../../server/config');
+  // 使用临时目录作为 projectRoot，避免读到仓库里的真实 .env
+  const bareRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ntjv-env-'));
 
-  const devConfig = createConfig({ env: {}, projectRoot: process.cwd() });
+  const devConfig = createConfig({ env: {}, projectRoot: bareRoot });
   assert.ok(devConfig.admin.usingGeneratedPassword);
   assert.ok(devConfig.admin.password.length >= 16);
   assert.equal(devConfig.admin.password, devConfig.admin.password.trim());
 
   // 每次创建配置都生成不同口令——源码与历史中不存在固定默认值
-  const another = createConfig({ env: {}, projectRoot: process.cwd() });
+  const another = createConfig({ env: {}, projectRoot: bareRoot });
   assert.notEqual(another.admin.password, devConfig.admin.password);
 
   const prodConfig = createConfig({
     env: { NODE_ENV: 'production' },
-    projectRoot: process.cwd()
+    projectRoot: bareRoot
   });
   const problems = validateRuntimeConfig(prodConfig, { warn: () => {} });
   assert.equal(problems.length, 1);
@@ -119,8 +125,9 @@ test('missing admin password: generated at runtime, refused in production', () =
 
   const prodOk = createConfig({
     env: { NODE_ENV: 'production', ADMIN_PASSWORD: 'real-secret' },
-    projectRoot: process.cwd()
+    projectRoot: bareRoot
   });
   assert.equal(prodOk.admin.usingGeneratedPassword, false);
   assert.ok(!validateRuntimeConfig(prodOk, { warn: () => {} }).length);
+  fs.rmSync(bareRoot, { recursive: true, force: true });
 });

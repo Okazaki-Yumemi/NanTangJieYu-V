@@ -14,7 +14,6 @@ test('bundled seeds load and validate cleanly', () => {
   assert.equal(seeds.regions.length, 6);
   assert.ok(seeds.interactions.length >= 4);
   assert.ok(seeds.prizes.length >= 6);
-  assert.ok(seeds.stageEvents.length >= 3);
 
   const regions = [...seeds.regions].sort((a, b) => a.order - b.order);
   assert.deepEqual(
@@ -48,10 +47,6 @@ test('validateSeeds reports broken references', () => {
       region_rank_bonus: [{ bonus: 1 }],
       region_rank_bonus_scope: 'sometimes'
     },
-    stageEvents: [
-      { id: 's1', name: 'S', effect: { type: 'team_contribution', team: 'ghost3', amount: -5 } },
-      { id: 's2', name: 'S2', effect: { type: 'unknown_effect' } }
-    ],
     titles: [{ min_contribution: 0, title: 'T' }]
   });
 
@@ -63,7 +58,4 @@ test('validateSeeds reports broken references', () => {
   assert.match(joined, /contribution_bonus_tiers/);
   assert.match(joined, /region_rank_bonus/);
   assert.match(joined, /region_rank_bonus_scope/);
-  assert.match(joined, /ghost3/);
-  assert.match(joined, /unknown_effect/);
-  assert.match(joined, /amount/);
 });

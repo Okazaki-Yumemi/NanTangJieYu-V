@@ -11,7 +11,6 @@ const regions = require('../domain/regions');
 const codesModule = require('../domain/codes');
 const contributions = require('../domain/contributions');
 const lottery = require('../domain/lottery');
-const stage = require('../domain/stage');
 const adminLog = require('../domain/admin-log');
 const weights = require('../domain/weights');
 const views = require('../views');
@@ -778,48 +777,6 @@ function registerRoutes(router, appCtx) {
       sendJson(res, 200, { ...result, admin: views.buildAdminState(store.getLatest(), seeds) });
     } catch (error) {
       console.error('[admin] 奖品操作失败:', error);
-      sendJson(res, 500, { error: ERROR_CODES.INTERNAL_ERROR, message: '操作失败。' });
-    }
-  });
-
-  router.post('/api/admin/stage', async (req, res) => {
-    let body;
-    try {
-      body = await collectBody(req);
-    } catch {
-      sendJson(res, 400, { error: ERROR_CODES.BAD_REQUEST, message: '请求格式错误。' });
-      return;
-    }
-    try {
-      const result = await adminTransact(appCtx, req, (state, ctx) => {
-        const event = stage.getStageEvent(seeds, String(body.event_id || ''));
-        if (!event) {
-          return { error: ERROR_CODES.NOT_FOUND, message: '节目事件不存在。' };
-        }
-        const triggerResult = stage.triggerStageEvent(state, event, ctx);
-        if (triggerResult.error) {
-          return triggerResult;
-        }
-        contributions.trimLedger(state, seeds.activity.ledger_recent_limit);
-        adminLog.logAdminAction(
-          state,
-          'stage_trigger',
-          { event_id: event.id, message: triggerResult.message },
-          ctx.now
-        );
-        return {
-          ok: true,
-          message: triggerResult.message,
-          __ledgerEntries: triggerResult.ledger_entries || []
-        };
-      });
-      if (result.error) {
-        sendJson(res, result.error === ERROR_CODES.NOT_FOUND ? 404 : 400, result);
-        return;
-      }
-      sendJson(res, 200, { ...result, admin: views.buildAdminState(store.getLatest(), seeds) });
-    } catch (error) {
-      console.error('[admin] 节目事件失败:', error);
       sendJson(res, 500, { error: ERROR_CODES.INTERNAL_ERROR, message: '操作失败。' });
     }
   });

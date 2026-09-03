@@ -31,7 +31,6 @@
 - 玩家管理：搜索、调整贡献（写流水）、调整抽奖权重、恢复能量、重置密码、封禁 / 解封。
 - 注册码管理：批量生成（普通 / 特典）、查询、禁用 / 解禁、导出 CSV。
 - 抽奖：奖池一览、按权重抽取指定奖品、权重预览、标记领取、作废重抽（防重复中奖可配置）。
-- 节目事件：QUIZ / STG / 舞台节目联动（队伍贡献、削减异变、提前解锁区域），一键触发并留痕。
 - 全部管理操作写入 AdminLog；贡献调整写入贡献流水。
 
 ### 大屏（/display.html）
@@ -117,7 +116,6 @@ ADMIN_ENTRY_PATH=/my-secret-admin.html
 │       ├── interactions.json#   互动与随机结果（含角色立绘引用）
 │       ├── prizes.json      #   奖池（base 或绑定区域）
 │       ├── lottery.json     #   抽奖权重规则（阶梯全部可配）
-│       ├── stage-events.json#   节目事件预设
 │       └── titles.json      #   称号阶梯
 ├── web/public/              # 前端（原生 JS，无构建步骤）
 │   ├── index.html / app.js / player.css     # 玩家端

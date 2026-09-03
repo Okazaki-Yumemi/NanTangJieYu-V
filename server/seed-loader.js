@@ -19,7 +19,6 @@ const REQUIRED_SEED_FILES = [
   'interactions.json',
   'prizes.json',
   'lottery.json',
-  'stage-events.json',
   'titles.json',
   'sensitive-words.json'
 ];
@@ -54,7 +53,7 @@ function loadSeeds(seedsDir) {
 
 function validateSeeds(seeds) {
   const problems = [];
-  const { activity, teams, regions, interactions, prizes, lottery, stageEvents, titles, sensitiveWords } = seeds;
+  const { activity, teams, regions, interactions, prizes, lottery, titles, sensitiveWords } = seeds;
 
   if (!activity || typeof activity !== 'object') {
     problems.push('activity.json 必须是对象');
@@ -236,45 +235,6 @@ function validateSeeds(seeds) {
       }
       if (!Number.isFinite(weight) || weight <= 0) {
         problems.push(`lottery.json 票种 ${type} 的基础权重必须为正数`);
-      }
-    }
-  }
-
-  if (!Array.isArray(stageEvents)) {
-    problems.push('stage-events.json 必须是数组');
-  } else {
-    const stageIds = new Set();
-    const teamIds = new Set((teams || []).map((team) => team.id));
-    for (const event of stageEvents) {
-      if (!event.id || !event.name || !event.effect) {
-        problems.push(`stage-events.json 存在不完整的事件: ${JSON.stringify(event && event.id)}`);
-        continue;
-      }
-      if (stageIds.has(event.id)) {
-        problems.push(`stage-events.json 事件 id 重复: ${event.id}`);
-      }
-      stageIds.add(event.id);
-      const effect = event.effect;
-      if (effect.type === 'team_contribution' || effect.type === 'team_pool_contribution') {
-        if (!teamIds.has(effect.team)) {
-          problems.push(`节目事件 ${event.id} 引用了不存在的队伍: ${effect.team}`);
-        }
-        if (!Number.isFinite(effect.amount) || effect.amount <= 0) {
-          problems.push(`节目事件 ${event.id} 的 amount 必须为正数`);
-        }
-      } else if (effect.type === 'reduce_anomaly') {
-        if (!regionIds.has(effect.region)) {
-          problems.push(`节目事件 ${event.id} 引用了不存在的区域: ${effect.region}`);
-        }
-        if (!Number.isFinite(effect.amount) || effect.amount <= 0) {
-          problems.push(`节目事件 ${event.id} 的 amount 必须为正数`);
-        }
-      } else if (effect.type === 'unlock_region') {
-        if (!regionIds.has(effect.region)) {
-          problems.push(`节目事件 ${event.id} 引用了不存在的区域: ${effect.region}`);
-        }
-      } else {
-        problems.push(`节目事件 ${event.id} 的效果类型未知: ${effect.type}`);
       }
     }
   }

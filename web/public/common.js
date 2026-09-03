@@ -119,6 +119,49 @@ NTJ.polling = function polling(fn, intervalMs) {
   };
 };
 
+/**
+ * 动态背景：黑色基底上的五色光晕（对应五个季节色）缓慢漂移 + 漂浮光点。
+ * 纯 CSS 动画（仅 transform/opacity），三端页面共用。
+ */
+NTJ.injectBackdrop = function injectBackdrop() {
+  if (document.getElementById('ntj-backdrop')) {
+    return;
+  }
+  const wrap = document.createElement('div');
+  wrap.id = 'ntj-backdrop';
+  wrap.setAttribute('aria-hidden', 'true');
+
+  for (let index = 1; index <= 5; index += 1) {
+    const blob = document.createElement('i');
+    blob.className = `ntj-blob ntj-blob-${index}`;
+    wrap.appendChild(blob);
+  }
+
+  const particles = document.createElement('div');
+  particles.className = 'ntj-particles';
+  for (let index = 0; index < 34; index += 1) {
+    const dot = document.createElement('i');
+    dot.style.setProperty('--x', (Math.random() * 100).toFixed(2) + '%');
+    dot.style.setProperty('--y', (Math.random() * 100).toFixed(2) + '%');
+    dot.style.setProperty('--d', (9 + Math.random() * 16).toFixed(2) + 's');
+    dot.style.setProperty('--t', (2.4 + Math.random() * 5).toFixed(2) + 's');
+    dot.style.setProperty('--s', (1.5 + Math.random() * 3).toFixed(2) + 'px');
+    dot.style.setProperty('--delay', (-Math.random() * 20).toFixed(2) + 's');
+    particles.appendChild(dot);
+  }
+  wrap.appendChild(particles);
+  document.body.prepend(wrap);
+};
+
+NTJ.SEASON_STYLES = {
+  spring: { label: '春', color: '#ff7fa3', soft: 'rgba(255,127,163,0.18)' },
+  summer: { label: '夏', color: '#4ade80', soft: 'rgba(74,222,128,0.16)' },
+  autumn: { label: '秋', color: '#ffb454', soft: 'rgba(255,180,84,0.18)' },
+  winter: { label: '冬', color: '#6ab7ff', soft: 'rgba(106,183,255,0.16)' },
+  chaos: { label: '乱', color: '#b287ff', soft: 'rgba(178,135,255,0.18)' },
+  final: { label: '终', color: '#ffd166', soft: 'rgba(255,209,102,0.16)' }
+};
+
 NTJ.ACTIVITY_STATUS_LABELS = {
   scheduled: '未开始',
   running: '进行中',
@@ -133,17 +176,10 @@ NTJ.REGION_STATUS_LABELS = {
   cleared: '已解决'
 };
 
-NTJ.SEASON_STYLES = {
-  spring: { label: '春', color: '#e26a86', soft: '#fbe7ec' },
-  summer: { label: '夏', color: '#2e9e5b', soft: '#e2f5e8' },
-  autumn: { label: '秋', color: '#d8862a', soft: '#fcefdb' },
-  winter: { label: '冬', color: '#4a7fb5', soft: '#e3edf9' },
-  chaos: { label: '乱', color: '#8a5cc4', soft: '#efe7fa' },
-  final: { label: '终', color: '#b8860b', soft: '#f8f0d8' }
-};
-
 NTJ.characterImage = function characterImage(characterId) {
   return `/assets/characters/${NTJ.escapeHtml(characterId)}.png`;
 };
+
+NTJ.injectBackdrop();
 
 window.NTJ = NTJ;

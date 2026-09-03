@@ -27,63 +27,63 @@
     const defs = svgEl('defs', {}, root);
     defs.innerHTML = `
       <radialGradient id="ntj-map-paper" cx="50%" cy="42%" r="75%">
-        <stop offset="0%" stop-color="#fbf9f2"/>
-        <stop offset="100%" stop-color="#f1ecdf"/>
+        <stop offset="0%" stop-color="#151928"/>
+        <stop offset="100%" stop-color="#0d101a"/>
       </radialGradient>
       <filter id="ntj-node-shadow" x="-60%" y="-60%" width="220%" height="220%">
-        <feDropShadow dx="0" dy="1.5" stdDeviation="1.6" flood-color="#5b5442" flood-opacity="0.35"/>
+        <feDropShadow dx="0" dy="1.5" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.6"/>
       </filter>
     `;
 
     // 校园边界（纸面底）
     svgEl('rect', {
       x: 14, y: 22, width: VIEW_W - 28, height: VIEW_H - 44, rx: 26,
-      fill: 'url(#ntj-map-paper)', stroke: '#cfc7b4', 'stroke-width': 1.6
+      fill: 'url(#ntj-map-paper)', stroke: 'rgba(255,255,255,0.16)', 'stroke-width': 1.6
     }, root);
 
     // 环校道路
     svgEl('rect', {
       x: 40, y: 48, width: VIEW_W - 80, height: VIEW_H - 96, rx: 20,
-      fill: 'none', stroke: '#e4ddcc', 'stroke-width': 10
+      fill: 'none', stroke: '#1a2030', 'stroke-width': 10
     }, root);
     svgEl('rect', {
       x: 40, y: 48, width: VIEW_W - 80, height: VIEW_H - 96, rx: 20,
-      fill: 'none', stroke: '#fffdf6', 'stroke-width': 6
+      fill: 'none', stroke: '#242c40', 'stroke-width': 6
     }, root);
 
     // 主干路（南门 → 北侧）与东西向道路
     svgEl('path', {
       d: 'M 186 516 L 186 48 Q 186 30 204 30',
-      fill: 'none', stroke: '#e9e3d3', 'stroke-width': 8, 'stroke-linecap': 'round'
+      fill: 'none', stroke: '#1e2536', 'stroke-width': 8, 'stroke-linecap': 'round'
     }, root);
     svgEl('path', {
       d: 'M 52 300 L 328 300',
-      fill: 'none', stroke: '#e9e3d3', 'stroke-width': 7, 'stroke-linecap': 'round'
+      fill: 'none', stroke: '#1e2536', 'stroke-width': 7, 'stroke-linecap': 'round'
     }, root);
     svgEl('path', {
       d: 'M 60 430 L 300 430',
-      fill: 'none', stroke: '#eee8d8', 'stroke-width': 5, 'stroke-linecap': 'round'
+      fill: 'none', stroke: '#222939', 'stroke-width': 5, 'stroke-linecap': 'round'
     }, root);
 
     // 思源湖（西南）
     svgEl('path', {
       d: 'M 74 402 q 22 -16 46 -8 q 26 8 22 30 q -4 24 -30 26 q -30 2 -42 -16 q -8 -18 4 -32 z',
-      fill: '#bcd9ea', stroke: '#93bfd8', 'stroke-width': 1.4, opacity: 0.85
+      fill: '#14293e', stroke: '#2d5a7d', 'stroke-width': 1.4, opacity: 0.85
     }, root);
     // 涵泽湖（中西部）
     svgEl('path', {
       d: 'M 72 226 q 18 -12 38 -6 q 20 6 16 24 q -4 18 -24 20 q -24 2 -32 -12 q -6 -14 2 -26 z',
-      fill: '#bcd9ea', stroke: '#93bfd8', 'stroke-width': 1.4, opacity: 0.85
+      fill: '#14293e', stroke: '#2d5a7d', 'stroke-width': 1.4, opacity: 0.85
     }, root);
 
     // 电草草坪（中东部）
     svgEl('rect', {
       x: 228, y: 262, width: 96, height: 78, rx: 16,
-      fill: '#cfe6c2', stroke: '#a8cd96', 'stroke-width': 1.4, opacity: 0.9
+      fill: '#12241a', stroke: '#2f5c42', 'stroke-width': 1.4, opacity: 0.9
     }, root);
     svgEl('path', {
       d: 'M 244 330 l 6 -10 l 6 10 m 14 -14 l 6 -10 l 6 10 m 14 -12 l 6 -10 l 6 10',
-      stroke: '#9dc28a', 'stroke-width': 1.6, fill: 'none', 'stroke-linecap': 'round'
+      stroke: '#3f7a58', 'stroke-width': 1.6, fill: 'none', 'stroke-linecap': 'round'
     }, root);
 
     // 校舍群组（中性色块，不含具体指称）
@@ -99,26 +99,26 @@
     for (const block of blocks) {
       svgEl('rect', {
         x: block.x, y: block.y, width: block.w, height: block.h, rx: block.r,
-        fill: '#e6e0d0', stroke: '#d3cbb7', 'stroke-width': 1
+        fill: '#171c2b', stroke: '#2a3248', 'stroke-width': 1
       }, root);
       svgEl('rect', {
         x: block.x + block.w * 0.18, y: block.y + block.h * 0.2,
         width: block.w * 0.28, height: block.h * 0.6, rx: 2,
-        fill: '#d9d2bf'
+        fill: '#212940'
       }, root);
       svgEl('rect', {
         x: block.x + block.w * 0.54, y: block.y + block.h * 0.2,
         width: block.w * 0.28, height: block.h * 0.6, rx: 2,
-        fill: '#d9d2bf'
+        fill: '#212940'
       }, root);
     }
 
     // 指北针与图例标题
     const compass = svgEl('g', { transform: 'translate(340, 44)' }, root);
-    svgEl('circle', { r: 11, fill: '#fffdf6', stroke: '#cfc7b4' }, compass);
-    svgEl('path', { d: 'M 0 -7 L 3.4 4 L 0 1.6 L -3.4 4 Z', fill: '#b3822f' }, compass);
+    svgEl('circle', { r: 11, fill: '#171c2b', stroke: 'rgba(255,255,255,0.22)' }, compass);
+    svgEl('path', { d: 'M 0 -7 L 3.4 4 L 0 1.6 L -3.4 4 Z', fill: '#ffd166' }, compass);
     svgEl('text', {
-      x: 0, y: -14, 'text-anchor': 'middle', 'font-size': 9, fill: '#8f8871'
+      x: 0, y: -14, 'text-anchor': 'middle', 'font-size': 9, fill: '#8b91a7'
     }, compass).textContent = 'N';
   }
 

@@ -10,7 +10,6 @@ const players = require('./domain/players');
 const regions = require('./domain/regions');
 const weights = require('./domain/weights');
 const lottery = require('./domain/lottery');
-const stage = require('./domain/stage');
 const codesModule = require('./domain/codes');
 const adminLog = require('./domain/admin-log');
 const contributions = require('./domain/contributions');
@@ -294,7 +293,6 @@ function buildAdminState(state, seeds) {
     prizes: lottery.listPrizesWithStatus(state, seeds),
     draws: lottery.listDraws(state, seeds, { limit: 100 }),
     weights_preview: weights.buildWeightsTable(state, seeds.lottery).slice(0, 100),
-    stage_events: stage.listStageEvents(seeds),
     recent_admin_logs: adminLog.recentAdminLogs(state, 40),
     recent_contributions: contributions
       .recentGlobal(state, 50)

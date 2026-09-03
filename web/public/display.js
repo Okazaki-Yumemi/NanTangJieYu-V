@@ -9,6 +9,10 @@
 
   let mapRef = null;
   let lastRegionKey = '';
+  let latestData = null;
+  let rankPage = 0;
+  const RANK_PAGE_SIZE = 8;
+  const RANK_ROTATE_MS = 5000;
 
   const elements = {
     status: document.getElementById('display-status'),
@@ -27,6 +31,7 @@
   }
 
   function render(data) {
+    latestData = data;
     const label = NTJ.ACTIVITY_STATUS_LABELS[data.activity.status] || data.activity.status;
     elements.status.textContent = label;
     elements.status.className = `status-chip status-${data.activity.status}`;
@@ -40,6 +45,14 @@
     renderRegions(data);
     renderFeed(data);
   }
+
+  // 排行榜每 5 秒翻页（与 3 秒数据轮询解耦）
+  setInterval(() => {
+    rankPage += 1;
+    if (latestData) {
+      renderTop(latestData);
+    }
+  }, RANK_ROTATE_MS);
 
   function renderVs(data) {
     const total = data.teams.reduce((sum, team) => sum + team.total_contribution, 0);
@@ -81,17 +94,30 @@
   }
 
   function renderTop(data) {
-    elements.top.innerHTML = data.top_players
-      .slice(0, 12)
-      .map((row) => `
-        <div class="board-row">
-          <span class="board-rank">${row.rank}</span>
-          <strong>${escapeHtml(row.display_name)}</strong>
-          <span class="muted">${escapeHtml((teamById(data.teams, row.team)).short_name)}</span>
-          <span class="board-score">${formatNumber(row.total_contribution)}</span>
-        </div>
-      `)
+    const rows = data.top_players;
+    const pageCount = Math.max(1, Math.ceil(rows.length / RANK_PAGE_SIZE));
+    if (rankPage >= pageCount) {
+      rankPage = 0;
+    }
+    const pageRows = rows.slice(rankPage * RANK_PAGE_SIZE, rankPage * RANK_PAGE_SIZE + RANK_PAGE_SIZE);
+    elements.top.innerHTML = pageRows
+      .map((row, index) => {
+        const rank = rankPage * RANK_PAGE_SIZE + index + 1;
+        const medal = rank <= 3 ? ` rank-medal rank-${rank}` : '';
+        return `
+          <div class="board-row${medal}">
+            <span class="board-rank">${rank}</span>
+            <strong>${escapeHtml(row.display_name)}</strong>
+            <span class="muted">${escapeHtml((teamById(data.teams, row.team)).short_name)}</span>
+            <span class="board-score">${formatNumber(row.total_contribution)}</span>
+          </div>
+        `;
+      })
       .join('') || '<p class="muted">暂无数据。</p>';
+    const indicator = elements.top.nextElementSibling;
+    if (indicator && indicator.classList.contains('rank-pages')) {
+      indicator.textContent = `第 ${rankPage + 1} / ${pageCount} 页 · 共 ${rows.length} 名探索者`;
+    }
   }
 
   function renderMap(data) {
