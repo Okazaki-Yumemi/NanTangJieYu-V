@@ -201,6 +201,9 @@
   border-bottom: 1px dashed rgba(243, 237, 221, 0.14);
   font-size: 15.5px;
   padding: 8px 6px;
+}
+
+.display-ranking .board-row.animate-in {
   animation: rank-row-in 0.45s ease both;
 }
 

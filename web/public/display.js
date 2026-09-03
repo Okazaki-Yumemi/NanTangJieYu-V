@@ -11,6 +11,7 @@
   let lastRegionKey = '';
   let latestData = null;
   let rankPage = 0;
+  let lastRankSignature = '';
   const RANK_PAGE_SIZE = 8;
   const RANK_ROTATE_MS = 5000;
 
@@ -46,11 +47,11 @@
     renderFeed(data);
   }
 
-  // 排行榜每 5 秒翻页（与 3 秒数据轮询解耦）
+  // 排行榜每 5 秒翻页（与 3 秒数据轮询解耦）；翻页才播放入场动画
   setInterval(() => {
     rankPage += 1;
     if (latestData) {
-      renderTop(latestData);
+      renderTop(latestData, { animate: true });
     }
   }, RANK_ROTATE_MS);
 
@@ -93,19 +94,32 @@
     `;
   }
 
-  function renderTop(data) {
+  function renderTop(data, { animate = false } = {}) {
     const rows = data.top_players;
     const pageCount = Math.max(1, Math.ceil(rows.length / RANK_PAGE_SIZE));
     if (rankPage >= pageCount) {
       rankPage = 0;
     }
     const pageRows = rows.slice(rankPage * RANK_PAGE_SIZE, rankPage * RANK_PAGE_SIZE + RANK_PAGE_SIZE);
+
+    // 内容签名：数据轮询（3s）与翻页定时器（5s）都会调用本函数。
+    // 内容没变时跳过重渲染，避免同一页反复重播入场动画（“闪回滚两次”）。
+    const signature = JSON.stringify([
+      rankPage,
+      pageCount,
+      pageRows.map((row) => [row.user_id, row.total_contribution, row.display_name])
+    ]);
+    if (signature === lastRankSignature) {
+      return;
+    }
+    lastRankSignature = signature;
+
     elements.top.innerHTML = pageRows
       .map((row, index) => {
         const rank = rankPage * RANK_PAGE_SIZE + index + 1;
         const medal = rank <= 3 ? ` rank-medal rank-${rank}` : '';
         return `
-          <div class="board-row${medal}">
+          <div class="board-row${medal}${animate ? ' animate-in' : ''}">
             <span class="board-rank">${rank}</span>
             <strong>${escapeHtml(row.display_name)}</strong>
             <span class="muted">${escapeHtml((teamById(data.teams, row.team)).short_name)}</span>
