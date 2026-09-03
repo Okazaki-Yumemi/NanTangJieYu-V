@@ -532,9 +532,10 @@
   const LOTTERY_ITEM_WIDTH_FALLBACK = 184;
   const LOTTERY_ANIMATION_MS = 6000;
   const LOTTERY_SPECIAL_EVENT_RATE = 0.1;
+  const LOTTERY_BRAKE_DURATION_MS = 4000;
   const LOTTERY_REEL_EASE = 'cubic-bezier(0.1, 0.82, 0.16, 1)';
   const LOTTERY_REEL_SLIDE_EASE = 'cubic-bezier(0.24, 0.88, 0.38, 1)';
-  const LOTTERY_REEL_BRAKE_EASE = 'cubic-bezier(0.04, 0.94, 0.1, 1)';
+  const LOTTERY_REEL_BRAKE_EASE = 'linear';
 
   function pickLotteryAnimationEvent() {
     const roll = Math.random();
@@ -1071,12 +1072,7 @@
         completed = await moveReelTo(targetShift, 380, LOTTERY_REEL_SLIDE_EASE);
       }
     } else if (animationEvent === 'brake') {
-      const brakeDistance = Math.min(itemWidth * 0.24, 44);
-      const beforeBrakeShift = Math.max(0, targetShift - brakeDistance);
-      completed = await moveReelTo(beforeBrakeShift, duration - 350, LOTTERY_REEL_BRAKE_EASE);
-      if (completed) {
-        completed = await moveReelTo(targetShift, 280, LOTTERY_REEL_BRAKE_EASE);
-      }
+      completed = await moveReelTo(targetShift, LOTTERY_BRAKE_DURATION_MS, LOTTERY_REEL_BRAKE_EASE);
     } else {
       completed = await moveReelTo(targetShift, duration, LOTTERY_REEL_EASE);
     }
