@@ -12,6 +12,12 @@
   let playerQuery = '';
   let codeQuery = { query: '', status: '', type: '' };
   let lastGeneratedCodes = [];
+  const lotteryState = {
+    isDrawing: false,
+    pendingPrizeName: '',
+    winner: null,
+    animationId: 0
+  };
 
   const elements = {
     login: document.getElementById('admin-login'),
@@ -87,6 +93,14 @@
   function teamName(teamId) {
     const team = admin.teams.find((item) => item.id === teamId);
     return team ? team.short_name : teamId || '';
+  }
+
+  function regionName(regionId) {
+    if (regionId === 'base') {
+      return '基础奖池';
+    }
+    const region = admin.regions.find((item) => item.id === regionId);
+    return region ? region.name : regionId || '';
   }
 
   // ---------- 活动状态 ----------
@@ -514,6 +528,93 @@
 
   // ---------- 抽奖 ----------
 
+  const LOTTERY_ITEM_HEIGHT_FALLBACK = 88;
+  const LOTTERY_ANIMATION_MS = 3600;
+
+  function lotterySourceOptions(selected) {
+    return [
+      `<option value="base" ${selected === 'base' ? 'selected' : ''}>基础奖池</option>`,
+      ...admin.regions.map((region) =>
+        `<option value="${escapeHtml(region.id)}" ${region.id === selected ? 'selected' : ''}>${escapeHtml(region.name)}</option>`
+      )
+    ].join('');
+  }
+
+  function lotteryRollCandidates() {
+    const candidates = [];
+    const seen = new Set();
+    for (const row of admin.weights_preview || []) {
+      if (row.banned || !row.display_name || seen.has(row.display_name)) {
+        continue;
+      }
+      seen.add(row.display_name);
+      candidates.push({
+        displayName: row.display_name,
+        team: teamName(row.team),
+        weight: row.weight
+      });
+    }
+    return candidates;
+  }
+
+  function lotteryRollItem(candidate, { winner = false } = {}) {
+    return `
+      <div class="lottery-reel-item${winner ? ' is-winner' : ''}" ${winner ? '' : 'aria-hidden="true"'}>
+        <strong>${escapeHtml(candidate.displayName)}</strong>
+        <span>${escapeHtml(candidate.team || '调查队')}<small>${candidate.weight ? `权重 ${escapeHtml(candidate.weight)}` : '候选玩家'}</small></span>
+      </div>
+    `;
+  }
+
+  function renderLotteryConsole() {
+    const winner = lotteryState.winner;
+    const isDrawing = lotteryState.isDrawing;
+    const status = isDrawing ? '滚动抽取中' : (winner ? '结果已锁定' : '等待抽取');
+    const statusClass = isDrawing ? 'is-drawing' : (winner ? 'is-winner' : 'is-ready');
+    const initialCandidate = winner
+      ? {
+        displayName: winner.winner_display_name,
+        team: teamName(winner.winner_team),
+        weight: winner.weight_snapshot
+      }
+      : { displayName: isDrawing ? '准备滚动…' : '等待选择奖品', team: '现场抽奖台', weight: 0 };
+
+    return `
+      <div class="admin-card lottery-console ${statusClass}" data-lottery-console>
+        <div class="lottery-console-head">
+          <div>
+            <p class="eyebrow">Weighted Lottery · 现场抽取</p>
+            <h2>抽奖台</h2>
+            <p class="helper-text">${isDrawing
+              ? `正在从「${escapeHtml(lotteryState.pendingPrizeName || '当前奖品')}」的候选玩家中滚动抽取。`
+              : '点击下方奖池中的「抽取」，候选昵称会滚动减速并停在服务端已确定的结果。'}</p>
+          </div>
+          <span class="lottery-status ${statusClass}"><i></i>${status}</span>
+        </div>
+
+        <div class="lottery-stage" data-lottery-stage aria-live="polite" aria-busy="${isDrawing ? 'true' : 'false'}">
+          <span class="lottery-stage-label">${escapeHtml(lotteryState.pendingPrizeName || (winner ? winner.prize_name : '抽奖结果'))}</span>
+          <div class="lottery-reel-window">
+            <div class="lottery-reel" data-lottery-reel>
+              ${lotteryRollItem(initialCandidate, { winner: Boolean(winner) })}
+            </div>
+          </div>
+          <span class="lottery-pointer lottery-pointer-left" aria-hidden="true"></span>
+          <span class="lottery-pointer lottery-pointer-right" aria-hidden="true"></span>
+        </div>
+
+        ${winner ? `
+          <div class="lottery-result-panel">
+            <div><span>中奖玩家</span><strong>${escapeHtml(winner.winner_display_name)}</strong></div>
+            <div><span>所属阵营</span><strong>${escapeHtml(teamName(winner.winner_team))}</strong></div>
+            <div><span>本次权重</span><strong>${escapeHtml(winner.weight_snapshot)}</strong></div>
+            <div><span>奖品</span><strong>${escapeHtml(winner.prize_name)}</strong></div>
+          </div>
+        ` : '<p class="lottery-console-note">抽奖动画只展示昵称与阵营；中奖结果、权重快照和记录仍以服务端返回为准。</p>'}
+      </div>
+    `;
+  }
+
   function renderLottery() {
     const panel = elements.panels.lottery;
     const statusLabels = {
@@ -522,133 +623,203 @@
       claimed: '<span class="tag ok">已领取</span>',
       void: '<span class="tag bad">已作废</span>'
     };
-    const sourceOptions = (selected) => [
-      '<option value="base">基础奖池</option>',
-      ...admin.regions.map((region) =>
-        `<option value="${escapeHtml(region.id)}" ${region.id === selected ? 'selected' : ''}>${escapeHtml(region.name)}</option>`
-      )
-    ].join('');
 
     panel.innerHTML = `
+      ${renderLotteryConsole()}
+
       <div class="admin-card">
-        <h2>奖品编辑</h2>
-        <p class="helper-text">现场可直接填写 / 修正奖品信息：名称、说明、图片地址、份数、绑定区域。修改立即对玩家端与大屏生效并写入日志。</p>
-        <div class="inline-form">
-          <select id="prize-edit-select">
-            ${admin.prizes.map((prize) => `<option value="${escapeHtml(prize.id)}">${escapeHtml(prize.name)}（${prize.source === 'base' ? '基础' : (admin.regions.find((r) => r.id === prize.source) || {}).name || prize.source}）</option>`).join('')}
-          </select>
+        <div class="card-heading-row">
+          <div>
+            <p class="eyebrow">Prize Catalog</p>
+            <h2>奖品编辑</h2>
+          </div>
+          <span class="muted small">修改立即对玩家端与大屏生效</span>
         </div>
-        <div class="inline-form">
-          <input id="prize-edit-name" class="wide" type="text" placeholder="奖品名称" />
-          <input id="prize-edit-count" class="narrow" type="number" min="1" max="999" placeholder="份数" />
-          <select id="prize-edit-source"></select>
+        <p class="helper-text">现场可直接修正名称、说明、图片地址、份数和绑定区域；所有修改都会写入管理员日志。</p>
+        <div class="lottery-editor-grid">
+          <label class="admin-field lottery-field-prize">
+            <span>编辑奖品</span>
+            <select id="prize-edit-select">
+              ${admin.prizes.map((prize) => `<option value="${escapeHtml(prize.id)}">${escapeHtml(prize.name)}（${escapeHtml(regionName(prize.source))}）</option>`).join('')}
+            </select>
+          </label>
+          <label class="admin-field">
+            <span>名称</span>
+            <input id="prize-edit-name" type="text" placeholder="奖品名称" />
+          </label>
+          <label class="admin-field admin-field-count">
+            <span>份数</span>
+            <input id="prize-edit-count" type="number" min="1" max="999" placeholder="份数" />
+          </label>
+          <label class="admin-field">
+            <span>绑定区域</span>
+            <select id="prize-edit-source"></select>
+          </label>
+          <label class="admin-field lottery-field-wide">
+            <span>奖品说明</span>
+            <input id="prize-edit-desc" type="text" placeholder="例如：解决对应区域异变后解锁" />
+          </label>
+          <label class="admin-field lottery-field-wide">
+            <span>图片地址</span>
+            <input id="prize-edit-image" type="text" placeholder="可留空，使用神秘奖品占位图" />
+          </label>
+          <div class="lottery-image-preview" data-prize-preview>
+            <span class="muted small">图片预览</span>
+            <img id="prize-edit-preview" alt="奖品预览" />
+          </div>
+          <div class="lottery-editor-actions">
+            <button id="prize-edit-save" class="action-btn primary" type="button">保存修改</button>
+          </div>
         </div>
-        <div class="inline-form">
-          <input id="prize-edit-desc" style="min-width: 320px;" type="text" placeholder="奖品说明" />
-          <input id="prize-edit-image" style="min-width: 260px;" type="text" placeholder="图片地址（可留空）" />
-          <button id="prize-edit-save" class="action-btn primary">保存修改</button>
-        </div>
-        <div class="inline-form" style="border-top: 1px dashed var(--line); padding-top: 10px; margin-top: 4px;">
-          <strong class="muted small">新增奖品：</strong>
+        <div class="lottery-add-row">
+          <strong class="muted small">新增奖品</strong>
           <input id="prize-add-name" class="wide" type="text" placeholder="新奖品名称" />
           <input id="prize-add-count" class="narrow" type="number" min="1" max="999" value="1" />
-          <select id="prize-add-source">${sourceOptions('base')}</select>
-          <button id="prize-add-save" class="action-btn">添加奖品</button>
+          <select id="prize-add-source">${lotterySourceOptions('base')}</select>
+          <button id="prize-add-save" class="action-btn" type="button">添加奖品</button>
         </div>
       </div>
 
       <div class="admin-card">
-        <h2>奖池</h2>
+        <div class="card-heading-row">
+          <div>
+            <p class="eyebrow">Prize Pool</p>
+            <h2>奖池</h2>
+          </div>
+          <span class="muted small">${admin.prizes.filter((prize) => prize.available && prize.remaining > 0).length} 个奖品可抽</span>
+        </div>
         <p class="helper-text">流程：抽取 → 找到玩家「确认有效」→ 领奖时「标记领取」。玩家不在场就「作废重抽」，作废后玩家重新进入候选池。</p>
-        <table class="admin-table">
-          <thead><tr><th>奖品</th><th>来源</th><th>状态</th><th>已抽 / 总数</th><th>操作</th></tr></thead>
-          <tbody>
-            ${admin.prizes.map((prize) => `
-              <tr>
-                <td><strong>${escapeHtml(prize.name)}</strong><br /><span class="muted small">${escapeHtml(prize.description)}</span></td>
-                <td>${prize.source === 'base' ? '基础奖池' : escapeHtml((admin.regions.find((region) => region.id === prize.source) || {}).name || prize.source)}</td>
-                <td>${prize.available ? '<span class="tag ok">已解锁</span>' : '<span class="tag">神秘奖品</span>'}</td>
-                <td class="num">${prize.drawn} / ${prize.count}</td>
-                <td>
-                  <button class="action-btn primary" data-draw="${escapeHtml(prize.id)}"
-                    ${!prize.available || prize.remaining <= 0 ? 'disabled' : ''}>抽取</button>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>奖品</th><th>来源</th><th>状态</th><th>已抽 / 总数</th><th>操作</th></tr></thead>
+            <tbody>
+              ${admin.prizes.map((prize) => `
+                <tr>
+                  <td>
+                    <div class="lottery-prize-cell">
+                      <span class="lottery-prize-thumb"><img data-prize-image src="${escapeHtml(prize.image)}" alt="" loading="lazy" /></span>
+                      <span><strong>${escapeHtml(prize.name)}</strong><small class="muted">${escapeHtml(prize.description || '暂无说明')}</small></span>
+                    </div>
+                  </td>
+                  <td>${escapeHtml(regionName(prize.source))}</td>
+                  <td>${prize.available ? '<span class="tag ok">已解锁</span>' : '<span class="tag">神秘奖品</span>'}</td>
+                  <td class="num">${prize.drawn} / ${prize.count}<br /><span class="muted small">剩余 ${prize.remaining}</span></td>
+                  <td>
+                    <button class="action-btn primary lottery-table-draw" data-draw="${escapeHtml(prize.id)}" data-prize-name="${escapeHtml(prize.name)}"
+                      ${!prize.available || prize.remaining <= 0 || lotteryState.isDrawing ? 'disabled' : ''}>抽取</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="admin-card">
-        <h2>权重预览（前 100）</h2>
-        <table class="admin-table">
-          <thead><tr><th>#</th><th>玩家</th><th>阵营</th><th>贡献</th><th>权重</th></tr></thead>
-          <tbody>
-            ${admin.weights_preview.map((row, index) => `
-              <tr>
-                <td class="num">${index + 1}</td>
-                <td>${escapeHtml(row.display_name)}${row.banned ? ' <span class="tag bad">封禁</span>' : ''}</td>
-                <td>${escapeHtml(teamName(row.team))}</td>
-                <td class="num">${formatNumber(row.total_contribution)}</td>
-                <td class="num">${row.weight}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
+        <div class="card-heading-row">
+          <div>
+            <p class="eyebrow">Weight Preview</p>
+            <h2>权重预览 <span class="muted small">前 100 名</span></h2>
+          </div>
+          <span class="muted small">按当前规则实时计算</span>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>#</th><th>玩家</th><th>阵营</th><th>贡献</th><th>权重</th></tr></thead>
+            <tbody>
+              ${(admin.weights_preview || []).map((row, index) => `
+                <tr>
+                  <td class="num">${index + 1}</td>
+                  <td>${escapeHtml(row.display_name)}${row.banned ? ' <span class="tag bad">封禁</span>' : ''}</td>
+                  <td>${escapeHtml(teamName(row.team))}</td>
+                  <td class="num">${formatNumber(row.total_contribution)}</td>
+                  <td class="num">${row.weight}</td>
+                </tr>
+              `).join('') || '<tr><td colspan="5" class="muted">暂无可用玩家。</td></tr>'}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="admin-card">
-        <h2>抽奖记录</h2>
-        <table class="admin-table">
-          <thead><tr><th>时间</th><th>奖品</th><th>中奖者</th><th>权重快照</th><th>状态</th><th>操作</th></tr></thead>
-          <tbody>
-            ${admin.draws.map((draw) => `
-              <tr>
-                <td class="muted">${formatTime(draw.drawn_at)}</td>
-                <td><strong>${escapeHtml(draw.prize_name)}</strong></td>
-                <td><strong>${escapeHtml(draw.winner_display_name)}</strong> <span class="muted">${escapeHtml(teamName(draw.winner_team))}</span></td>
-                <td class="num">${draw.weight_snapshot} / 总 ${draw.total_weight_snapshot}</td>
-                <td>${statusLabels[draw.status] || escapeHtml(draw.status)}</td>
-                <td>
-                  <div class="btn-row">
-                    ${draw.status === 'pending' ? `<button class="action-btn primary" data-record="confirm" data-draw-id="${escapeHtml(draw.id)}">确认有效</button>` : ''}
-                    ${draw.status === 'confirmed' ? `<button class="action-btn" data-record="claim" data-draw-id="${escapeHtml(draw.id)}">标记领取</button>` : ''}
-                    ${(draw.status === 'pending' || draw.status === 'confirmed') ? `<button class="action-btn danger" data-record="void" data-draw-id="${escapeHtml(draw.id)}">作废重抽</button>` : ''}
-                  </div>
-                </td>
-              </tr>
-            `).join('') || '<tr><td colspan="6" class="muted">还没有抽奖记录。</td></tr>'}
-          </tbody>
-        </table>
+        <div class="card-heading-row">
+          <div>
+            <p class="eyebrow">Draw History</p>
+            <h2>抽奖记录</h2>
+          </div>
+          <span class="muted small">最近 100 条</span>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>时间</th><th>奖品</th><th>中奖者</th><th>权重快照</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody>
+              ${admin.draws.map((draw) => `
+                <tr>
+                  <td class="muted">${formatTime(draw.drawn_at)}</td>
+                  <td><strong>${escapeHtml(draw.prize_name)}</strong></td>
+                  <td><strong>${escapeHtml(draw.winner_display_name)}</strong> <span class="muted">${escapeHtml(teamName(draw.winner_team))}</span></td>
+                  <td class="num">${draw.weight_snapshot} / 总 ${draw.total_weight_snapshot}</td>
+                  <td>${statusLabels[draw.status] || escapeHtml(draw.status)}</td>
+                  <td>
+                    <div class="btn-row">
+                      ${draw.status === 'pending' ? `<button class="action-btn primary" data-record="confirm" data-draw-id="${escapeHtml(draw.id)}" ${lotteryState.isDrawing ? 'disabled' : ''}>确认有效</button>` : ''}
+                      ${draw.status === 'confirmed' ? `<button class="action-btn" data-record="claim" data-draw-id="${escapeHtml(draw.id)}" ${lotteryState.isDrawing ? 'disabled' : ''}>标记领取</button>` : ''}
+                      ${(draw.status === 'pending' || draw.status === 'confirmed') ? `<button class="action-btn danger" data-record="void" data-draw-id="${escapeHtml(draw.id)}" ${lotteryState.isDrawing ? 'disabled' : ''}>作废重抽</button>` : ''}
+                    </div>
+                  </td>
+                </tr>
+              `).join('') || '<tr><td colspan="6" class="muted">还没有抽奖记录。</td></tr>'}
+            </tbody>
+          </table>
+        </div>
       </div>
     `;
 
     // ---- 奖品编辑器 ----
-    const select = panel.querySelector('#prize-edit-select');
+    const editor = {
+      select: panel.querySelector('#prize-edit-select'),
+      name: panel.querySelector('#prize-edit-name'),
+      count: panel.querySelector('#prize-edit-count'),
+      source: panel.querySelector('#prize-edit-source'),
+      description: panel.querySelector('#prize-edit-desc'),
+      image: panel.querySelector('#prize-edit-image'),
+      preview: panel.querySelector('#prize-edit-preview')
+    };
     const fillEditor = () => {
-      const prize = admin.prizes.find((item) => item.id === select.value);
+      const prize = admin.prizes.find((item) => item.id === editor.select.value);
       if (!prize) {
         return;
       }
-      panel.querySelector('#prize-edit-name').value = prize.name;
-      panel.querySelector('#prize-edit-desc').value = prize.description || '';
-      panel.querySelector('#prize-edit-image').value = prize.image || '';
-      panel.querySelector('#prize-edit-count').value = prize.count;
-      panel.querySelector('#prize-edit-source').innerHTML = sourceOptions(prize.source);
+      editor.name.value = prize.name;
+      editor.description.value = prize.description || '';
+      editor.image.value = prize.image || '';
+      editor.count.value = prize.count;
+      editor.source.innerHTML = lotterySourceOptions(prize.source);
+      editor.preview.src = prize.image || '';
+      editor.preview.alt = `${prize.name}预览`;
+      editor.preview.hidden = !prize.image;
+    };
+    const refreshPreview = () => {
+      editor.preview.src = editor.image.value.trim();
+      editor.preview.hidden = !editor.image.value.trim();
     };
     fillEditor();
-    select.addEventListener('change', fillEditor);
+    editor.preview.addEventListener('error', () => {
+      editor.preview.hidden = true;
+    });
+    editor.image.addEventListener('input', refreshPreview);
+    editor.select.addEventListener('change', fillEditor);
 
     panel.querySelector('#prize-edit-save').addEventListener('click', async () => {
       try {
         const res = await post('/api/admin/lottery/prize', {
           op: 'update',
-          prize_id: select.value,
-          name: panel.querySelector('#prize-edit-name').value,
-          description: panel.querySelector('#prize-edit-desc').value,
-          image: panel.querySelector('#prize-edit-image').value,
-          count: Number(panel.querySelector('#prize-edit-count').value),
-          source: panel.querySelector('#prize-edit-source').value
+          prize_id: editor.select.value,
+          name: editor.name.value,
+          description: editor.description.value,
+          image: editor.image.value,
+          count: Number(editor.count.value),
+          source: editor.source.value
         });
         if (res) {
           toast(res.message, 'success');
@@ -676,17 +847,39 @@
       }
     });
 
+    for (const image of panel.querySelectorAll('[data-prize-image]')) {
+      image.addEventListener('error', () => {
+        image.hidden = true;
+      });
+    }
+
     for (const button of panel.querySelectorAll('[data-draw]')) {
       button.addEventListener('click', async () => {
+        if (lotteryState.isDrawing || !window.confirm('确认执行抽奖？')) {
+          return;
+        }
+        const animationId = ++lotteryState.animationId;
+        lotteryState.isDrawing = true;
+        lotteryState.pendingPrizeName = button.dataset.prizeName || '当前奖品';
+        lotteryState.winner = null;
+        renderLottery();
+
         try {
-          const res = await post('/api/admin/lottery/draw', { prize_id: button.dataset.draw }, {
-            confirmText: '确认执行抽奖？'
-          });
-          if (res) {
-            toast(`${res.message}（权重 ${res.draw.weight_snapshot} / 总 ${res.draw.total_weight_snapshot}）`, 'success');
+          const res = await post('/api/admin/lottery/draw', { prize_id: button.dataset.draw });
+          if (!res || animationId !== lotteryState.animationId) {
+            return;
           }
+          await runLotteryAnimation(res.draw, animationId);
+          lotteryState.winner = res.draw;
+          toast(`${res.message}（权重 ${res.draw.weight_snapshot} / 总 ${res.draw.total_weight_snapshot}）`, 'success');
         } catch (error) {
           toast(error.message || '抽奖失败', 'error');
+        } finally {
+          if (animationId === lotteryState.animationId) {
+            lotteryState.isDrawing = false;
+            lotteryState.pendingPrizeName = '';
+            renderLottery();
+          }
         }
       });
     }
@@ -712,6 +905,62 @@
         }
       });
     }
+  }
+
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  function nextFrame() {
+    return new Promise((resolve) => requestAnimationFrame(resolve));
+  }
+
+  async function runLotteryAnimation(draw, animationId) {
+    const panel = elements.panels.lottery;
+    const stage = panel.querySelector('[data-lottery-stage]');
+    const reel = panel.querySelector('[data-lottery-reel]');
+    if (!stage || !reel || !draw) {
+      return;
+    }
+
+    const winner = {
+      displayName: draw.winner_display_name,
+      team: teamName(draw.winner_team),
+      weight: draw.weight_snapshot
+    };
+    const candidates = lotteryRollCandidates();
+    if (!candidates.some((candidate) => candidate.displayName === winner.displayName)) {
+      candidates.push(winner);
+    }
+    const safeCandidates = candidates.length ? candidates : [winner];
+    const rounds = Math.max(28, Math.min(56, safeCandidates.length * 3));
+    const items = Array.from({ length: rounds }, (_, index) => safeCandidates[index % safeCandidates.length]);
+    items.push(winner);
+    reel.innerHTML = `${items.slice(0, -1).map((candidate) => lotteryRollItem(candidate)).join('')}${lotteryRollItem(winner, { winner: true })}`;
+    reel.style.setProperty('--lottery-shift', '0px');
+    reel.classList.remove('is-rolling', 'is-settled');
+    stage.classList.remove('is-winner');
+    reel.getBoundingClientRect();
+
+    const item = reel.querySelector('.lottery-reel-item');
+    const itemHeight = item ? item.getBoundingClientRect().height : LOTTERY_ITEM_HEIGHT_FALLBACK;
+    const shift = Math.max(0, (items.length - 1) * itemHeight);
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const duration = reduceMotion ? 80 : LOTTERY_ANIMATION_MS;
+    reel.style.setProperty('--lottery-duration', `${duration}ms`);
+    await nextFrame();
+    if (animationId !== lotteryState.animationId || !reel.isConnected) {
+      return;
+    }
+    reel.style.setProperty('--lottery-shift', `-${shift}px`);
+    reel.classList.add('is-rolling');
+    await sleep(duration + 80);
+    if (animationId !== lotteryState.animationId || !reel.isConnected) {
+      return;
+    }
+    reel.classList.remove('is-rolling');
+    reel.classList.add('is-settled');
+    stage.classList.add('is-winner');
   }
 
   // ---------- 日志 ----------
