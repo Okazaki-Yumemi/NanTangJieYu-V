@@ -563,13 +563,14 @@
     return candidates;
   }
 
-  function lotteryRollItem(candidate, { winner = false } = {}) {
+  function lotteryRollItem(candidate, { winner = false, revealed = winner } = {}) {
     const portrait = candidate.portrait
       ? `<img src="${escapeHtml(candidate.portrait)}" alt="" loading="lazy" />`
       : '<span aria-hidden="true">✦</span>';
+    const isWinner = winner && revealed;
     return `
-      <div class="lottery-reel-item${winner ? ' is-winner' : ''}" style="--lottery-team-color: ${escapeHtml(candidate.color || '#ffd166')}; --lottery-team-soft: ${escapeHtml(candidate.colorSoft || '#fff4d1')};" ${winner ? '' : 'aria-hidden="true"'}>
-        <span class="lottery-reel-badge"><i></i>${winner ? 'WINNER DROP' : 'PLAYER DROP'}</span>
+      <div class="lottery-reel-item${isWinner ? ' is-winner' : ''}" style="--lottery-team-color: ${escapeHtml(candidate.color || '#ffd166')}; --lottery-team-soft: ${escapeHtml(candidate.colorSoft || '#fff4d1')};"${winner ? ' data-lottery-winner-card' : ''} ${isWinner ? '' : 'aria-hidden="true"'}>
+        <span class="lottery-reel-badge"><i></i><span class="lottery-reel-badge-label">${isWinner ? 'WINNER DROP' : 'PLAYER DROP'}</span></span>
         <span class="lottery-reel-avatar">${portrait}</span>
         <strong class="lottery-reel-name">${escapeHtml(candidate.displayName)}</strong>
         <span class="lottery-reel-meta"><b>${escapeHtml(candidate.team || '调查队')}</b><small>${candidate.weight ? `权重 ${escapeHtml(candidate.weight)}` : '候选玩家'}</small></span>
@@ -995,13 +996,22 @@
     }
     const safeCandidates = candidates.length ? candidates : [winner];
     const rounds = Math.max(36, Math.min(72, safeCandidates.length * 4));
+    const trailingCards = 5;
     const startIndex = Math.floor(Math.random() * safeCandidates.length);
-    const items = Array.from(
+    const rollingItems = Array.from(
       { length: rounds },
       (_, index) => safeCandidates[(startIndex + index) % safeCandidates.length]
     );
-    items.push(winner);
-    reel.innerHTML = `${items.slice(0, -1).map((candidate) => lotteryRollItem(candidate)).join('')}${lotteryRollItem(winner, { winner: true })}`;
+    const winnerIndex = rollingItems.length;
+    const trailingItems = Array.from(
+      { length: trailingCards },
+      (_, index) => safeCandidates[(startIndex + rounds + index) % safeCandidates.length]
+    );
+    const items = [...rollingItems, winner, ...trailingItems];
+    reel.innerHTML = items.map((candidate, index) => lotteryRollItem(candidate, {
+      winner: index === winnerIndex,
+      revealed: false
+    })).join('');
     reel.style.setProperty('--lottery-shift', '0px');
     reel.classList.remove('is-rolling', 'is-settled');
     stage.classList.remove('is-winner');
@@ -1011,7 +1021,7 @@
     const itemWidth = item ? item.getBoundingClientRect().width : LOTTERY_ITEM_WIDTH_FALLBACK;
     const windowWidth = reelWindow.getBoundingClientRect().width || itemWidth;
     const centerOffset = Math.max(0, (windowWidth - itemWidth) / 2);
-    const shift = Math.max(0, (items.length - 1) * itemWidth - centerOffset);
+    const shift = Math.max(0, winnerIndex * itemWidth - centerOffset);
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const duration = reduceMotion ? 80 : LOTTERY_ANIMATION_MS;
     reel.style.setProperty('--lottery-duration', `${duration}ms`);
@@ -1027,6 +1037,15 @@
     }
     reel.classList.remove('is-rolling');
     reel.classList.add('is-settled');
+    const winnerCard = reel.querySelector('[data-lottery-winner-card]');
+    if (winnerCard) {
+      winnerCard.classList.add('is-winner');
+      winnerCard.removeAttribute('aria-hidden');
+      const badgeLabel = winnerCard.querySelector('.lottery-reel-badge-label');
+      if (badgeLabel) {
+        badgeLabel.textContent = 'WINNER DROP';
+      }
+    }
     stage.classList.add('is-winner');
   }
 
