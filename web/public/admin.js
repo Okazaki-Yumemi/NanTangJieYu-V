@@ -17,8 +17,7 @@
     pendingPrizeName: '',
     pendingPrizeId: '',
     winner: null,
-    animationId: 0,
-    animationEvent: ''
+    animationId: 0
   };
 
   const elements = {
@@ -533,10 +532,6 @@
   const LOTTERY_ITEM_WIDTH_FALLBACK = 184;
   const LOTTERY_ANIMATION_MS = 6000;
   const LOTTERY_SPECIAL_EVENT_RATE = 0.1;
-  const LOTTERY_EVENT_LABELS = {
-    slide: '大地球滑步',
-    brake: '大地球急停'
-  };
   const LOTTERY_REEL_EASE = 'cubic-bezier(0.1, 0.82, 0.16, 1)';
   const LOTTERY_REEL_SLIDE_EASE = 'cubic-bezier(0.24, 0.88, 0.38, 1)';
   const LOTTERY_REEL_BRAKE_EASE = 'cubic-bezier(0.04, 0.94, 0.1, 1)';
@@ -636,8 +631,6 @@
     const isDrawing = lotteryState.isDrawing;
     const status = isDrawing ? '滚动抽取中' : (winner ? '结果已锁定' : '等待抽取');
     const statusClass = isDrawing ? 'is-drawing' : (winner ? 'is-winner' : 'is-ready');
-    const eventLabel = LOTTERY_EVENT_LABELS[lotteryState.animationEvent] || '';
-    const eventClass = eventLabel ? ` is-event-${lotteryState.animationEvent}` : '';
     const winnerTeam = winner
       ? (admin.teams || []).find((team) => team.id === winner.winner_team)
       : null;
@@ -668,9 +661,8 @@
 
         ${renderLotteryQuickPicks()}
 
-        <div class="lottery-stage${eventClass}" data-lottery-stage aria-live="polite" aria-busy="${isDrawing ? 'true' : 'false'}">
+        <div class="lottery-stage" data-lottery-stage aria-live="polite" aria-busy="${isDrawing ? 'true' : 'false'}">
           <span class="lottery-stage-label">${escapeHtml(lotteryState.pendingPrizeName || (winner ? winner.prize_name : '抽奖结果'))}</span>
-          <span class="lottery-event-flag${eventLabel ? '' : ' hidden'}" data-lottery-event-flag>${eventLabel ? `本局彩蛋 · ${escapeHtml(eventLabel)}` : ''}</span>
           <div class="lottery-reel-window" data-lottery-reel-window>
             <div class="lottery-reel${isDrawing ? '' : ' is-idle'}" data-lottery-reel>
               ${lotteryRollItem(initialCandidate, { winner: Boolean(winner) })}
@@ -940,7 +932,6 @@
         lotteryState.pendingPrizeName = button.dataset.prizeName || '当前奖品';
         lotteryState.pendingPrizeId = button.dataset.draw || '';
         lotteryState.winner = null;
-        lotteryState.animationEvent = '';
         renderLottery();
 
         try {
@@ -1048,17 +1039,6 @@
     const targetShift = Math.max(0, winnerIndex * itemWidth - centerOffset);
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const animationEvent = reduceMotion ? '' : pickLotteryAnimationEvent();
-    lotteryState.animationEvent = animationEvent;
-    const eventLabel = LOTTERY_EVENT_LABELS[animationEvent] || '';
-    const eventFlag = stage.querySelector('[data-lottery-event-flag]');
-    stage.classList.remove('is-event-slide', 'is-event-brake');
-    if (eventLabel) {
-      stage.classList.add(`is-event-${animationEvent}`);
-      if (eventFlag) {
-        eventFlag.textContent = `本局彩蛋 · ${eventLabel}`;
-        eventFlag.classList.remove('hidden');
-      }
-    }
 
     const animationIsActive = () => animationId === lotteryState.animationId && reel.isConnected;
     let isFirstPhase = true;
