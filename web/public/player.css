@@ -33,18 +33,29 @@
 .team-pick-portrait {
   position: relative;
   width: 84px;
-  height: 104px;
-  aspect-ratio: 4 / 5;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  aspect-ratio: 3 / 4;
+  height: auto;
   border-radius: 12px;
   overflow: hidden;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.15), transparent 45%),
-    var(--team-soft);
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.2);
+    radial-gradient(85% 48% at 50% 92%, var(--team-soft, rgba(255,255,255,0.14)), transparent 72%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 55%);
+}
+
+.team-pick-portrait::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 58%;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.5), transparent 70%);
+  pointer-events: none;
 }
 
 .team-pick-portrait img {
@@ -53,7 +64,7 @@
   height: 100%;
   object-fit: contain;
   object-position: center bottom;
-  padding: 4px 3px 0;
+  filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.42));
 }
 
 .team-pick strong {
@@ -119,10 +130,10 @@
 .battle-portrait {
   flex: 0 0 58px;
   width: 58px;
-  height: 72px;
+  height: 74px;
   object-position: center bottom;
   object-fit: contain;
-  filter: drop-shadow(0 2px 3px rgba(90, 60, 40, 0.25));
+  filter: drop-shadow(0 7px 10px rgba(0, 0, 0, 0.45));
 }
 
 .battle-info {

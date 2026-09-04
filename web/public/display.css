@@ -134,12 +134,11 @@
 
 .vs-portrait {
   display: block;
-  width: 92px;
-  height: 118px;
+  width: 96px;
+  height: 128px;
   object-fit: contain;
   object-position: center bottom;
-  padding: 3px 3px 0;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
+  filter: drop-shadow(0 9px 14px rgba(0, 0, 0, 0.55));
 }
 
 .vs-team strong {
