@@ -1,7 +1,10 @@
 'use strict';
 
 /**
- * 交大校园风格 SVG 地图（简化示意图，后续可整体替换为正式美术）。
+ * 3D 立体校园地图（diorama 风格）。
+ *
+ * 结构：透视容器 .map-scene > 倾斜地面 .map-plane（rotateX）> 地形 SVG + 区域立牌。
+ * 立牌用 rotateX(-tilt) 反向转正，像立在地面上的广告牌；选中时上浮 + 高亮 + 光柱。
  *
  * NTJ.renderCampusMap(container, regions, { onSelect }) → { update(regions, selectedId) }
  * 区域坐标来自 shared/seeds/regions.json 的 map.x / map.y（viewBox 380×560）。
@@ -23,227 +26,305 @@
     return el;
   }
 
-  function buildBaseLayer(root) {
+  /* ---------- 地面地形（跟随地面一起倾斜） ---------- */
+
+  function buildGround(root) {
     const defs = svgEl('defs', {}, root);
     defs.innerHTML = `
-      <radialGradient id="ntj-map-paper" cx="50%" cy="42%" r="75%">
-        <stop offset="0%" stop-color="#151928"/>
-        <stop offset="100%" stop-color="#0d101a"/>
+      <radialGradient id="ntj-ground-base" cx="50%" cy="34%" r="82%">
+        <stop offset="0%" stop-color="#1a2136"/>
+        <stop offset="58%" stop-color="#131828"/>
+        <stop offset="100%" stop-color="#0c0f1a"/>
       </radialGradient>
-      <filter id="ntj-node-shadow" x="-60%" y="-60%" width="220%" height="220%">
-        <feDropShadow dx="0" dy="1.5" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.6"/>
-      </filter>
+      <linearGradient id="ntj-lake" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#1d3d5c"/>
+        <stop offset="100%" stop-color="#122a44"/>
+      </linearGradient>
+      <linearGradient id="ntj-wall" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#1a2136"/>
+        <stop offset="100%" stop-color="#10141f"/>
+      </linearGradient>
+      <pattern id="ntj-grid" width="34" height="34" patternUnits="userSpaceOnUse">
+        <path d="M 34 0 L 0 0 0 34" fill="none" stroke="rgba(255,255,255,0.045)" stroke-width="1"/>
+      </pattern>
     `;
 
-    // 校园边界（纸面底）
+    // 底板
     svgEl('rect', {
-      x: 14, y: 22, width: VIEW_W - 28, height: VIEW_H - 44, rx: 26,
-      fill: 'url(#ntj-map-paper)', stroke: 'rgba(255,255,255,0.16)', 'stroke-width': 1.6
+      x: 5, y: 5, width: VIEW_W - 10, height: VIEW_H - 10, rx: 26,
+      fill: 'url(#ntj-ground-base)', stroke: 'rgba(255,255,255,0.16)', 'stroke-width': 1.5
+    }, root);
+    svgEl('rect', {
+      x: 5, y: 5, width: VIEW_W - 10, height: VIEW_H - 10, rx: 26,
+      fill: 'url(#ntj-grid)'
     }, root);
 
     // 环校道路
     svgEl('rect', {
       x: 40, y: 48, width: VIEW_W - 80, height: VIEW_H - 96, rx: 20,
-      fill: 'none', stroke: '#1a2030', 'stroke-width': 10
+      fill: 'none', stroke: '#232c42', 'stroke-width': 11
     }, root);
     svgEl('rect', {
       x: 40, y: 48, width: VIEW_W - 80, height: VIEW_H - 96, rx: 20,
-      fill: 'none', stroke: '#242c40', 'stroke-width': 6
+      fill: 'none', stroke: '#2e3a56', 'stroke-width': 5.5
+    }, root);
+    svgEl('rect', {
+      x: 40, y: 48, width: VIEW_W - 80, height: VIEW_H - 96, rx: 20,
+      fill: 'none', stroke: 'rgba(255,255,255,0.22)', 'stroke-width': 1.1, 'stroke-dasharray': '7 9'
     }, root);
 
-    // 主干路（南门 → 北侧）与东西向道路
-    svgEl('path', {
-      d: 'M 186 516 L 186 48 Q 186 30 204 30',
-      fill: 'none', stroke: '#1e2536', 'stroke-width': 8, 'stroke-linecap': 'round'
-    }, root);
-    svgEl('path', {
-      d: 'M 52 300 L 328 300',
-      fill: 'none', stroke: '#1e2536', 'stroke-width': 7, 'stroke-linecap': 'round'
-    }, root);
-    svgEl('path', {
-      d: 'M 60 430 L 300 430',
-      fill: 'none', stroke: '#222939', 'stroke-width': 5, 'stroke-linecap': 'round'
-    }, root);
+    // 主干路
+    const roads = [
+      { d: 'M 186 516 L 186 48 Q 186 30 204 30', w: 9 },
+      { d: 'M 52 300 L 328 300', w: 8 },
+      { d: 'M 60 430 L 300 430', w: 6 },
+      { d: 'M 104 248 L 186 300', w: 4.5 },
+      { d: 'M 272 302 L 306 480', w: 4.5 },
+      { d: 'M 158 128 L 112 248', w: 4.5 }
+    ];
+    for (const road of roads) {
+      svgEl('path', {
+        d: road.d, fill: 'none', stroke: '#27304a',
+        'stroke-width': road.w, 'stroke-linecap': 'round'
+      }, root);
+      svgEl('path', {
+        d: road.d, fill: 'none', stroke: 'rgba(255,255,255,0.16)', 'stroke-width': 1,
+        'stroke-dasharray': '5 8', 'stroke-linecap': 'round'
+      }, root);
+    }
 
     // 思源湖（西南）
     svgEl('path', {
       d: 'M 74 402 q 22 -16 46 -8 q 26 8 22 30 q -4 24 -30 26 q -30 2 -42 -16 q -8 -18 4 -32 z',
-      fill: '#14293e', stroke: '#2d5a7d', 'stroke-width': 1.4, opacity: 0.85
+      fill: 'url(#ntj-lake)', stroke: '#3d6f9e', 'stroke-width': 1.4
     }, root);
+    svgEl('ellipse', { class: 'lake-shimmer', cx: 100, cy: 424, rx: 14, ry: 4, fill: 'rgba(160,215,255,0.35)' }, root);
     // 涵泽湖（中西部）
     svgEl('path', {
       d: 'M 72 226 q 18 -12 38 -6 q 20 6 16 24 q -4 18 -24 20 q -24 2 -32 -12 q -6 -14 2 -26 z',
-      fill: '#14293e', stroke: '#2d5a7d', 'stroke-width': 1.4, opacity: 0.85
+      fill: 'url(#ntj-lake)', stroke: '#3d6f9e', 'stroke-width': 1.4
     }, root);
+    svgEl('ellipse', { class: 'lake-shimmer lake-shimmer-late', cx: 94, cy: 240, rx: 10, ry: 3, fill: 'rgba(160,215,255,0.3)' }, root);
 
     // 电草草坪（中东部）
     svgEl('rect', {
       x: 228, y: 262, width: 96, height: 78, rx: 16,
-      fill: '#12241a', stroke: '#2f5c42', 'stroke-width': 1.4, opacity: 0.9
+      fill: '#13291d', stroke: '#31684a', 'stroke-width': 1.3
     }, root);
     svgEl('path', {
       d: 'M 244 330 l 6 -10 l 6 10 m 14 -14 l 6 -10 l 6 10 m 14 -12 l 6 -10 l 6 10',
       stroke: '#3f7a58', 'stroke-width': 1.6, fill: 'none', 'stroke-linecap': 'round'
     }, root);
 
-    // 校舍群组（中性色块，不含具体指称）
+    // 小树林点缀
+    const trees = [[70, 180], [84, 168], [320, 220], [332, 232], [64, 470], [78, 458], [300, 128], [314, 140], [228, 210]];
+    for (const [tx, ty] of trees) {
+      svgEl('circle', { cx: tx, cy: ty, r: 5.5, fill: '#16301f', stroke: '#2c5a3c', 'stroke-width': 1 }, root);
+      svgEl('circle', { cx: tx - 1.4, cy: ty - 1.6, r: 2.1, fill: 'rgba(110,190,130,0.4)' }, root);
+    }
+
+    // 校舍（2.5D：南墙面 + 顶面）
     const blocks = [
-      { x: 226, y: 96, w: 44, h: 30, r: 6 },
-      { x: 288, y: 150, w: 52, h: 36, r: 6 },
-      { x: 84, y: 316, w: 40, h: 30, r: 6 },
-      { x: 136, y: 340, w: 54, h: 34, r: 6 },
-      { x: 214, y: 380, w: 46, h: 30, r: 6 },
-      { x: 64, y: 130, w: 42, h: 32, r: 6 },
-      { x: 226, y: 470, w: 56, h: 34, r: 6 }
+      { x: 226, y: 96, w: 44, h: 30 },
+      { x: 288, y: 150, w: 52, h: 36 },
+      { x: 84, y: 316, w: 40, h: 30 },
+      { x: 136, y: 340, w: 54, h: 34 },
+      { x: 214, y: 380, w: 46, h: 30 },
+      { x: 64, y: 130, w: 42, h: 32 },
+      { x: 226, y: 470, w: 56, h: 34 }
     ];
-    for (const block of blocks) {
-      svgEl('rect', {
-        x: block.x, y: block.y, width: block.w, height: block.h, rx: block.r,
-        fill: '#171c2b', stroke: '#2a3248', 'stroke-width': 1
+    for (const b of blocks) {
+      const depth = 7;
+      // 南墙（正面）
+      svgEl('path', {
+        d: `M ${b.x} ${b.y + b.h} L ${b.x + depth} ${b.y + b.h + depth} L ${b.x + b.w + depth} ${b.y + b.h + depth} L ${b.x + b.w} ${b.y + b.h} Z`,
+        fill: 'url(#ntj-wall)'
       }, root);
+      // 顶面
       svgEl('rect', {
-        x: block.x + block.w * 0.18, y: block.y + block.h * 0.2,
-        width: block.w * 0.28, height: block.h * 0.6, rx: 2,
-        fill: '#212940'
+        x: b.x, y: b.y, width: b.w, height: b.h, rx: 4,
+        fill: '#242e4a', stroke: '#3d4a70', 'stroke-width': 1
       }, root);
+      // 顶面窗带
       svgEl('rect', {
-        x: block.x + block.w * 0.54, y: block.y + block.h * 0.2,
-        width: block.w * 0.28, height: block.h * 0.6, rx: 2,
-        fill: '#212940'
+        x: b.x + 6, y: b.y + b.h * 0.32, width: b.w - 12, height: b.h * 0.2, rx: 1.6,
+        fill: 'rgba(150,200,255,0.22)'
       }, root);
     }
 
-    // 指北针与图例标题
-    const compass = svgEl('g', { transform: 'translate(340, 44)' }, root);
-    svgEl('circle', { r: 11, fill: '#171c2b', stroke: 'rgba(255,255,255,0.22)' }, compass);
-    svgEl('path', { d: 'M 0 -7 L 3.4 4 L 0 1.6 L -3.4 4 Z', fill: '#ffd166' }, compass);
+    // 指北针（躺在地面上）
+    const compass = svgEl('g', { transform: 'translate(342, 42)' }, root);
+    svgEl('circle', { r: 12, fill: 'rgba(23,28,43,0.9)', stroke: 'rgba(255,255,255,0.24)' }, compass);
+    svgEl('path', { d: 'M 0 -7.5 L 3.6 4.4 L 0 1.8 L -3.6 4.4 Z', fill: '#ffd166' }, compass);
     svgEl('text', {
-      x: 0, y: -14, 'text-anchor': 'middle', 'font-size': 9, fill: '#8b91a7'
+      x: 0, y: -15.5, 'text-anchor': 'middle', 'font-size': 9, fill: '#8b91a7'
     }, compass).textContent = 'N';
   }
 
-  function buildRouteLayer(root) {
-    return svgEl('path', {
-      class: 'map-route',
-      fill: 'none',
-      stroke: '#c9a13e',
-      'stroke-width': 2,
-      'stroke-dasharray': '6 7',
-      'stroke-linecap': 'round',
-      opacity: 0.75
-    }, root);
+  /* ---------- 区域立牌（直立 billboard） ---------- */
+
+  function buildMarker(layer, region) {
+    const marker = document.createElement('div');
+    marker.className = 'map-marker';
+    marker.style.left = `${(region.map.x / VIEW_W) * 100}%`;
+    marker.style.top = `${(region.map.y / VIEW_H) * 100}%`;
+
+    // 地面元素（贴地）
+    const disc = document.createElement('i');
+    disc.className = 'marker-ground-disc';
+    const ring = document.createElement('i');
+    ring.className = 'marker-ground-ring';
+    const shadow = document.createElement('i');
+    shadow.className = 'marker-shadow';
+
+    // 直立内容
+    const float = document.createElement('button');
+    float.type = 'button';
+    float.className = 'marker-float';
+    float.setAttribute('aria-label', region.name);
+
+    const lev = document.createElement('span');
+    lev.className = 'marker-lev';
+    const beam = document.createElement('i');
+    beam.className = 'marker-beam';
+    const pin = document.createElement('span');
+    pin.className = 'marker-pin';
+    const progress = document.createElement('span');
+    progress.className = 'marker-progress';
+    const orb = document.createElement('span');
+    orb.className = 'marker-orb';
+    const glyph = document.createElement('span');
+    glyph.className = 'marker-glyph';
+    orb.appendChild(glyph);
+    const order = document.createElement('span');
+    order.className = 'marker-order';
+    pin.appendChild(progress);
+    pin.appendChild(orb);
+    pin.appendChild(order);
+
+    const label = document.createElement('span');
+    label.className = 'marker-label';
+    const statusLabel = document.createElement('span');
+    statusLabel.className = 'marker-status';
+
+    lev.appendChild(beam);
+    lev.appendChild(pin);
+    lev.appendChild(label);
+    lev.appendChild(statusLabel);
+    float.appendChild(lev);
+
+    marker.appendChild(shadow);
+    marker.appendChild(disc);
+    marker.appendChild(ring);
+    marker.appendChild(float);
+    layer.appendChild(marker);
+
+    float.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (marker._onSelect) {
+        marker._onSelect(region.id);
+      }
+    });
+
+    marker._refs = { disc, ring, shadow, float, beam, progress, orb, glyph, order, label, statusLabel };
+    order.textContent = `⬡${region.order}`;
+    return marker;
   }
 
-  function buildRegionNode(root, region) {
-    const group = svgEl('g', {
-      class: 'map-node',
-      'data-region-id': region.id,
-      transform: `translate(${region.map.x}, ${region.map.y})`
-    }, root);
-
-    svgEl('circle', { class: 'node-pulse', r: 20 }, group);
-    svgEl('circle', { class: 'node-hit', r: 30, fill: 'transparent' }, group);
-    svgEl('circle', { class: 'node-body', r: 19, filter: 'url(#ntj-node-shadow)' }, group);
-    svgEl('circle', {
-      class: 'node-progress-ring', r: 23, fill: 'none', 'stroke-width': 3.4,
-      'stroke-linecap': 'round', transform: 'rotate(-90)'
-    }, group);
-    svgEl('text', {
-      class: 'node-order', y: -30, 'text-anchor': 'middle', 'font-size': 11
-    }, group).textContent = `⬡${region.order}`;
-    const glyph = svgEl('text', {
-      class: 'node-glyph', y: 6.5, 'text-anchor': 'middle', 'font-size': 16
-    }, group);
-    glyph.textContent = region.season_label || '?';
-    const label = svgEl('text', {
-      class: 'node-label', y: 40, 'text-anchor': 'middle', 'font-size': 12
-    }, group);
-    label.textContent = region.name;
-    svgEl('text', {
-      class: 'node-status-label', y: 54, 'text-anchor': 'middle', 'font-size': 9.5
-    }, group);
-
-    return group;
-  }
+  /* ---------- 主入口 ---------- */
 
   function renderCampusMap(container, regions, options = {}) {
     container.classList.add('campus-map-wrap');
     container.innerHTML = '';
-    const svg = svgEl('svg', {
+
+    const scene = document.createElement('div');
+    scene.className = 'map-scene';
+    const plane = document.createElement('div');
+    plane.className = 'map-plane';
+    scene.appendChild(plane);
+    container.appendChild(scene);
+
+    const ground = svgEl('svg', {
       viewBox: `0 0 ${VIEW_W} ${VIEW_H}`,
-      class: 'campus-map',
+      class: 'map-ground',
       role: 'img',
       'aria-label': '校园异变地图'
-    }, container);
+    }, plane);
+    buildGround(ground);
 
-    buildBaseLayer(svg);
-    const route = buildRouteLayer(svg);
-    const nodeLayer = svgEl('g', { class: 'map-node-layer' }, svg);
-    const nodeRefs = new Map();
+    // 调查路线（金色虚线，按顺序串联）
+    const route = svgEl('path', {
+      class: 'map-route',
+      fill: 'none',
+      stroke: '#c9a13e',
+      'stroke-width': 2.2,
+      'stroke-dasharray': '6 7',
+      'stroke-linecap': 'round',
+      opacity: 0.7
+    }, ground);
 
+    const markerLayer = document.createElement('div');
+    markerLayer.className = 'map-marker-layer';
+    plane.appendChild(markerLayer);
+
+    const markerRefs = new Map();
     for (const region of regions) {
-      const group = buildRegionNode(nodeLayer, region);
-      group.addEventListener('click', () => {
-        if (options.onSelect) {
-          options.onSelect(region.id);
-        }
+      const marker = buildMarker(markerLayer, region);
+      marker._onSelect = options.onSelect || null;
+      markerRefs.set(region.id, marker);
+    }
+
+    // 指针视差（仅精确指针 + 未开启减动效）
+    const fineMotion = window.matchMedia('(pointer: fine) and (prefers-reduced-motion: no-preference)');
+    if (fineMotion.matches && options.onSelect !== undefined) {
+      scene.classList.add('map-parallax');
+      scene.addEventListener('pointermove', (event) => {
+        const rect = scene.getBoundingClientRect();
+        const px = (event.clientX - rect.left) / rect.width - 0.5;
+        const py = (event.clientY - rect.top) / rect.height - 0.5;
+        scene.style.setProperty('--par-x', (px * 2).toFixed(3));
+        scene.style.setProperty('--par-y', (py * 2).toFixed(3));
       });
-      nodeRefs.set(region.id, {
-        group,
-        pulse: group.querySelector('.node-pulse'),
-        body: group.querySelector('.node-body'),
-        ring: group.querySelector('.node-progress-ring'),
-        glyph: group.querySelector('.node-glyph'),
-        order: group.querySelector('.node-order'),
-        label: group.querySelector('.node-label'),
-        statusLabel: group.querySelector('.node-status-label')
+      scene.addEventListener('pointerleave', () => {
+        scene.style.setProperty('--par-x', '0');
+        scene.style.setProperty('--par-y', '0');
       });
     }
 
     function update(nextRegions, selectedId) {
       const sorted = [...nextRegions].sort((a, b) => a.order - b.order);
       const points = sorted.map((region) => `${region.map.x},${region.map.y}`).join(' ');
-      route.setAttribute('points', points);
       route.setAttribute('d', `M ${points.split(' ').join(' L ')}`);
 
+      scene.classList.toggle('has-selection', Boolean(selectedId));
+
       for (const region of nextRegions) {
-        const refs = nodeRefs.get(region.id);
-        if (!refs) {
+        const marker = markerRefs.get(region.id);
+        if (!marker) {
           continue;
         }
-        const season = NTJ.SEASON_STYLES[region.season] || { color: '#888', soft: '#eee' };
+        const refs = marker._refs;
+        const season = NTJ.SEASON_STYLES[region.season] || { label: '?', color: '#8b91a7', soft: 'rgba(255,255,255,0.2)' };
         const status = region.closed ? 'closed' : region.status;
         const isSelected = region.id === selectedId;
 
-        refs.group.setAttribute('class', [
-          'map-node',
+        marker.setAttribute('class', [
+          'map-marker',
           `is-${status}`,
           isSelected ? 'is-selected' : ''
         ].filter(Boolean).join(' '));
-        refs.body.setAttribute('fill', season.soft);
-        refs.body.setAttribute('stroke', season.color);
-        refs.pulse.setAttribute('stroke', season.color);
-        refs.ring.setAttribute('stroke', season.color);
-        refs.glyph.setAttribute('fill', season.color);
-        refs.order.setAttribute('fill', season.color);
+        marker.style.setProperty('--season-color', season.color);
+        marker.style.setProperty('--season-soft', season.soft);
+
+        refs.float.setAttribute('aria-label', `${region.name}（${region.closed ? '临时关闭' : (NTJ.REGION_STATUS_LABELS[region.status] || '')}）`);
+        refs.glyph.textContent = region.status === 'cleared' ? '✓' : (region.season_label || '?');
         refs.label.textContent = region.name;
         refs.statusLabel.textContent = region.closed
           ? '临时关闭'
           : (NTJ.REGION_STATUS_LABELS[region.status] || '');
 
         const progress = Math.max(0, Math.min(1, Number(region.anomaly_progress) || 0));
-        const circumference = 2 * Math.PI * 23;
-        if (region.status === 'cleared') {
-          refs.ring.setAttribute('stroke-dasharray', `${circumference} 0`);
-          refs.glyph.textContent = '✓';
-        } else {
-          refs.ring.setAttribute(
-            'stroke-dasharray',
-            `${(circumference * progress).toFixed(1)} ${circumference.toFixed(1)}`
-          );
-          refs.glyph.textContent = region.season_label || '?';
-        }
-        refs.ring.setAttribute('stroke-dashoffset', circumference / 4);
+        refs.progress.style.setProperty('--progress', region.status === 'cleared' ? '1' : progress.toFixed(3));
       }
     }
 
