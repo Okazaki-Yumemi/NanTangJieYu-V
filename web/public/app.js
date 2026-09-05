@@ -637,9 +637,9 @@
 
   function renderFeeds(data) {
     elements.myLogs.innerHTML = data.my_logs.map(renderFeedRow).join('')
-      || '<p class="muted small">还没有行动记录，去地图上选择一个区域开始调查吧！</p>';
+      || '<p class="muted small">还没有行动记录。先在地图上挑个区域吧。</p>';
     elements.recentFeed.innerHTML = data.recent_contributions.map(renderFeedRow).join('')
-      || '<p class="muted small">全场还没有动静。</p>';
+      || '<p class="muted small">全场静悄悄的。</p>';
   }
 
   // ---------- 互动 ----------
