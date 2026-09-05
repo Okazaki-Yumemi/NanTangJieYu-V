@@ -236,12 +236,12 @@
           <button class="action-btn primary" data-activity="start" ${started || activity.status !== 'scheduled' ? 'disabled' : ''}>开始活动</button>
           <button class="action-btn warn" data-activity="pause" ${!started ? 'disabled' : ''}>暂停活动</button>
           <button class="action-btn primary" data-activity="resume" ${!paused ? 'disabled' : ''}>恢复活动</button>
-          <button class="action-btn danger" data-activity="end" ${activity.status === 'ended' ? 'disabled' : ''}>结束活动</button>
+          <button class="action-btn danger is-solid" data-activity="end" ${activity.status === 'ended' ? 'disabled' : ''}>结束活动</button>
           <span style="width: 1px; height: 22px; background: var(--line);"></span>
           <button class="action-btn" data-activity="open_registration" ${activity.registration_open ? 'disabled' : ''}>开放注册</button>
           <button class="action-btn" data-activity="close_registration" ${!activity.registration_open ? 'disabled' : ''}>关闭注册</button>
         </div>
-        <p class="helper-text">互动仅在「进行中」状态可用；注册开关独立于活动状态。</p>
+        <p class="helper-text">互动仅在「进行中」状态可用；注册开关独立于活动状态。临时停场请用「暂停活动」，「结束活动」不可逆。</p>
       </div>
 
       <div class="admin-card">

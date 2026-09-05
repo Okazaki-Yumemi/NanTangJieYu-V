@@ -288,6 +288,19 @@
   border-color: rgba(255, 107, 129, 0.85);
 }
 
+/* 全场唯一实底红：不可逆的「结束活动」，与可逆的暂停/恢复拉开档位 */
+.action-btn.danger.is-solid {
+  border-color: transparent;
+  color: #fff;
+  background: linear-gradient(135deg, #ff5c79, #b0123a);
+  box-shadow: 0 3px 14px rgba(200, 30, 74, 0.35);
+}
+
+.action-btn.danger.is-solid:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ff6c86, #c81e4a);
+  box-shadow: 0 5px 20px rgba(200, 30, 74, 0.4);
+}
+
 table.admin-table {
   width: 100%;
   border-collapse: collapse;

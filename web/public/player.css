@@ -518,6 +518,11 @@ i.energy-dot.on {
   font-size: 11.5px;
 }
 
+/* 收益/冷却分段不拆行：折行只发生在「·」分隔处 */
+.action-meta .meta-keep {
+  white-space: nowrap;
+}
+
 /* ---------- 抽奖播报 / 现场播报 ---------- */
 
 .latest-draw-player {

@@ -357,11 +357,20 @@
     return { primary, more };
   }
 
+  // meta 分段加 nowrap：折行只发生在「·」分隔处，不会把「冷却 1 分 30 秒」拆成两行
   function actionMetaText(action) {
     const hint = action.contribution_hint;
-    return `⚡${action.energy_cost} · 贡献 ${hint.contribution[0]}~${hint.contribution[1]} · 削减异变 ${hint.anomaly[0]}~${hint.anomaly[1]}`
-      + (action.cooldown_left > 0 ? ` · 冷却中 ${formatDuration(action.cooldown_left)}` : '')
-      + (action.cooldown_sec > 0 && action.cooldown_left <= 0 ? ` · 冷却 ${formatDuration(action.cooldown_sec)}` : '');
+    const segments = [
+      `⚡${action.energy_cost}`,
+      `贡献 ${hint.contribution[0]}~${hint.contribution[1]}`,
+      `削减异变 ${hint.anomaly[0]}~${hint.anomaly[1]}`
+    ];
+    if (action.cooldown_left > 0) {
+      segments.push(`冷却中 ${formatDuration(action.cooldown_left)}`);
+    } else if (action.cooldown_sec > 0) {
+      segments.push(`冷却 ${formatDuration(action.cooldown_sec)}`);
+    }
+    return segments.map((part) => `<span class="meta-keep">${part}</span>`).join(' · ');
   }
 
   // 冷却秒数变化时只原位改 meta 文案与禁用态，不重建按钮（避免点击被打断）
@@ -377,7 +386,7 @@
       }
       const meta = button.querySelector('.action-meta');
       if (meta) {
-        meta.textContent = actionMetaText(action);
+        meta.innerHTML = actionMetaText(action);
       }
       const shouldDisable = Boolean(action.unavailable) || action.cooldown_left > 0 || appState.pendingInteract;
       if (button.disabled !== shouldDisable) {
