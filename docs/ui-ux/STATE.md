@@ -35,9 +35,16 @@
 
 ## 下一步（优先级）
 
-1. Iteration 3：文案 pass —— seeds 三处修正、admin 术语统一（强制 CLEAR→强制解决）+ 确认框写明后果、玩家端遗留提示语润色。
-2. Iteration 4：管理端视觉层级（danger/primary 区分、danger 确认样式、表格密度）。
-3. Iteration 5：玩家端 action 分组 + 375px marker 细节 + 430×932 复验。
+1. Iteration 5：玩家端 action list 分组（常用/更多）+ 375px marker label 间距 + 430×932 复验。
+2. Iteration 6：admin window.prompt/confirm → 自定义模态（现场安全，含 focus 管理）；admin 英文 eyebrow 取舍（倾向保留抽奖台仪式感，仅去杂乱）。
+3. Iteration 7：copy pass 第二批（display 空态、admin 文案全扫、角色语气校对）。
+
+## 版本号现状
+
+- index.html: styles v7 / player v7 / common v3 / map v3 / app v4
+- display.html: styles v7 / display v9 / common v3 / map v3 / display.js v4
+- admin.html: styles v7 / admin.css v12 / common v4 / admin.js v12
+- 改 CSS/JS 后必须 bump 对应 ?v=（本会话曾因忘 bump 误判 CSS 未生效）。
 
 ## 用户明确要求 / 禁止破坏
 

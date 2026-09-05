@@ -29,5 +29,20 @@
 - goal：消除文案与数值矛盾、中英夹生；危险确认写明后果
 - changed：interactions.json 三处（妹红「力量+1异变-0」改写实、早苗去 Performing、文「采访自由」）；admin「强制 CLEAR」→「强制解决」+ 两个危险确认写明「将把「XX」标记为已解决，注入奖品并解锁下一区域……写入管理日志」；玩家端登录失败兜底补上下文；版本号 bump
 - validation：interactions.json JSON 校验 + 服务重启加载 + 管理端 DOM 断言 + npm test 84/84
-- commit：见 git log（copy(player/admin) ）
+- commit：027e0f3
 - next：Iter4 管理端视觉层级（danger/primary 区分、表格密度）
+
+## Iteration 4 — 管理端视觉层级（2026-09-05）
+
+- goal：primary/danger 操作一眼可分；表格密度；键盘可达
+- changed：admin primary 改实底渐变（与玩家端主按钮同语言）、danger 加重描边+字重、表内按钮致密化、action/mini/tab 补 focus-visible
+- validation：1366×768 截图 + DOM（表格 21 行无横向溢出、行高 57px）+ npm test 84/84
+- commit：8b78366
+- next：Iter5 玩家端 action 分组 + 375px marker 细节 + 430×932 复验
+
+## Iteration 4.1 — 大屏区域卡收尾（2026-09-05）
+
+- changed：右列弹性比 2:1、区域卡内边距/间隙收紧（发现 CSS 版本号未 bump 导致缓存假象，v=9）
+- validation：DOM 断言 regions overflow 73→0，六卡完整可见；1920×1080 截图
+- commit：238738c
+- next：Iter5
