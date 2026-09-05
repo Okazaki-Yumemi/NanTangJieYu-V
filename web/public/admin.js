@@ -832,7 +832,6 @@
       <div class="admin-card lottery-console ${statusClass}" data-lottery-console>
         <div class="lottery-console-head">
           <div>
-            <p class="eyebrow">Weighted Lottery · 现场抽取</p>
             <h2>抽奖台</h2>
             <p class="helper-text">${isDrawing
               ? `正在从「${escapeHtml(lotteryState.pendingPrizeName || '当前奖品')}」的候选玩家中滚动抽取。`
@@ -881,7 +880,6 @@
       <div class="admin-card">
         <div class="card-heading-row">
           <div>
-            <p class="eyebrow">Prize Catalog</p>
             <h2>奖品编辑</h2>
           </div>
           <span class="muted small">修改立即对玩家端与大屏生效</span>
@@ -934,7 +932,6 @@
       <div class="admin-card">
         <div class="card-heading-row">
           <div>
-            <p class="eyebrow">Prize Pool</p>
             <h2>奖池</h2>
           </div>
           <span class="muted small">${admin.prizes.filter((prize) => prize.available && prize.remaining > 0).length} 个奖品可抽</span>
@@ -969,7 +966,6 @@
       <div class="admin-card">
         <div class="card-heading-row">
           <div>
-            <p class="eyebrow">Weight Preview</p>
             <h2>权重预览 <span class="muted small">前 100 名</span></h2>
           </div>
           <span class="muted small">按当前规则实时计算</span>
@@ -995,7 +991,6 @@
       <div class="admin-card">
         <div class="card-heading-row">
           <div>
-            <p class="eyebrow">Draw History</p>
             <h2>抽奖记录</h2>
           </div>
           <span class="muted small">最近 100 条</span>
