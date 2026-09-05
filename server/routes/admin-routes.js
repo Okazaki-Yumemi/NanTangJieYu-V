@@ -77,6 +77,8 @@ function adminTransact(appCtx, req, mutator) {
     if (!session) {
       return appCtx.store.abort({ error: ERROR_CODES.FORBIDDEN, message: '请先登录管理后台。' });
     }
+    // 管理操作同样为会话续期：TTL 从最近操作起算而非登录时刻。
+    state.admin_sessions[session.sessionId].last_seen_at = now;
     const outcome = mutator(state, { seeds: appCtx.seeds, now }, session);
     if (outcome && outcome.error) {
       return appCtx.store.abort(outcome);

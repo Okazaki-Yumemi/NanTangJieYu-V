@@ -226,6 +226,23 @@ describe('HTTP integration: full event journey', () => {
     assert.equal(repeat.json.state.me.total_contribution, res.json.state.me.total_contribution);
   });
 
+  it('interaction refreshes session activity so sliding TTL does not drop active players', async () => {
+    const sessionId = playerACookie.split('=')[1];
+    const readLastSeen = () => {
+      const state = JSON.parse(fs.readFileSync(path.join(dataDir, 'state.json'), 'utf8'));
+      return state.sessions[sessionId].last_seen_at;
+    };
+    const before = readLastSeen();
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+
+    const res = await request('POST', '/api/player/interact', {
+      body: { region_id: 'siyuan_gate', action_id: 'investigate', client_request_id: 'session-refresh-1' },
+      headers: { Cookie: playerACookie }
+    });
+    assert.equal(res.status, 200, res.text);
+    assert.ok(readLastSeen() >= before + 1, 'interact should advance the session last_seen_at');
+  });
+
   it('locked region and foreign-team interaction are rejected', async () => {
     const locked = await request('POST', '/api/player/interact', {
       body: { region_id: 'admin_building', action_id: 'investigate', client_request_id: 'locked-1' },

@@ -187,9 +187,14 @@ function registerRoutes(router, appCtx) {
     try {
       const result = await store.transact((state) => {
         const now = nowSec();
-        const user = players.getSessionUser(state, getCookie(req, SESSION_COOKIE));
+        const cookieSessionId = getCookie(req, SESSION_COOKIE);
+        const user = players.getSessionUser(state, cookieSessionId);
         if (!user) {
           return store.abort({ error: ERROR_CODES.USER_NOT_FOUND, message: '请先注册或登录。' });
+        }
+        // 活跃玩家的会话按滑动窗口续期，避免 TTL 从登录时刻起算误伤长时间在线用户。
+        if (cookieSessionId && state.sessions[cookieSessionId]) {
+          state.sessions[cookieSessionId].last_seen_at = now;
         }
         const outcome = interactions.performInteraction(state, user, body, { seeds, now });
         if (outcome.error) {
