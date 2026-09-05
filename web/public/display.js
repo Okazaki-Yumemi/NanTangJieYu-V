@@ -179,18 +179,26 @@
       .sort((a, b) => a.order - b.order)
       .map((region) => {
         const statusLabel = region.closed ? '临时关闭' : NTJ.REGION_STATUS_LABELS[region.status];
+        const season = NTJ.SEASON_STYLES[region.season] || {};
+        const isCleared = region.status === 'cleared';
+        const isLocked = region.status === 'locked';
+        // 与玩家端同语义：异变条 = 剩余量，随调查推进清空；locked / cleared 不再展示易误读的数值
+        const remainingPercent = isCleared || isLocked
+          ? 0
+          : Math.max(0, Math.min(100, ((region.anomaly_remaining / region.max_anomaly) * 100).toFixed(1)));
+        const nums = isCleared ? '' : (isLocked ? '—' : `${formatNumber(region.anomaly_remaining)} / ${formatNumber(region.max_anomaly)}`);
         return `
-          <div class="display-region">
+          <div class="display-region${isCleared ? ' is-cleared' : ''}${isLocked ? ' is-locked' : ''}">
             <div class="region-line">
               <strong>${escapeHtml(region.name)}
-                <span class="tag">${escapeHtml(NTJ.SEASON_STYLES[region.season]?.label || '')}</span>
+                <span class="tag">${escapeHtml(season.label || '')}</span>
               </strong>
-              <span class="nums">${formatNumber(region.anomaly_remaining)} / ${formatNumber(region.max_anomaly)}</span>
+              <span class="nums">${nums}</span>
             </div>
-            <div class="anomaly-bar"><span style="width: ${((region.anomaly_progress || 0) * 100).toFixed(1)}%"></span></div>
+            <div class="anomaly-bar"><span style="width: ${remainingPercent}%; background: linear-gradient(90deg, ${escapeHtml(season.color || '#d9b64a')}, rgba(255, 255, 255, 0.5))"></span></div>
             <div class="region-line" style="margin: 6px 0 0;">
-              <span class="tag">${escapeHtml(statusLabel)}</span>
-              <span class="nums">${((region.anomaly_progress || 0) * 100).toFixed(0)}%</span>
+              <span class="tag status-tag">${escapeHtml(statusLabel)}</span>
+              ${isCleared ? '<span class="nums cleared-note">异变已清零</span>' : ''}
             </div>
           </div>
         `;

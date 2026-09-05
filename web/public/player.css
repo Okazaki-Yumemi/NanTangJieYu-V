@@ -377,20 +377,8 @@ i.energy-dot.on {
   color: var(--gold);
 }
 
-.anomaly-bar {
-  height: 12px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.11);
-  overflow: hidden;
-  margin: 8px 0;
-}
-
 .anomaly-bar span {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
   background: linear-gradient(90deg, var(--season-color, #b3374a), color-mix(in srgb, var(--season-color, #b3374a) 55%, #ffffff));
-  transition: width 0.5s ease;
 }
 
 .region-story {

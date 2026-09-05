@@ -1,7 +1,7 @@
 # UI/UX 迭代状态（STATE）
 
-- 更新时间：2026-09-05
-- HEAD：e8c2208（main，与 origin 同步）
+- 更新时间：2026-09-05（Iteration 2 完成后）
+- HEAD：见 git log（Iter1 = 5946f98）
 - 工作区：`.ntj-beautify-notes.md` 为用户/前次会话的美化备忘（未跟踪，视为用户资产，不提交不删除）
 
 ## 视觉方向（已确立，不推翻）
@@ -14,12 +14,10 @@
 - 大屏 `display.html/js/css`：1920×1080，3s 轮询只读。
 - 管理端 `admin.html/js/css`：1366/1440 桌面。
 
-## 最近完成（本次会话之前）
+## 最近完成（本会话）
 
-- 3D diorama 地图 + 选中上浮高亮（ade96b0）。
-- 立绘去硬边框、600×800 归一化（14e9e60 / 9a3f686 / e8c2208）。
-- 标题季节色竖条、间距节奏（753f4bd）。
-- 抽奖 reel（CSGO 式）+ easter egg 事件（f9b0358 等）。
+- Iteration 1（5946f98）：玩家端剩余异变条语义、图例 orb 化、cleared 金 ✓、互动按钮补削减量/具名阵营限定/冷却文案、section-head 窄屏换行。
+- Iteration 2：大屏 1080 一屏锁定（body height:100vh 桌面端）、grid 行 minmax(0,1fr)、排行榜页码可见、奖池 4 列网格卡内滚动、区域状态语义（locked「—」/cleared 金卡「异变已清零」/条=剩余季节色）、修复大屏异变条 0 高历史 bug（.anomaly-bar 从 player.css 上移 styles.css 共享）、地图提示文案。
 
 ## 已验证页面（2026-09-05 baseline 截图）
 
@@ -28,22 +26,18 @@
 
 ## 已知问题（详见 BACKLOG）
 
-- P0 玩家端异变数值语义矛盾：`284,907 / 290,000 异变` 是"剩余"，进度条却是"已解决%"，方向相反。
-- P0 地图图例四色（金/蓝/绿/米）与 marker 实际视觉（季节色 orb+进度环+灰锁）不对应。
-- P1 cleared 区域 orb 仍是季节色（粉色 ✓ 像“错误”），缺成功语义。
-- P1 大屏排行榜 8 行/页 + space-around → 底部行与页码被裁切。
-- P1 大屏区域状态：locked 显示 `360,000/360,000 0%`、cleared 显示 `0/200,000 100%` 语义混乱。
-- P1 大屏奖池 8 件奖品在中心列溢出裁切。
-- P1 互动按钮未展示服务端已有的 `contribution_hint.anomaly`（异变削减预期）。
-- P1 interactions.json 妹红 outcome 文案「异变 -0」与实际 anomaly [30,60] 矛盾。
-- P2 冷却文案「5 分 0 秒」冗长；admin「强制 CLEAR」中英混排；admin window.prompt 交互粗糙；admin 英文 eyebrow；display 提示「点击大屏地图无效…」给观众看很怪；窄屏 section-head 挤压换行。
-- 运行时 `data/state.json` 有 dev 脏数据（奖品名 "w"、"测试用"），演示前需重置重播种。
+- P1 interactions.json 三处文案（妹红「异变-0」、早苗 Performing、文「全新闻自由」）。
+- P1 admin「强制 CLEAR」等术语 + 确认框后果（Iter3）。
+- P2 admin window.prompt/confirm 粗糙；admin 英文 eyebrow；结束/开始活动按钮区分弱；玩家端 action list 10 键同权重；375px marker label 拥挤；「冷却 1 分 30 秒」折行。
+- 大屏区域列表余 ~70px、动态流滚动（卡内滚动，可接受）。
+- 集成测试偶发 flaky 1 次（复跑全过，观察）。
+- 运行时 `data/state.json` 有 dev 脏数据（奖品名 "w"、"测试用"），演示前删 data/ 重播种。
 
 ## 下一步（优先级）
 
-1. Iteration 1（进行中）：玩家端「异变进度语义 + 区域状态视觉」——剩余条语义、图例重做、cleared 金色 ✓、冷却文案、action meta 补异变范围、section-head 窄屏。
-2. Iteration 2：大屏排行榜溢出 + 区域状态语义 + 奖池布局。
-3. Iteration 3：文案 pass（seeds + 端内提示 + admin 术语统一）。
+1. Iteration 3：文案 pass —— seeds 三处修正、admin 术语统一（强制 CLEAR→强制解决）+ 确认框写明后果、玩家端遗留提示语润色。
+2. Iteration 4：管理端视觉层级（danger/primary 区分、danger 确认样式、表格密度）。
+3. Iteration 5：玩家端 action 分组 + 375px marker 细节 + 430×932 复验。
 
 ## 用户明确要求 / 禁止破坏
 
@@ -54,3 +48,10 @@
 - 地图 API `NTJ.renderCampusMap(container, regions, {selectedId, onSelect}) → {update}` 不可破坏（display.js 依赖）。
 - 用户自己的 yukari.png 改动不提交。
 - 每个稳定 milestone 独立 commit；永不 reset --hard / clean -fd。
+
+## 环境备忘
+
+- 本地 `.env`：PORT=3000，ADMIN_PASSWORD=demo-admin-2026，入口 /demo-admin-entry.html。
+- dev 玩家：测试-紫音 等 20 个（密码 dev1234，见 scripts/seed-dev.js）。
+- 浏览器截图通道易在带 3D 地图的页面上卡死/返回旧帧：每标签页前 1-2 张可靠，之后用新标签页或 DOM 断言代替。
+- CSS/JS 改动需同步 bump HTML 中的 ?v= 版本号（styles.css 现为 v=7；common.js 玩家端 v=3 / 管理端 v=4；app/display.js v=3）。
