@@ -192,7 +192,15 @@
         if (appState.modalOpen) {
           return;
         }
-        const res = await api('GET', '/api/player/state');
+        let res;
+        try {
+          res = await api('GET', '/api/player/state');
+        } catch (error) {
+          if (error.error === 'USER_NOT_FOUND') {
+            handleAuthLost();
+          }
+          return;
+        }
         // 数据没变的轮询周期不做全量重渲染，避免动画重启/图片重建/滚动被顶走；
         // 冷却倒计时由 renderRegionDetail 里的秒级 tick 单独推进。
         const payload = JSON.stringify(res.state);
@@ -424,6 +432,10 @@
 
   function renderRegionDetail() {
     const data = appState.data;
+    if (!data) {
+      elements.regionDetail.innerHTML = '';
+      return;
+    }
     const region = data.regions.find((item) => item.id === appState.selectedRegionId);
     if (!region) {
       elements.regionDetail.innerHTML = '';
@@ -660,7 +672,9 @@
       renderHome();
       showResult(res.action_result);
     } catch (error) {
-      if (error.error === 'COOLDOWN_ACTIVE' && error.retry_in_sec) {
+      if (error.error === 'USER_NOT_FOUND') {
+        handleAuthLost();
+      } else if (error.error === 'COOLDOWN_ACTIVE' && error.retry_in_sec) {
         toast(`冷却中，还需 ${formatDuration(error.retry_in_sec)}`, 'warn');
       } else if (error.error === 'ENERGY_NOT_ENOUGH') {
         toast('能量不足，休息一下再出发。', 'warn');
@@ -735,6 +749,18 @@
   function closeCleared() {
     elements.clearedModal.classList.add('hidden');
     appState.modalOpen = false;
+  }
+
+  // 会话失效（服务端修剪 / 被强制下线 / 多端冲突）：停止轮询并送回登录视图。
+  function handleAuthLost() {
+    if (appState.poller) {
+      appState.poller.stop();
+      appState.poller = null;
+    }
+    appState.data = null;
+    appState.selectedRegionId = null;
+    showRegister('');
+    showError(elements.loginError, '登录状态已失效，请重新登录。');
   }
 
   // ---------- 事件绑定与启动 ----------
