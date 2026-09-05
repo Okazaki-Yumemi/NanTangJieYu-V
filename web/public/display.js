@@ -196,7 +196,7 @@
               <span class="nums">${nums}</span>
             </div>
             <div class="anomaly-bar"><span style="width: ${remainingPercent}%; background: linear-gradient(90deg, ${escapeHtml(season.color || '#d9b64a')}, rgba(255, 255, 255, 0.5))"></span></div>
-            <div class="region-line" style="margin: 6px 0 0;">
+            <div class="region-line" style="margin: 4px 0 0;">
               <span class="tag status-tag">${escapeHtml(statusLabel)}</span>
               ${isCleared ? '<span class="nums cleared-note">异变已清零</span>' : ''}
             </div>

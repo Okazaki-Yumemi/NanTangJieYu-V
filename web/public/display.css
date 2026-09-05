@@ -103,7 +103,7 @@
 
 /* 右列：区域状态是主要信息，分得比动态流更多高度 */
 .display-col.right .display-card.grow:first-child {
-  flex: 1.6 1 0%;
+  flex: 2 1 0%;
 }
 
 .display-card h2 {
@@ -383,7 +383,7 @@
 .display-regions {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
   overflow: auto;
   scrollbar-width: thin;
 }
@@ -391,7 +391,7 @@
 .display-region {
   border: 1px solid rgba(243, 237, 221, 0.14);
   border-radius: 12px;
-  padding: 8px 12px;
+  padding: 7px 12px;
   flex: none;
 }
 
@@ -413,14 +413,14 @@
 }
 
 .display-region .anomaly-bar {
-  margin: 6px 0;
+  margin: 5px 0;
 }
 
 .display-region .region-line {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 
 .display-region strong {
