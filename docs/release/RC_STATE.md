@@ -24,10 +24,16 @@
 - [x] 三端主要 viewport 视觉基线建立且无回归（21 张，见 baselines/MANIFEST）
 - [ ] long-session soak 无泄漏/无状态腐烂（**真机必办**：IAB 撑不住长时标签页，代码级审查无泄漏向量）
 - [x] 网络故障恢复路径可接受（Track F 注入实测 + 代码级）
-- [ ] 完整活动 rehearsal 成功
-- [ ] lottery rehearsal 成功
-- [ ] deployment checklist 完成
-- [ ] `docs/ops/EVENT_RUNBOOK.md` + `EMERGENCY.md` 可用
+- [x] 完整活动 rehearsal 成功（2026-09-05 一次性实例 :3101，PRE-EVENT→EVENT→FINALE→POST-EVENT + 备份/损坏双演习，见 FIELD_TEST_LOG）
+- [x] lottery rehearsal 成功（抽取/确认/领取/作废重抽/防重复/份数抽完/未解锁拒绝，全过）
+- [x] deployment checklist 完成（并入 RUNBOOK 1.1–1.3：.env 规矩含 COOKIE_SECURE 陷阱、启动命令、自检 5 项、防火墙）
+- [x] `docs/ops/EVENT_RUNBOOK.md` + `EMERGENCY.md` 可用（rehearsal 逐步照执行，报错文案与代码逐字核对）
+
+## 剩余冻结前提
+
+1. **真机长时 soak**（唯一硬缺口）：Android Chrome 低端机 + 投影电脑各 ≥30min，按 RUNBOOK/KNOWN_ISSUES 方法记录
+2. 大屏「未开始/全 CLEAR/抽奖后」等次要状态基线（nice-to-have）
+3. 数据清理仍 **BLOCKED_ON_USER_APPROVAL**
 
 ## 确认缺陷台账（摘要，详情 KNOWN_ISSUES）
 
@@ -36,11 +42,15 @@
 | RC-1 | High | FIXED | 会话失效后玩家端停留冻结旧界面 → 前端 401 处理 + 回登录视图（app v9，浏览器端到端验证） |
 | RC-2 | Medium | FIXED | interact/管理操作不刷新会话活跃时间 → 滑动续期（新增集成测试） |
 | RC-3 | Low | WONTFIX 倾向 | 暂停期点未解锁区域报「尚未解锁」而非「活动未开始」（两者都真，重试自愈，不值得动门控顺序） |
+| RC-4 | Low | WONTFIX 倾向 | 每次注册/登录多写一条死会话行（domain 与路由各建一条；仅存储冗余，TTL/forceLogout 均覆盖） |
 
 ## 已验证可靠（本轮证据）
 
-- 幂等：同 `client_request_id` 重复提交返回首次结果（`server/domain/interactions.js` request_locks）
-- 限频：interact 400ms 服务端限频，前端另有 pendingInteract 点击守卫
+- 幂等：同 `client_request_id` 重复提交返回首次结果（`server/domain/interactions.js` request_locks；rehearsal 重放实测）
+- 限频：interact 400ms 服务端限频，前端另有 pendingInteract 点击守卫（rehearsal 连点实测 `RATE_LIMITED`）
 - 轮询失败：静默吞掉下一轮重试，页面不白掉（`NTJ.polling`）
-- 会话持久化：sessions 在 state.json 内，服务重启不掉登录
+- 会话持久化：sessions 在 state.json 内，服务重启不掉登录（rehearsal：管理/玩家 Cookie 均跨重启存活）
 - 错误分层：HTTP 401/403/409/429 映射齐全（player-routes ERROR_STATUS），无 stack 泄露
+- 状态文件自愈：主文件损坏自动从 `.bak` 恢复（`Recovering` 日志实测）；双损坏拒绝启动不静默重建（退出码 1 实测）
+- 抽奖完整性：防重复（池收缩实测）、份数用尽拒绝、作废不占名额且释放中奖席位、权重快照/池大小留痕
+- 报错文案：玩家端/管理端全部提示与 RUNBOOK 附录 B 逐字一致（rehearsal 全量核对）

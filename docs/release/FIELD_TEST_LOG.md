@@ -53,3 +53,16 @@
 - 代码级泄漏审查（本轮完成）：轮询为单 setTimeout 链（poller 唯一、stop 一次）；冷却 tick 自清理；模态 document keydown 监听器随 close() 成对移除；渲染层 innerHTML 重建、无持有节点引用的数组——未发现结构性泄漏向量
 - 结论：**真机长时 soak 为 RC 冻结前必办项**（Android Chrome 低端机 + 投影电脑各一次，≥30min），写入 RUNBOOK 待办
 
+## 2026-09-05 · 全流程 rehearsal（一次性实例 :3101，API 级照手册逐步执行）
+
+- 环境：`PORT=3101` + 全新 `DATA_DIR` + `ADMIN_PASSWORD` 显式设置（NODE_ENV=development）
+- **PRE-EVENT**：healthz ✓；管理登录 ✓；初始态 scheduled/注册开/0码/6区域/8奖品 ✓；生成 10 码 + 禁用 + CSV 导出（11 行含表头）✓；注册 2 人（灵梦/魔理沙各一）✓；负例：禁用码 `CODE_DISABLED` ✓、已用码 `CODE_ALREADY_USED` ✓、未开始互动 `ACTIVITY_NOT_RUNNING` ✓
+- **EVENT**：start ✓；互动结算 ✓；幂等重放 `duplicate:true` 总量不变 ✓；400ms 限流 `RATE_LIMITED` ✓；暂停→互动拒→恢复→互动正常 ✓；关注册→注册拒 `REGISTRATION_CLOSED`→重开 ✓；force_clear 思源门（区域奖解锁 `prizes_available:true`）✓；advance_stage 播报「已强制解决「思源湖」，下一阶段「凯旋门」开启」✓
+- **FINALE（lottery rehearsal）**：抽未解锁奖 `PRIZE_LOCKED（需要先解决「凯旋门」异变）` ✓；书签×2 抽满：第 1 抽池 2/权重快照 4（基础 1+区域排名加成 3）→确认→领取，第 2 抽池缩为 1（防重复生效）另一人中→确认→领取，第 3 抽 `该奖品已被抽完` ✓；区域限定奖 抽→作废（不占名额）→重抽同一人可再中→确认 ✓；记录总览四种状态（pending/confirmed/claimed/void）正确 ✓
+- **POST-EVENT**：备份演习（暂停→整目录拷贝→恢复；ledger 末行可解析）✓；重启持久化（管理/玩家会话均存活、p1 总量 775→888、draws=4 保留）✓；损坏演习 A：state.json 截断→日志 `Recovering … from state.json.bak: Invalid JSON …`→自动恢复数据完整 ✓；损坏演习 B：双文件损坏→退出码 1、`State recovery failed`、拒绝启动不静默重建 ✓；恢复演习 C：备份两文件放回→重启健康 ✓；end 活动→互动拒→重复 end `NO_CHANGE` ✓
+- **发现**：
+  - RC-4（Low）：每次注册/登录在 state.json 写入一条永不使用的死会话行（domain `createSession` 与路由 `transactWithSession` 各建一条；浏览器使用路由那条）
+  - 手册偏差 1：Windows 启动先打两条 `Could not fsync … EPERM` 警告（代码 win32 分支预期噪音），RUNBOOK 1.2 已补说明
+  - 环境教训：Git Bash 中 `VAR=… nohup node … &` 的环境变量前缀会丢失，导致两次进程按 `.env` 落到 :3000/仓库 data——该进程因端口冲突即退，仅触发 initialize 的常规 normalize 写盘（data/ 为 gitignored，无 git 影响）；后续全部改用托管后台任务
+- 测试：rehearsal 后 `npm test` 85/85 PASS
+

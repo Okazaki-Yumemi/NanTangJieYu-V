@@ -35,6 +35,12 @@
 - 影响：活动暂停时点击未解锁区域，提示「尚未解锁」（真但不最相关）。
 - 处理倾向：WONTFIX 倾向——两条信息都真实，玩家重试后自然看到正确提示；改动会动门控顺序，RC 阶段不值得。待观察。
 
+### RC-4 · OPEN · 每次注册/登录写入一条死会话行
+
+- 证据：domain 层 `players.createSession`（registerPlayer :179 / loginPlayer :206）创建并绑定 user_id 的会话；路由层 `transactWithSession`（player-routes.js:76-80）另建一条匿名会话再绑定 user 并种 Cookie。浏览器只会拿到路由那条；domain 那条无任何 Cookie 引用。rehearsal 实测：3 个用户 6 条会话（每人 2 条，同秒创建）。
+- 影响：仅 state.json 每次注册/登录多一行（~100 字节）；TTL 修剪（12h）与 forceLogout（按 user_id 全删）都覆盖它，功能零影响。
+- 处理倾向：WONTFIX 倾向——会话链路是 RC-1/RC-2 刚验证过的最敏感路径，冻结期做纯清理改动的回归风险大于收益；现场规模（≤数百人）存储增量可忽略。留待活动后清理。
+
 ## OBSERVATION（保留观察，未转正）
 
 - IAB 浏览器标签页 3–10 分钟失联（三种页面均发生）：无崩溃转储可查，产品不可归因；真机 soak（RC 冻结必办）将给出真实设备结论

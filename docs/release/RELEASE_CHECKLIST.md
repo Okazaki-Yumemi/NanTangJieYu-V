@@ -63,10 +63,11 @@
 
 ## Operations
 
-- [ ] 生产 env（PORT / ADMIN_PASSWORD / 隐私管理路径 / cookieSecure）
-- [ ] DATA_DIR 持久化位置确认
-- [ ] /healthz 可用
-- [ ] 数据导出 / 备份 / 恢复流程文档化（docs/ops/）
+- [x] 生产 env（PORT / ADMIN_PASSWORD / 隐私管理路径 / cookieSecure）——规则与 `COOKIE_SECURE=0` 陷阱见 RUNBOOK 1.1（http 现场 + production 未关 secure = 登录后即掉线）
+- [x] DATA_DIR 持久化位置确认——启动自检第 5 项（RUNBOOK 1.3）
+- [x] /healthz 可用（不读状态、不建会话，rehearsal 实测）
+- [x] 数据导出 / 备份 / 恢复流程文档化（`docs/ops/EVENT_RUNBOOK.md` §6–7 + `EMERGENCY.md`；rehearsal 实测：暂停→整目录拷贝、双文件恢复、主文件截断自动自愈、双损坏拒绝启动）
+- 全流程 rehearsal 与 lottery rehearsal 记录见 `FIELD_TEST_LOG.md` 2026-09-05 条目
 
 ## 视觉回归基线
 
