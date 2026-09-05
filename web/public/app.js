@@ -312,15 +312,21 @@
     return appState.data.interactions
       .filter((interaction) => !interaction.regions || interaction.regions.includes(region.id))
       .map((interaction) => {
-        let unavailable = '';
-        if (interaction.team_restriction && me && interaction.team_restriction !== me.team) {
-          unavailable = '限指定阵营';
-        }
-        const lastAt = cooldowns[interaction.id] || 0;
-        const cooldownLeft = interaction.cooldown_sec > 0
-          ? Math.max(0, interaction.cooldown_sec - (now - lastAt))
-          : 0;
-        return { ...interaction, unavailable, cooldown_left: cooldownLeft };
+        const restrictionTeam = interaction.team_restriction
+          ? appState.data.teams.find((item) => item.id === interaction.team_restriction)
+          : null;
+        const teamBlocked = Boolean(interaction.team_restriction && me && interaction.team_restriction !== me.team);
+        return {
+          ...interaction,
+          restriction_team_name: restrictionTeam ? restrictionTeam.short_name : '',
+          team_blocked: teamBlocked,
+          unavailable: teamBlocked
+            ? `仅限${restrictionTeam ? restrictionTeam.short_name : '指定阵营'}`
+            : '',
+          cooldown_left: interaction.cooldown_sec > 0
+            ? Math.max(0, interaction.cooldown_sec - (now - (cooldowns[interaction.id] || 0)))
+            : 0
+        };
       });
   }
 
@@ -335,7 +341,11 @@
     const season = NTJ.SEASON_STYLES[region.season] || { label: '', color: '#888', soft: '#eee' };
     const statusLabel = region.closed ? '临时关闭' : NTJ.REGION_STATUS_LABELS[region.status];
     const story = region.status === 'cleared' ? region.cleared_story : region.description;
-    const progressPercent = ((region.anomaly_progress || 0) * 100).toFixed(1);
+    const isCleared = region.status === 'cleared';
+    // 异变条 = 剩余量：从满条开始，随调查推进逐渐清空，与「剩余异变」数字同向。
+    const remainingPercent = isCleared
+      ? 0
+      : Math.max(0, Math.min(100, ((region.anomaly_remaining / region.max_anomaly) * 100).toFixed(1)));
 
     let unlockHint = '';
     if (region.status === 'locked') {
@@ -358,15 +368,16 @@
             ${actions.map((action) => {
               const disabled = action.unavailable || action.cooldown_left > 0 || appState.pendingInteract;
               const hint = action.contribution_hint;
+              const tag = action.team_restriction
+                ? `<em class="action-tag${action.team_blocked ? ' blocked' : ''}">${escapeHtml(action.team_blocked ? action.unavailable : `${action.restriction_team_name}限定`)}</em>`
+                : '';
               return `
-                <button type="button" class="action-btn" data-action="${escapeHtml(action.id)}"
+                <button type="button" class="action-btn${action.team_blocked ? ' is-team-locked' : ''}" data-action="${escapeHtml(action.id)}"
                   ${disabled ? 'disabled' : ''}>
-                  <span class="action-name">${escapeHtml(action.name)}
-                    ${action.team_restriction ? `<em class="action-tag">${escapeHtml(action.unavailable || '阵营限定')}</em>` : ''}
-                  </span>
+                  <span class="action-name">${escapeHtml(action.name)}${tag}</span>
                   <span class="action-desc">${escapeHtml(action.description)}</span>
                   <span class="action-meta muted">
-                    ⚡${action.energy_cost} · 贡献 ${hint.contribution[0]}~${hint.contribution[1]}
+                    ⚡${action.energy_cost} · 贡献 ${hint.contribution[0]}~${hint.contribution[1]} · 削减异变 ${hint.anomaly[0]}~${hint.anomaly[1]}
                     ${action.cooldown_left > 0 ? ` · 冷却中 ${formatDuration(action.cooldown_left)}` : ''}
                     ${action.cooldown_sec > 0 && action.cooldown_left <= 0 ? ` · 冷却 ${formatDuration(action.cooldown_sec)}` : ''}
                   </span>
@@ -385,14 +396,18 @@
             <h3>${escapeHtml(region.name)} <span class="season-chip">${escapeHtml(season.label)}</span></h3>
             <p class="muted small">${escapeHtml(region.title || '')} · ${statusLabel} · ${formatNumber(region.participant_count)} 人参与</p>
           </div>
-          <div class="region-anomaly">
-            <strong>${formatNumber(region.anomaly_remaining)}</strong>
-            <span class="muted small">/ ${formatNumber(region.max_anomaly)} 异变</span>
+          <div class="region-anomaly${isCleared ? ' is-cleared' : ''}">
+            ${isCleared
+              ? '<strong>已解决</strong><span class="muted small">异变已清零</span>'
+              : `<strong>${formatNumber(region.anomaly_remaining)}</strong><span class="muted small">剩余异变 / 共 ${formatNumber(region.max_anomaly)}</span>`}
           </div>
         </div>
-        <div class="anomaly-bar">
-          <span style="width: ${progressPercent}%"></span>
+        ${isCleared ? '' : `
+        <div class="anomaly-bar" role="progressbar" aria-label="剩余异变"
+          aria-valuemin="0" aria-valuemax="${region.max_anomaly}" aria-valuenow="${region.anomaly_remaining}">
+          <span style="width: ${remainingPercent}%"></span>
         </div>
+        `}
         <p class="region-story">${escapeHtml(story || '')}</p>
         ${unlockHint}
         ${actionsHtml}

@@ -23,9 +23,10 @@ NTJ.formatDuration = function formatDuration(seconds) {
   }
   const minutes = Math.floor(total / 60);
   if (minutes < 60) {
-    return `${minutes} 分 ${total % 60} 秒`;
+    return total % 60 === 0 ? `${minutes} 分钟` : `${minutes} 分 ${total % 60} 秒`;
   }
-  return `${Math.floor(minutes / 60)} 时 ${minutes % 60} 分`;
+  const hours = Math.floor(minutes / 60);
+  return minutes % 60 === 0 ? `${hours} 小时` : `${hours} 时 ${minutes % 60} 分`;
 };
 
 NTJ.formatTime = function formatTime(epochSeconds) {
