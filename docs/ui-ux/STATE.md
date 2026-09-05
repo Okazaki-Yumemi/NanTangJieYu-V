@@ -1,7 +1,7 @@
 # UI/UX 迭代状态（STATE）
 
-- 更新时间：2026-09-05（Iteration 6 完成后）
-- HEAD：见 git log（Iter5 = 5ec8d48，Iter6 = 0748fb4；每次 commit 后 push origin main）
+- 更新时间：2026-09-05（Iteration 7 完成后）
+- HEAD：见 git log（Iter5 = 5ec8d48，Iter6 = 0748fb4，Iter7 = e668dc1；每次 commit 后 push origin main）
 - 工作区：`.ntj-beautify-notes.md` 为用户/前次会话的美化备忘（未跟踪，视为用户资产，不提交不删除）
 
 ## 视觉方向（已确立，不推翻）
@@ -21,6 +21,7 @@
 - Iteration 3（027e0f3）：文案第一批（interactions 三处与结算矛盾的文本）。
 - Iteration 4（8b78366）：admin 主次按钮视觉分层 + 确认框后果说明。
 - Iteration 5（5ec8d48）：玩家端行动分组——常用（调查异常点/集中调查/本阵营协助）平铺，其余收进「更多行动 (N)」折叠区；aria-expanded/controls、展开状态存 appState 跨重渲染保持；修复 display:flex 覆盖 [hidden] 的折叠失效 bug；375px 页头「进行中」chip nowrap、brand-eyebrow ≤430px 字距 0.08em 消除孤字折行。验证：375/390/430 DOM 断言 + 大屏 bodyScrollH=1080 回归，npm test 84/84。
+- Iteration 7（e668dc1）：文案第二批——admin 移除 5 处操作性英文 eyebrow（保留抽奖台 QUICK PICK 仪式牌与 PLAYER DROP 彩蛋，与其他页纯中文标题对齐）；空态统一「暂无…」；display 空态（暂无数据/等待第一份调查报告）与 seeds 语气复扫，无需改动。npm test 84/84。
 - Iteration 6（0748fb4）：admin 原生 confirm/prompt 全部替换为页内模态 openAdminModal（confirm/prompt/select 三形态；Esc/遮罩取消、Enter 提交、Tab 焦点圈、焦点归还、danger 红确认按钮）；post() confirm 参数升级为配置对象；换阵营改下拉；调贡献/调权重补数值校验；封禁补确认；作废改「先原因后确认」；顺带修复原有潜伏 bug（换阵营处理器引用未定义的 player 变量，点击即 ReferenceError）。验证：1366×768 DOM 断言（开/关/Esc/Tab 圈/焦点归还/danger 样式/select 选项/空值校验 toast）+ 截图，npm test 84/84。
 
 ## 已验证页面（2026-09-05 baseline 截图）
@@ -32,7 +33,7 @@
 
 ## 已知问题（详见 BACKLOG）
 
-- P2 admin 英文 eyebrow；「冷却 1 分 30 秒」折行。
+- P2 「冷却 1 分 30 秒」折行。
 - 375px 地图 marker label 实测尚可（6 标记无重叠、无出界），暂降级为观察项。
 - 大屏动态流滚动（卡内滚动，可接受）。
 - 集成测试偶发 flaky 1 次（复跑全过，观察）。
@@ -42,15 +43,15 @@
 
 ## 下一步（优先级）
 
-1. Iteration 7：copy pass 第二批（display 空态、admin 文案全扫、角色语气校对）。
-2. Iteration 8 候选：admin 英文 eyebrow 取舍（倾向保留抽奖台仪式感，仅去杂乱）。
-3. 观察项：375px marker 间距、「冷却 1 分 30 秒」折行、flaky 测试。
+1. Iteration 8 候选：结束活动 vs 开始活动 视觉区分加强；「冷却 1 分 30 秒」折行润色。
+2. 观察项：375px marker 间距、flaky 测试、display 动态流滚动。
+3. 演示前：删 data/ 重播种（现有 "w"/「测试用」脏数据）。
 
 ## 版本号现状
 
 - index.html: styles v8 / player v8 / common v3 / map v3 / app v5
 - display.html: styles v8 / display v9 / common v3 / map v3 / display.js v4
-- admin.html: styles v8 / admin.css v13 / common v4 / admin.js v13
+- admin.html: styles v8 / admin.css v13 / common v4 / admin.js v14
 - 改 CSS/JS 后必须 bump 对应 ?v=（styles.css 三端共享，需三处同步 bump；本会话曾因忘 bump 误判 CSS 未生效）。
 
 ## 用户明确要求 / 禁止破坏

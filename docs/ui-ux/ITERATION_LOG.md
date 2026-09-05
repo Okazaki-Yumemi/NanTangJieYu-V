@@ -41,3 +41,11 @@ h+overflow hidden；grid 行 minmax(0,1fr)；奖池 4 列网格 + 卡内滚动�
 - validation：1366×768 DOM 断言（模态开/关、Esc、Tab 圈序、焦点归还、danger class、select 选项与预选、空值校验 toast、Enter 提交改名成功 + toast）+ 模态截图；npm test 84/84
 - commit：0748fb4
 - next：Iter7 copy pass 第二批（display 空态、admin 文案全扫、角色语气校对）
+
+## Iteration 7 — 文案 pass 第二批（2026-09-05）
+
+- goal：display 空态、admin 全量文案、角色语气校对
+- changed：admin.js 移除 5 处英文 eyebrow（Prize Catalog/Prize Pool/Weight Preview/Draw History/Weighted Lottery·现场抽取），保留抽奖台 QUICK PICK 仪式牌与 PLAYER DROP 彩蛋（用户有意设计）；「还没有抽奖记录」→「暂无抽奖记录」统一管理端空态语感；display.js 空态（「暂无数据。」「等待第一份调查报告……」）与 seeds 语气（阵营 slogan、互动描述、cleared_story 线索链）复扫判定达标不动
+- validation：抽奖页 DOM 断言（eyebrows=[]、五个 h2 中文、QuickPick 保留）+ 截图；npm test 84/84
+- commit：e668dc1
+- next：Iter8 候选（开始/结束活动区分、冷却折行）或演示前数据清理

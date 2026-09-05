@@ -10,7 +10,6 @@
 
 ## P2
 
-- [ ] admin 英文 eyebrow（Quick Pick/Prize Catalog…）→ 中文或去掉。（Iter6 候选）
 - [ ] 结束活动 vs 开始活动 视觉区分加强。
 - [ ] 玩家端「冷却 1 分 30 秒」在 meta 行折行（可改「90 秒」或缩写）。
 - [ ] 集成测试偶发 flaky（连跑曾 1 次 fail，复跑全过；如复发需定位）。
@@ -32,3 +31,4 @@
 - Iter4（8b78366）：admin 主/危险按钮视觉分层 + 确认框后果说明 + focus-visible。
 - Iter5（5ec8d48）：玩家端行动分组（常用/更多行动折叠，含 [hidden] 失效 bug 修复）；375px 页头 chip 不折行、eyebrow 窄屏字距防孤字。
 - Iter6（0748fb4）：admin 原生 confirm/prompt 全部替换为页内模态（焦点管理/危险态红确认）；换阵营改下拉；封禁补确认；修复换阵营 player 未定义的历史 bug。
+- Iter7（e668dc1）：admin 去除操作性英文 eyebrow（保留 QUICK PICK 仪式牌）；空态统一「暂无…」。
