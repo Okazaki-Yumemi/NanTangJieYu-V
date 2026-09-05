@@ -58,3 +58,11 @@ h+overflow hidden；grid 行 minmax(0,1fr)；奖池 4 列网格 + 卡内滚动�
 - validation：computed style 断言（blob filter none、glass 12px）；大屏 feed 探针 7.2s（跨 2 个轮询周期）节点未重建、scrollTop 40 保持；玩家 me-card 探针跨轮询周期存活；湖底打捞冷却 57→55→31 秒原位递减；390px 截图视觉无损；bodyScrollH=1080 回归；npm test 84/84
 - commit：4482376
 - next：如仍有卡顿，候选 = 光晕 mix-blend-mode、粒子数量；Iter8 功能项照旧
+
+## Iteration 8 — 危险操作视觉与冷却折行（2026-09-05）
+
+- goal：BACKLOG 收尾——结束/开始活动区分加强、「冷却 1 分 30 秒」折行
+- changed：admin「结束活动」改 is-solid 实底红（全场唯一，与可逆的暂停/恢复拉开档位），helper 补「临时停场请用「暂停活动」，「结束活动」不可逆。」；app.js actionMetaText 改为分段 span.meta-keep（nowrap），折行只发生在「·」分隔处，refreshCooldownsInPlace 相应改 innerHTML；player.css .meta-keep；seeds 湖底打捞琪露诺文案补「湖面」主语；bump admin v15/v14、app v7、player v9；dev server 重启加载 seeds（taskkill 28412 后重启，后台任务 failed 通知为旧进程被杀的预期结果）
+- validation：admin computed（linear-gradient(135deg,#ff5c79,#b0123a) + 白字 + helper 新文案）；375px 展开更多行动后冷却中 58 秒段单行、湖底打捞/集中调查 meta 均在分隔处折行；375px 截图；npm test 84/84
+- commit：13ec962
+- next：演示前数据清理；观察项照旧

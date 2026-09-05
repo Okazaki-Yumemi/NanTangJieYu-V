@@ -1,7 +1,7 @@
 # UI/UX 迭代状态（STATE）
 
-- 更新时间：2026-09-05（性能专项完成）
-- HEAD：见 git log（Iter7 = e668dc1，性能专项 = 4482376；每次 commit 后 push origin main）
+- 更新时间：2026-09-05（Iteration 8 完成后）
+- HEAD：见 git log（性能专项 = 4482376，Iter8 = 13ec962；每次 commit 后 push origin main）
 - 工作区：`.ntj-beautify-notes.md` 为用户/前次会话的美化备忘（未跟踪，视为用户资产，不提交不删除）
 
 ## 视觉方向（已确立，不推翻）
@@ -21,6 +21,7 @@
 - Iteration 3（027e0f3）：文案第一批（interactions 三处与结算矛盾的文本）。
 - Iteration 4（8b78366）：admin 主次按钮视觉分层 + 确认框后果说明。
 - Iteration 5（5ec8d48）：玩家端行动分组——常用（调查异常点/集中调查/本阵营协助）平铺，其余收进「更多行动 (N)」折叠区；aria-expanded/controls、展开状态存 appState 跨重渲染保持；修复 display:flex 覆盖 [hidden] 的折叠失效 bug；375px 页头「进行中」chip nowrap、brand-eyebrow ≤430px 字距 0.08em 消除孤字折行。验证：375/390/430 DOM 断言 + 大屏 bodyScrollH=1080 回归，npm test 84/84。
+- Iteration 8（13ec962）：「结束活动」升级全场唯一实底红（is-solid）+ helper 写明「临时停场用暂停、结束不可逆」；玩家端行动 meta 分段 nowrap（折行只发生在·分隔处，「冷却 1 分 30 秒」不再拆行，375px 实测各段单行）；湖底打捞琪露诺文案补主语（dev server 已重启加载）。验证：admin computed gradient + helper 文案、375px 冷却段单行 + 截图；npm test 84/84。
 - 性能专项（4482376）：卡顿治理——背景光晕去 70px blur 滤镜、玻璃 16→12px、玩家/大屏轮询载荷守卫（不再无变化全量重渲染，顺带修复大屏动态流每 3s 滚动重置）、冷却倒计时改区域详情内 1Hz 原位刷新、地图视差 rAF 节流。验证：computed style（blob filter none / glass 12px）、大屏滚动 7.2s 保持、玩家 me-card 跨轮询存活、冷却 57→55→31 秒原位递减、截图视觉无损；npm test 84/84。
 - Iteration 7（e668dc1）：文案第二批——admin 移除 5 处操作性英文 eyebrow（保留抽奖台 QUICK PICK 仪式牌与 PLAYER DROP 彩蛋，与其他页纯中文标题对齐）；空态统一「暂无…」；display 空态（暂无数据/等待第一份调查报告）与 seeds 语气复扫，无需改动。npm test 84/84。
 - Iteration 6（0748fb4）：admin 原生 confirm/prompt 全部替换为页内模态 openAdminModal（confirm/prompt/select 三形态；Esc/遮罩取消、Enter 提交、Tab 焦点圈、焦点归还、danger 红确认按钮）；post() confirm 参数升级为配置对象；换阵营改下拉；调贡献/调权重补数值校验；封禁补确认；作废改「先原因后确认」；顺带修复原有潜伏 bug（换阵营处理器引用未定义的 player 变量，点击即 ReferenceError）。验证：1366×768 DOM 断言（开/关/Esc/Tab 圈/焦点归还/danger 样式/select 选项/空值校验 toast）+ 截图，npm test 84/84。
@@ -44,16 +45,16 @@
 
 ## 下一步（优先级）
 
-1. Iteration 8 候选：结束活动 vs 开始活动 视觉区分加强；「冷却 1 分 30 秒」折行润色。
+1. Iteration 9 候选：演示前数据清理（删 data/ 重播种）；管理端表格在区域很多时的密度复查。
 2. 性能备注：blob 去滤镜、玻璃 12px、轮询载荷守卫、冷却原位 tick、视差 rAF 均已落地（4482376）；如仍有卡顿，下一步候选是 mix-blend-mode: screen 的光晕层与 34 个粒子数量。
 2. 观察项：375px marker 间距、flaky 测试、display 动态流滚动。
 3. 演示前：删 data/ 重播种（现有 "w"/「测试用」脏数据）。
 
 ## 版本号现状
 
-- index.html: styles v9 / player v8 / common v3 / map v4 / app v6
+- index.html: styles v9 / player v9 / common v3 / map v4 / app v7
 - display.html: styles v9 / display v9 / common v3 / map v4 / display.js v5
-- admin.html: styles v8 / admin.css v13 / common v4 / admin.js v14
+- admin.html: styles v9 / admin.css v14 / common v4 / admin.js v15
 - 改 CSS/JS 后必须 bump 对应 ?v=（styles.css 三端共享，需三处同步 bump；本会话曾因忘 bump 误判 CSS 未生效）。
 
 ## 用户明确要求 / 禁止破坏
