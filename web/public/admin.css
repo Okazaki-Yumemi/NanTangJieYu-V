@@ -1,81 +1,81 @@
-/* 管理后台样式（桌面优先） */
 
-.admin-body {
-  min-height: 100vh;
-  background: transparent;
-}
+/* ---------- 模态确认 / 输入 ---------- */
 
-.admin-body h1,
-.admin-body h2,
-.admin-body h3,
-.admin-body button,
-.admin-body input,
-.admin-body select {
-  font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei UI', 'Microsoft YaHei', sans-serif;
-}
-
-.admin-body input,
-.admin-body select {
-  color: var(--ink);
-  color-scheme: dark;
-  background: rgba(255, 255, 255, 0.055);
-}
-
-.admin-body input::placeholder {
-  color: rgba(154, 160, 181, 0.72);
-}
-
-.admin-body input:focus,
-.admin-body select:focus {
-  outline: none;
-  border-color: rgba(255, 77, 109, 0.72);
-  box-shadow: 0 0 0 3px rgba(255, 77, 109, 0.14);
-}
-
-.admin-login {
+.admin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
-  padding: 20px;
+  padding: 24px;
+  background: rgba(8, 6, 14, 0.62);
+  backdrop-filter: blur(4px);
+  animation: admin-modal-fade 0.2s ease;
 }
 
-.login-card {
-  position: relative;
-  width: 100%;
-  max-width: 360px;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.075), transparent 52%),
-    var(--panel);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+.admin-modal {
+  width: min(440px, 100%);
   border: 1px solid var(--line);
-  border-radius: 18px;
-  box-shadow: var(--shadow);
-  padding: 28px 24px;
-  text-align: center;
-  overflow: hidden;
+  border-radius: 14px;
+  background: linear-gradient(170deg, rgba(32, 24, 44, 0.97), rgba(16, 13, 24, 0.98));
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  padding: 18px 20px;
+  animation: admin-modal-pop 0.2s cubic-bezier(0.34, 1.4, 0.64, 1);
 }
 
-.login-card h1 {
-  margin: 4px 0 18px;
-  font-size: 22px;
-  color: var(--accent);
+.admin-modal h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--ink);
 }
 
-.login-card input {
+.admin-modal-message {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  white-space: pre-line;
+}
+
+.admin-modal-field {
   width: 100%;
+  margin-top: 12px;
   border: 1px solid var(--line);
-  border-radius: 11px;
-  padding: 11px 12px;
-  font-size: 15px;
-  margin-bottom: 12px;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13.5px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink);
 }
 
-.admin-shell {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 16px 16px 40px;
+.admin-modal-field:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.admin-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+@keyframes admin-modal-fade {
+  from { opacity: 0; }
+}
+
+@keyframes admin-modal-pop {
+  from { opacity: 0; transform: scale(0.95) translateY(6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-modal-overlay,
+  .admin-modal {
+    animation: none;
+  }
+}
+6px 16px 40px;
 }
 
 .admin-header {

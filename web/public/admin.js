@@ -49,8 +49,8 @@
     renderTab();
   }
 
-  async function post(pathname, body, { confirmText } = {}) {
-    if (confirmText && !window.confirm(confirmText)) {
+  async function post(pathname, body, { confirm = null } = {}) {
+    if (confirm && !(await adminConfirm(confirm))) {
       return null;
     }
     const res = await api('POST', pathname, body);
@@ -60,6 +60,109 @@
     }
     renderTab();
     return res;
+  }
+
+  // ---------- 模态确认 / 输入（替代原生 confirm/prompt，防现场误触误关） ----------
+
+  function openAdminModal(config) {
+    return new Promise((resolve) => {
+      const {
+        title,
+        message = '',
+        mode = 'confirm',
+        confirmLabel = '确定',
+        cancelLabel = '取消',
+        danger = false,
+        initialValue = '',
+        placeholder = '',
+        options = null
+      } = config;
+      const previouslyFocused = document.activeElement;
+      const overlay = document.createElement('div');
+      overlay.className = 'admin-modal-overlay';
+      const field = options
+        ? `<select class="admin-modal-field" id="admin-modal-field">${options.map((opt) => `<option value="${escapeHtml(opt.value)}"${opt.value === initialValue ? ' selected' : ''}>${escapeHtml(opt.label)}</option>`).join('')}</select>`
+        : (mode === 'prompt'
+          ? `<input class="admin-modal-field" id="admin-modal-field" type="text" value="${escapeHtml(initialValue)}" placeholder="${escapeHtml(placeholder)}" />`
+          : '');
+      overlay.innerHTML = `
+        <div class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="admin-modal-title">
+          <h3 id="admin-modal-title">${escapeHtml(title)}</h3>
+          ${message ? `<p class="admin-modal-message">${escapeHtml(message)}</p>` : ''}
+          ${field}
+          <div class="admin-modal-actions">
+            <button type="button" class="action-btn" data-modal-cancel>${escapeHtml(cancelLabel)}</button>
+            <button type="button" class="action-btn ${danger ? 'danger' : 'primary'}" data-modal-confirm>${escapeHtml(confirmLabel)}</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+
+      const fieldEl = overlay.querySelector('#admin-modal-field');
+      const confirmBtn = overlay.querySelector('[data-modal-confirm]');
+      const cancelBtn = overlay.querySelector('[data-modal-cancel]');
+
+      function close(result) {
+        document.removeEventListener('keydown', onKeydown, true);
+        overlay.remove();
+        if (previouslyFocused && previouslyFocused.isConnected && previouslyFocused.focus) {
+          previouslyFocused.focus();
+        }
+        resolve(result);
+      }
+      function submit() {
+        close(mode === 'confirm' ? true : fieldEl.value);
+      }
+      function cancel() {
+        close(mode === 'confirm' ? false : null);
+      }
+
+      confirmBtn.addEventListener('click', submit);
+      cancelBtn.addEventListener('click', cancel);
+      overlay.addEventListener('mousedown', (event) => {
+        if (event.target === overlay) {
+          cancel();
+        }
+      });
+      if (fieldEl) {
+        fieldEl.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            submit();
+          }
+        });
+      }
+
+      function onKeydown(event) {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          cancel();
+        } else if (event.key === 'Tab') {
+          const focusables = [fieldEl, cancelBtn, confirmBtn].filter((el) => el);
+          const index = focusables.indexOf(document.activeElement);
+          event.preventDefault();
+          const next = event.shiftKey
+            ? focusables[(index - 1 + focusables.length) % focusables.length]
+            : focusables[(index + 1) % focusables.length];
+          next.focus();
+        }
+      }
+      document.addEventListener('keydown', onKeydown, true);
+
+      (fieldEl || confirmBtn).focus();
+    });
+  }
+
+  function adminConfirm(config) {
+    return openAdminModal({ ...config, mode: 'confirm' });
+  }
+
+  function adminPrompt(config) {
+    return openAdminModal({ ...config, mode: 'prompt' });
+  }
+
+  function adminSelect(config) {
+    return openAdminModal({ ...config, mode: 'prompt' });
   }
 
   function renderHeader() {
@@ -173,13 +276,23 @@
     for (const button of panel.querySelectorAll('[data-activity]')) {
       button.addEventListener('click', async () => {
         const action = button.dataset.activity;
-        const confirmText = action === 'end'
-          ? '确定要结束活动吗？结束后玩家无法继续互动与获取贡献，该操作会写入管理日志。'
+        const confirm = action === 'end'
+          ? {
+            title: '结束活动',
+            message: '结束后玩家无法继续互动与获取贡献，该操作会写入管理日志。',
+            confirmLabel: '结束活动',
+            danger: true
+          }
           : (action === 'advance_stage'
-            ? `将把「${currentRegion ? currentRegion.name : ''}」直接标记为已解决，注入对应奖品并解锁下一区域，玩家端会收到系统播报。此操作会写入管理日志。确定继续？`
+            ? {
+              title: `推进阶段：解决「${currentRegion ? currentRegion.name : ''}」`,
+              message: '将把该区域直接标记为已解决，注入对应奖品并解锁下一区域，玩家端会收到系统播报。此操作会写入管理日志。',
+              confirmLabel: '标记为已解决',
+              danger: true
+            }
             : null);
-        try {
-          const res = await post('/api/admin/activity', { action }, { confirmText });
+          try {
+            const res = await post('/api/admin/activity', { action }, { confirm });
           if (res) {
             toast(res.message, 'success');
           }
@@ -246,11 +359,16 @@
               return;
             }
           }
-          const confirmText = op === 'force_clear'
-            ? `将把「${regionName(regionId)}」直接标记为已解决，解锁后续区域与对应奖品。此操作会写入管理日志。确定继续？`
+          const confirm = op === 'force_clear'
+            ? {
+              title: `强制解决「${regionName(regionId)}」`,
+              message: '将把该区域直接标记为已解决，解锁后续区域与对应奖品。此操作会写入管理日志。',
+              confirmLabel: '强制解决',
+              danger: true
+            }
             : null;
           try {
-            const res = await post('/api/admin/region', body, { confirmText });
+            const res = await post('/api/admin/region', body, { confirm });
             if (res) {
               toast(res.message, 'success');
             }
@@ -329,44 +447,103 @@
         button.addEventListener('click', async () => {
           const op = button.dataset.op;
           const name = row.querySelector('strong').textContent;
+          const player = admin.players.find((item) => item.id === userId);
           let body = { user_id: userId, op };
           if (op === 'adjust_contribution') {
-            const amount = window.prompt(`调整 ${name} 的贡献值（正数增加，负数扣减）：`);
+            const amount = await adminPrompt({
+              title: `调整 ${name} 的贡献值`,
+              message: '正数增加，负数扣减。',
+              placeholder: '如 50 或 -20',
+              confirmLabel: '调整'
+            });
             if (amount === null) {
               return;
             }
-            const reason = window.prompt('调整原因（会写入流水，如「舞台补发」「数据修正」）：') || '管理员调整';
-            body = { ...body, amount: Number(amount), reason };
+            if (amount.trim() === '' || !Number.isFinite(Number(amount))) {
+              toast('请输入有效的贡献值数值', 'warn');
+              return;
+            }
+            const reason = await adminPrompt({
+              title: '调整原因',
+              message: '会写入流水，如「舞台补发」「数据修正」。'
+            });
+            body = { ...body, amount: Number(amount), reason: reason || '管理员调整' };
           } else if (op === 'set_weight_override') {
-            const value = window.prompt(`设置 ${name} 的抽奖权重调整量（在当前权重基础上 +/-）：`, '0');
+            const value = await adminPrompt({
+              title: `设置 ${name} 的抽奖权重调整量`,
+              message: '在当前权重基础上增减，如 1 或 -1。',
+              initialValue: '0',
+              confirmLabel: '设置'
+            });
             if (value === null) {
+              return;
+            }
+            if (value.trim() === '' || !Number.isFinite(Number(value))) {
+              toast('请输入有效的权重数值', 'warn');
               return;
             }
             body = { ...body, value: Number(value) };
           } else if (op === 'rename') {
-            const displayName = window.prompt(`修改 ${name} 的昵称（敏感词会被拒绝）：`);
+            const displayName = await adminPrompt({
+              title: `修改 ${name} 的昵称`,
+              message: '敏感词会被拒绝。',
+              confirmLabel: '修改'
+            });
             if (!displayName) {
               return;
             }
             body = { ...body, display_name: displayName };
           } else if (op === 'switch_team') {
-            const team = window.prompt(`将 ${name} 换到哪个阵营？输入 reimu 或 marisa\n（个人贡献会随人迁移到新阵营的队伍总量，播报类队伍加成不迁移）`, player.team);
+            const team = await adminSelect({
+              title: `将 ${name} 换到哪个阵营？`,
+              message: '个人贡献会随人迁移到新阵营的队伍总量，播报类队伍加成不迁移。',
+              initialValue: player.team,
+              options: [
+                { value: 'reimu', label: '灵梦队（reimu）' },
+                { value: 'marisa', label: '魔理沙队（marisa）' }
+              ],
+              confirmLabel: '换阵营'
+            });
             if (!team) {
               return;
             }
-            body = { ...body, team: team.trim() };
+            body = { ...body, team };
           } else if (op === 'rebind_code') {
-            const code = window.prompt(`为 ${name} 换绑新的注册码（旧码会退役禁用）：\n新码必须是未使用的可用码`);
+            const code = await adminPrompt({
+              title: `为 ${name} 换绑注册码`,
+              message: '旧码会退役禁用；新码必须是未使用的可用码。',
+              placeholder: '输入新注册码',
+              confirmLabel: '换绑'
+            });
             if (!code) {
               return;
             }
             body = { ...body, code: code.trim().toUpperCase() };
           } else if (op === 'force_logout') {
-            if (!window.confirm(`强制下线 ${name}？该玩家所有登录会话会被清除，需要重新登录。`)) {
+            const confirmed = await adminConfirm({
+              title: `强制下线 ${name}`,
+              message: '该玩家所有登录会话会被清除，需要重新登录。',
+              confirmLabel: '强制下线',
+              danger: true
+            });
+            if (!confirmed) {
+              return;
+            }
+          } else if (op === 'ban') {
+            const confirmed = await adminConfirm({
+              title: `封禁 ${name}`,
+              message: '封禁后该玩家将无法登录与互动，可通过「解封」恢复。',
+              confirmLabel: '封禁',
+              danger: true
+            });
+            if (!confirmed) {
               return;
             }
           } else if (op === 'reset_password') {
-            const password = window.prompt(`为 ${name} 设置新密码：`);
+            const password = await adminPrompt({
+              title: `为 ${name} 设置新密码`,
+              confirmLabel: '设置'
+            });
             if (!password) {
               return;
             }
@@ -929,7 +1106,15 @@
 
     for (const button of panel.querySelectorAll('[data-draw]')) {
       button.addEventListener('click', async () => {
-        if (lotteryState.isDrawing || !window.confirm('确认执行抽奖？')) {
+        if (lotteryState.isDrawing) {
+          return;
+        }
+        const confirmed = await adminConfirm({
+          title: '执行抽奖',
+          message: '将按当前权重随机产生一名获奖者，结果立即生效。',
+          confirmLabel: '执行抽奖'
+        });
+        if (!confirmed) {
           return;
         }
         const animationId = ++lotteryState.animationId;
@@ -965,11 +1150,24 @@
         const drawId = button.dataset.drawId;
         let body = { draw_id: drawId, op: button.dataset.record };
         if (body.op === 'void') {
-          const reason = window.prompt('作废原因（会写入日志）：') || '管理员作废';
-          if (!window.confirm('确认作废该中奖记录？作废后该玩家可重新参与抽奖。')) {
+          const reason = await adminPrompt({
+            title: '作废该中奖记录',
+            message: '作废原因会写入日志。',
+            placeholder: '如「重复中奖」'
+          });
+          if (reason === null) {
             return;
           }
-          body = { ...body, reason };
+          const confirmed = await adminConfirm({
+            title: '确认作废',
+            message: '作废后该中奖记录失效，该玩家可重新参与抽奖。',
+            confirmLabel: '作废',
+            danger: true
+          });
+          if (!confirmed) {
+            return;
+          }
+          body = { ...body, reason: reason || '管理员作废' };
         }
         try {
           const res = await post('/api/admin/lottery/record', body);
