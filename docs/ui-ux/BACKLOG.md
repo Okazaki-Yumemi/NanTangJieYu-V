@@ -10,7 +10,6 @@
 
 ## P2
 
-- [ ] admin window.prompt/confirm → 自定义小模态（改造量大，现场前评估）。（Iter6 候选）
 - [ ] admin 英文 eyebrow（Quick Pick/Prize Catalog…）→ 中文或去掉。（Iter6 候选）
 - [ ] 结束活动 vs 开始活动 视觉区分加强。
 - [ ] 玩家端「冷却 1 分 30 秒」在 meta 行折行（可改「90 秒」或缩写）。
@@ -32,3 +31,4 @@
 - Iter3（027e0f3）：interactions 三处文案（妹红/早苗/文文）。
 - Iter4（8b78366）：admin 主/危险按钮视觉分层 + 确认框后果说明 + focus-visible。
 - Iter5（5ec8d48）：玩家端行动分组（常用/更多行动折叠，含 [hidden] 失效 bug 修复）；375px 页头 chip 不折行、eyebrow 窄屏字距防孤字。
+- Iter6（0748fb4）：admin 原生 confirm/prompt 全部替换为页内模态（焦点管理/危险态红确认）；换阵营改下拉；封禁补确认；修复换阵营 player 未定义的历史 bug。

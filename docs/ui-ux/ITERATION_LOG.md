@@ -33,3 +33,11 @@ h+overflow hidden；grid 行 minmax(0,1fr)；奖池 4 列网格 + 卡内滚动�
 - validation：DOM 断言 regions overflow 73→0，六卡完整可见；1920×1080 截图
 - commit：238738c
 - next：Iter5
+
+## Iteration 6 — 管理端模态化（2026-09-05）
+
+- goal：原生 window.confirm/prompt 在现场易误触、不可样式化、无焦点管理；顺带覆盖危险操作确认缺口
+- changed：admin.js 新增 openAdminModal（confirm/prompt/select；Esc/遮罩取消、Enter 提交、Tab 焦点圈、焦点归还触发元素、danger 红确认）；post() confirm 参数改为配置对象；活动/区域两处危险确认、玩家管理 8 种操作、抽奖执行与作废全部迁移；换阵营 free-text 改下拉；调贡献/调权重补 Number.isFinite 校验（空串原会静默提交 0）；封禁补确认；修复换阵营处理器引用未定义 player 的历史 bug；admin.css 模态样式（backdrop blur、0.2s 入场、prefers-reduced-motion 关闭动画）；bump admin v13
+- validation：1366×768 DOM 断言（模态开/关、Esc、Tab 圈序、焦点归还、danger class、select 选项与预选、空值校验 toast、Enter 提交改名成功 + toast）+ 模态截图；npm test 84/84
+- commit：0748fb4
+- next：Iter7 copy pass 第二批（display 空态、admin 文案全扫、角色语气校对）
