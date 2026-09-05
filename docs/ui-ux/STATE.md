@@ -45,8 +45,9 @@
 
 ## 下一步（优先级）
 
+0. **Phase 2 已启动（Release Candidate 模式，evidence-driven）**：真相源在 `docs/release/`（RC_STATE / RELEASE_CHECKLIST / KNOWN_ISSUES / FIELD_TEST_LOG）。恢复上下文时先读那四份文件；本文件继续管设计/文案规范。测试基线 85/85。
 1. 演示前数据清理：删 data/ 重播种（现有 "w"/「测试用」脏数据）——等用户点头。
-2. 管理端表格在区域很多时的密度复查。
+2. 视觉回归基线（三端 boundary 状态截图）、long-session soak、Track F 网络故障实测——Phase 2 后续轮次。
 3. 性能备注：blob 去滤镜、玻璃 12px、轮询载荷守卫、冷却原位 tick、视差 rAF 均已落地（4482376）；如仍有卡顿，下一步候选是 mix-blend-mode: screen 的光晕层与 34 个粒子数量。
 4. 观察项：375px marker 间距、flaky 测试、display 动态流滚动。
 
