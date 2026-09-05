@@ -49,3 +49,12 @@ h+overflow hidden；grid 行 minmax(0,1fr)；奖池 4 列网格 + 卡内滚动�
 - validation：抽奖页 DOM 断言（eyebrows=[]、五个 h2 中文、QuickPick 保留）+ 截图；npm test 84/84
 - commit：e668dc1
 - next：Iter8 候选（开始/结束活动区分、冷却折行）或演示前数据清理
+
+## 性能专项 — 卡顿治理（2026-09-05）
+
+- 背景：用户反馈页面卡顿；环境限制无法测 FPS（IAB 对 rAF 全节流），改为确定性成本分析
+- 定位：①5 个 62vmax 背景光晕各带 filter: blur(70px) + mix-blend-mode 无限漂移，玻璃卡 backdrop-filter 在其上每帧重糊 ②玩家 6s/大屏 3s 全量 innerHTML 重渲染（动画重启、图片重建、大屏动态流滚动每 3s 被重置）③地图 pointermove 高频样式写入
+- changed：styles.css 光晕去 blur 滤镜（渐变已软过渡）、--glass-blur 16→12px；app.js 轮询 JSON 载荷守卫 + renderRegionDetail 内 1Hz 冷却原位 tick（actionMetaText/refreshCooldownsInPlace 抽取复用，不重建按钮避免吞点击）；display.js 同款载荷守卫；map.js 视差写入合并 rAF；bump styles v9 / app v6 / display.js v5 / map v4
+- validation：computed style 断言（blob filter none、glass 12px）；大屏 feed 探针 7.2s（跨 2 个轮询周期）节点未重建、scrollTop 40 保持；玩家 me-card 探针跨轮询周期存活；湖底打捞冷却 57→55→31 秒原位递减；390px 截图视觉无损；bodyScrollH=1080 回归；npm test 84/84
+- commit：4482376
+- next：如仍有卡顿，候选 = 光晕 mix-blend-mode、粒子数量；Iter8 功能项照旧
