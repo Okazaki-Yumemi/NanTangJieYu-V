@@ -32,3 +32,4 @@
 - Iter6（0748fb4）：admin 原生 confirm/prompt 全部替换为页内模态（焦点管理/危险态红确认）；换阵营改下拉；封禁补确认；修复换阵营 player 未定义的历史 bug。
 - Iter7（e668dc1）：admin 去除操作性英文 eyebrow（保留 QUICK PICK 仪式牌）；空态统一「暂无…」。
 - Iter8（13ec962）：「结束活动」实底红 + meta 分段 nowrap（冷却短语不拆行）+ 琪露诺文案补主语。
+- Iter9：文案去 AI 味——通读文花帖/音乐室评论/求闻史纪提炼 7 条准则入 COPY_GUIDE；interactions 34 条 outcome 全重写（数值零改动）、titles/activity/regions 收尾、app.js 空态。

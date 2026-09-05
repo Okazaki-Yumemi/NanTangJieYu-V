@@ -6,7 +6,11 @@
 - validation：375×812 DOM 断言（primary=3、more 隐藏/展开/收起循环、chip 25px、eyebrow 单行）+ 展开态截图；390×844 / 430×932 无横向滚动；大屏回归 bodyScrollH=1080；npm test 84/84
 - commit：5ec8d48（自本轮起 commit 后 push origin main，用户要求）
 - next：Iter6 admin prompt/confirm 模态化 + 英文 eyebrow 取舍
-h+overflow hidden；grid 行 minmax(0,1fr)；奖池 4 列网格 + 卡内滚动（pool-card）；地图卡 500px；排行榜 flex-start + 页码固定；区域列表 locked 不显示数值「—」、cleared 金卡「异变已清零」、条=剩余且季节色；修复大屏 anomaly-bar 0 高历史 bug（组件样式从 player.css 上移 styles.css）；提示文案改「调查请用手机扫码参与」
+
+## Iteration 2 — 大屏端一屏锁定与区域语义（2026-09-05）
+
+- goal：大屏 1920×1080 溢出、区域状态语义不清（本条目在旧会话中曾被写入工具损坏，Iter9 按 BACKLOG 摘要复原标题与 changed 行前半）
+- changed：display.css 根容器改 100dvh + overflow hidden；grid 行 minmax(0,1fr)；奖池 4 列网格 + 卡内滚动（pool-card）；地图卡 500px；排行榜 flex-start + 页码固定；区域列表 locked 不显示数值「—」、cleared 金卡「异变已清零」、条=剩余且季节色；修复大屏 anomaly-bar 0 高历史 bug（组件样式从 player.css 上移 styles.css）；提示文案改「调查请用手机扫码参与」
 - validation：1920×1080 DOM 断言（bodyScrollH=1080、页码可见、溢出量化）+ 截图 + npm test 84/84（一次 flaky 复跑通过）
 - commit：aa33e4e
 - next：Iter3 文案 pass（seeds 三处 + admin 术语 + 确认框后果）
@@ -66,3 +70,12 @@ h+overflow hidden；grid 行 minmax(0,1fr)；奖池 4 列网格 + 卡内滚动�
 - validation：admin computed（linear-gradient(135deg,#ff5c79,#b0123a) + 白字 + helper 新文案）；375px 展开更多行动后冷却中 58 秒段单行、湖底打捞/集中调查 meta 均在分隔处折行；375px 截图；npm test 84/84
 - commit：13ec962
 - next：演示前数据清理；观察项照旧
+
+## Iteration 9 — 文案去 AI 味重写（2026-09-05）
+
+- goal：用户要求先阅读东方 Project 的人类优质文案，再据此重写全站文案，减少 AI 味
+- research：THBWiki 网页视图反爬（468），改走 MediaWiki API（api.php?action=parse 直连可用，已记入环境备忘）；通读《文文。新闻》报道+采访（雾雨魔理沙/八意永琳两篇中日对照）、《东方红魔乡》ZUN 音乐室评论、《求闻史纪》琪露诺词条，提炼人类写作共性成 COPY_GUIDE「去 AI 味清单」7 条（具体名词压倒抽象、成语绝迹、括号干吐槽、反高潮、感叹号是角色资产、口癖固定、留毛边）
+- changed：interactions.json 11 互动 34 条 outcome 全部重写 + 4 条 description（数值字段程序化校验零改动；感叹号 9→4，密度 0.75%→0.28%；最长 55 字在弹窗承受内）；regions.json 两处收尾（隐岐奈退场去「意味深长」改动作白描、凯旋门「往下掉」）；titles.json 重写（12000→穿过银杏旋涡的人、18000→跟着脚印走的人、45000→把季节追回来的人，与 26000「追赶季节的人」呼应成线）；activity.json tagline/story_intro 重写；app.js 空态两处（「全场静悄悄的。」「先在地图上挑个区域吧。」去说教味）；bump app v8
+- validation：重启服务后 /api/public/state 载荷与 seed 文件逐字比对 PASS；dev 玩家实测 interact 全链路 outcome 文案正确返回；npm test 84/84
+- commit：code + docs
+- next：演示前数据清理（删 data/ 重播种，等用户点头）

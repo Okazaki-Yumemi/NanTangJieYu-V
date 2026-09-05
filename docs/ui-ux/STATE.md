@@ -45,14 +45,14 @@
 
 ## 下一步（优先级）
 
-1. Iteration 9 候选：演示前数据清理（删 data/ 重播种）；管理端表格在区域很多时的密度复查。
-2. 性能备注：blob 去滤镜、玻璃 12px、轮询载荷守卫、冷却原位 tick、视差 rAF 均已落地（4482376）；如仍有卡顿，下一步候选是 mix-blend-mode: screen 的光晕层与 34 个粒子数量。
-2. 观察项：375px marker 间距、flaky 测试、display 动态流滚动。
-3. 演示前：删 data/ 重播种（现有 "w"/「测试用」脏数据）。
+1. 演示前数据清理：删 data/ 重播种（现有 "w"/「测试用」脏数据）——等用户点头。
+2. 管理端表格在区域很多时的密度复查。
+3. 性能备注：blob 去滤镜、玻璃 12px、轮询载荷守卫、冷却原位 tick、视差 rAF 均已落地（4482376）；如仍有卡顿，下一步候选是 mix-blend-mode: screen 的光晕层与 34 个粒子数量。
+4. 观察项：375px marker 间距、flaky 测试、display 动态流滚动。
 
 ## 版本号现状
 
-- index.html: styles v9 / player v9 / common v3 / map v4 / app v7
+- index.html: styles v9 / player v9 / common v3 / map v4 / app v8
 - display.html: styles v9 / display v9 / common v3 / map v4 / display.js v5
 - admin.html: styles v9 / admin.css v14 / common v4 / admin.js v15
 - 改 CSS/JS 后必须 bump 对应 ?v=（styles.css 三端共享，需三处同步 bump；本会话曾因忘 bump 误判 CSS 未生效）。
@@ -73,3 +73,5 @@
 - dev 玩家：测试-紫音 等 20 个（密码 dev1234，见 scripts/seed-dev.js）。
 - 浏览器截图通道易在带 3D 地图的页面上卡死/返回旧帧：每标签页前 1-2 张可靠，之后用新标签页或 DOM 断言代替。
 - CSS/JS 改动需同步 bump HTML 中的 ?v= 版本号（以「版本号现状」为准）；浏览器会缓存 HTML，验证时给页面 URL 加 query 参数强制刷新。
+- THBWiki 网页视图反爬（HTTP 468，curl 带浏览器 UA 也不行）；但 MediaWiki API 直连可用：`https://thwiki.cc/api.php?action=parse&page=<URL编码标题>&format=json&prop=wikitext`——文案调研走这条通道（Iter9 验证有效）。
+- **禁止用 shell（cat >> / >>）向 docs 追加内容**：本环境实测 heredoc 追加会变成「替换文件头部 + 残留尾巴碎片」（Iter2/Iter5 条目两次遭殃，Iter9 复原）；对 docs 的增改一律走 Edit/Write 工具。
