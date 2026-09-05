@@ -17,13 +17,13 @@
 
 冻结条件（全部满足才可 RC FROZEN）：
 
-- [ ] npm test 全通过（当前 ✓，需持续保持）
-- [ ] RC Blocker = 0
-- [ ] High = 0
-- [ ] 活动状态矩阵全组合验证（见 RELEASE_CHECKLIST 矩阵节）
-- [ ] 三端主要 viewport 视觉基线建立且无回归
-- [ ] long-session soak 无泄漏/无状态腐烂
-- [ ] 网络故障恢复路径可接受（Track F 实测）
+- [x] npm test 全通过（85/85）
+- [ ] RC Blocker = 0（当前 0 ✓）
+- [x] High = 0（RC-1 已修复验证）
+- [x] 活动状态矩阵全组合验证（M1–M12，20/20）
+- [x] 三端主要 viewport 视觉基线建立且无回归（21 张，见 baselines/MANIFEST）
+- [ ] long-session soak 无泄漏/无状态腐烂（**真机必办**：IAB 撑不住长时标签页，代码级审查无泄漏向量）
+- [x] 网络故障恢复路径可接受（Track F 注入实测 + 代码级）
 - [ ] 完整活动 rehearsal 成功
 - [ ] lottery rehearsal 成功
 - [ ] deployment checklist 完成
