@@ -274,18 +274,31 @@
       markerRefs.set(region.id, marker);
     }
 
-    // 指针视差（仅精确指针 + 未开启减动效）
+    // 指针视差（仅精确指针 + 未开启减动效）；写入合并到 rAF，避免高频 pointermove 反复触发样式重算
     const fineMotion = window.matchMedia('(pointer: fine) and (prefers-reduced-motion: no-preference)');
     if (fineMotion.matches && options.onSelect !== undefined) {
       scene.classList.add('map-parallax');
+      let parallaxRaf = 0;
+      let parallaxX = 0;
+      let parallaxY = 0;
       scene.addEventListener('pointermove', (event) => {
         const rect = scene.getBoundingClientRect();
-        const px = (event.clientX - rect.left) / rect.width - 0.5;
-        const py = (event.clientY - rect.top) / rect.height - 0.5;
-        scene.style.setProperty('--par-x', (px * 2).toFixed(3));
-        scene.style.setProperty('--par-y', (py * 2).toFixed(3));
+        parallaxX = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
+        parallaxY = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
+        if (parallaxRaf) {
+          return;
+        }
+        parallaxRaf = requestAnimationFrame(() => {
+          parallaxRaf = 0;
+          scene.style.setProperty('--par-x', parallaxX.toFixed(3));
+          scene.style.setProperty('--par-y', parallaxY.toFixed(3));
+        });
       });
       scene.addEventListener('pointerleave', () => {
+        if (parallaxRaf) {
+          cancelAnimationFrame(parallaxRaf);
+          parallaxRaf = 0;
+        }
         scene.style.setProperty('--par-x', '0');
         scene.style.setProperty('--par-y', '0');
       });

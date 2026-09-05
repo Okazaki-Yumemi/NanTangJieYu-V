@@ -14,8 +14,12 @@
     pendingInteract: false,
     modalOpen: false,
     moreActionsOpen: false,
+    lastPayload: null,
     poller: null
   };
+
+  // 冷却倒计时 tick（仅在当前区域存在冷却时运行，见 renderRegionDetail）
+  let cooldownTicker = null;
 
   const elements = {
     registerView: document.getElementById('register-view'),
@@ -177,6 +181,7 @@
     elements.registerView.classList.add('hidden');
     elements.homeView.classList.remove('hidden');
     appState.data = data;
+    appState.lastPayload = JSON.stringify(data);
     if (!appState.selectedRegionId) {
       const firstOpen = data.regions.find((region) => region.status === 'available' || region.status === 'investigating');
       appState.selectedRegionId = firstOpen ? firstOpen.id : data.regions[0].id;
@@ -188,6 +193,13 @@
           return;
         }
         const res = await api('GET', '/api/player/state');
+        // 数据没变的轮询周期不做全量重渲染，避免动画重启/图片重建/滚动被顶走；
+        // 冷却倒计时由 renderRegionDetail 里的秒级 tick 单独推进。
+        const payload = JSON.stringify(res.state);
+        if (payload === appState.lastPayload) {
+          return;
+        }
+        appState.lastPayload = payload;
         appState.data = res.state;
         renderHome();
       }, 6000);
@@ -345,6 +357,62 @@
     return { primary, more };
   }
 
+  function actionMetaText(action) {
+    const hint = action.contribution_hint;
+    return `⚡${action.energy_cost} · 贡献 ${hint.contribution[0]}~${hint.contribution[1]} · 削减异变 ${hint.anomaly[0]}~${hint.anomaly[1]}`
+      + (action.cooldown_left > 0 ? ` · 冷却中 ${formatDuration(action.cooldown_left)}` : '')
+      + (action.cooldown_sec > 0 && action.cooldown_left <= 0 ? ` · 冷却 ${formatDuration(action.cooldown_sec)}` : '');
+  }
+
+  // 冷却秒数变化时只原位改 meta 文案与禁用态，不重建按钮（避免点击被打断）
+  function refreshCooldownsInPlace(region) {
+    let activeCount = 0;
+    for (const action of regionActions(region)) {
+      const button = elements.regionDetail.querySelector(`.action-btn[data-action="${CSS.escape(action.id)}"]`);
+      if (!button) {
+        continue;
+      }
+      if (action.cooldown_left > 0) {
+        activeCount += 1;
+      }
+      const meta = button.querySelector('.action-meta');
+      if (meta) {
+        meta.textContent = actionMetaText(action);
+      }
+      const shouldDisable = Boolean(action.unavailable) || action.cooldown_left > 0 || appState.pendingInteract;
+      if (button.disabled !== shouldDisable) {
+        button.disabled = shouldDisable;
+      }
+    }
+    return activeCount > 0;
+  }
+
+  function startCooldownTicker() {
+    if (cooldownTicker) {
+      clearInterval(cooldownTicker);
+      cooldownTicker = null;
+    }
+    const region = appState.data && appState.data.regions.find((item) => item.id === appState.selectedRegionId);
+    if (!region) {
+      return;
+    }
+    const hasActive = refreshCooldownsInPlace(region);
+    if (!hasActive) {
+      return;
+    }
+    cooldownTicker = setInterval(() => {
+      const current = appState.data && appState.data.regions.find((item) => item.id === appState.selectedRegionId);
+      if (!current) {
+        return;
+      }
+      const stillActive = refreshCooldownsInPlace(current);
+      if (!stillActive && cooldownTicker) {
+        clearInterval(cooldownTicker);
+        cooldownTicker = null;
+      }
+    }, 1000);
+  }
+
   function renderRegionDetail() {
     const data = appState.data;
     const region = data.regions.find((item) => item.id === appState.selectedRegionId);
@@ -381,7 +449,6 @@
         const { primary, more } = splitActions(actions);
         const actionButton = (action) => {
           const disabled = action.unavailable || action.cooldown_left > 0 || appState.pendingInteract;
-          const hint = action.contribution_hint;
           const tag = action.team_restriction
             ? `<em class="action-tag${action.team_blocked ? ' blocked' : ''}">${escapeHtml(action.team_blocked ? action.unavailable : `${action.restriction_team_name}限定`)}</em>`
             : '';
@@ -390,11 +457,7 @@
               ${disabled ? 'disabled' : ''}>
               <span class="action-name">${escapeHtml(action.name)}${tag}</span>
               <span class="action-desc">${escapeHtml(action.description)}</span>
-              <span class="action-meta muted">
-                ⚡${action.energy_cost} · 贡献 ${hint.contribution[0]}~${hint.contribution[1]} · 削减异变 ${hint.anomaly[0]}~${hint.anomaly[1]}
-                ${action.cooldown_left > 0 ? ` · 冷却中 ${formatDuration(action.cooldown_left)}` : ''}
-                ${action.cooldown_sec > 0 && action.cooldown_left <= 0 ? ` · 冷却 ${formatDuration(action.cooldown_sec)}` : ''}
-              </span>
+              <span class="action-meta muted">${actionMetaText(action)}</span>
             </button>
           `;
         };
@@ -472,6 +535,8 @@
         if (label) label.textContent = appState.moreActionsOpen ? '收起' : '更多行动';
       });
     }
+
+    startCooldownTicker();
   }
 
   function renderPrizeTrack(data) {

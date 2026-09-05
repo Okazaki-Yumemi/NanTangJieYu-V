@@ -12,6 +12,7 @@
   let latestData = null;
   let rankPage = 0;
   let lastRankSignature = '';
+  let lastPayload = null;
   const RANK_PAGE_SIZE = 8;
   const RANK_ROTATE_MS = 5000;
 
@@ -235,6 +236,12 @@
 
   async function tick() {
     const data = await api('GET', '/api/public/state');
+    // 数据没变就跳过重建：避免动态流滚动位置每 3 秒被顶回顶部、排行动画反复重播
+    const payload = JSON.stringify(data);
+    if (payload === lastPayload) {
+      return;
+    }
+    lastPayload = payload;
     render(data);
   }
 

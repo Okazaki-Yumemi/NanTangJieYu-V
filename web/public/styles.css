@@ -18,7 +18,7 @@
   --down: #ff6b81;
   --radius: 14px;
   --font-sans: 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei UI', 'Microsoft YaHei', system-ui, sans-serif;
-  --glass-blur: blur(16px) saturate(1.35);
+  --glass-blur: blur(12px) saturate(1.25);
   --shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
   --map-halo: rgba(5, 6, 12, 0.88);
 }
@@ -115,7 +115,7 @@ input {
   width: 62vmax;
   height: 62vmax;
   border-radius: 50%;
-  filter: blur(70px);
+  /* 径向渐变本身已软过渡到透明，不再叠加 blur 滤镜（5 层大面积 blur 是持续 GPU 大头） */
   opacity: 0.42;
   will-change: transform, opacity;
   mix-blend-mode: screen;
