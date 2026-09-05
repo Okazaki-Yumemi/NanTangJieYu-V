@@ -334,6 +334,13 @@ input {
   color: var(--gold);
 }
 
+/* 窄屏下字距收敛，避免「…活动」末字被挤成孤行 */
+@media (max-width: 430px) {
+  .brand-eyebrow {
+    letter-spacing: 0.08em;
+  }
+}
+
 .brand-title {
   margin: 4px 0 2px;
   font-size: 30px;
@@ -426,6 +433,7 @@ input {
   border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
+  white-space: nowrap;
   background: var(--accent-soft);
   color: #ff8fa3;
 }

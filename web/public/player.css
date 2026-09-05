@@ -392,11 +392,75 @@ i.energy-dot.on {
 
 /* ---------- 互动按钮 ---------- */
 
+.action-groups {
+  display: flex;
+  flex-direction: column;
+  margin: 10px 0;
+}
+
 .action-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin: 10px 0;
+}
+
+.action-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 9px;
+  padding: 5px 2px;
+  border: none;
+  background: none;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s;
+}
+
+.action-toggle:hover {
+  color: var(--ink);
+}
+
+.action-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.action-toggle-count {
+  font-style: normal;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--ink-soft);
+  background: rgba(255, 255, 255, 0.09);
+  border-radius: 999px;
+  padding: 3px 7px;
+}
+
+.action-toggle-caret {
+  display: inline-flex;
+  width: 8px;
+  height: 8px;
+  border-right: 1.8px solid currentColor;
+  border-bottom: 1.8px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 0.2s;
+}
+
+.action-toggle[aria-expanded="true"] .action-toggle-caret {
+  transform: rotate(-135deg);
+}
+
+.action-list.is-more {
+  margin-top: 9px;
+}
+
+/* display:flex 会盖过 [hidden] 的 UA 样式，这里显式还原折叠 */
+.action-list.is-more[hidden] {
+  display: none;
 }
 
 .action-btn {

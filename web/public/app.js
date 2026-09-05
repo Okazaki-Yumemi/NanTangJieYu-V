@@ -13,6 +13,7 @@
     mapRef: null,
     pendingInteract: false,
     modalOpen: false,
+    moreActionsOpen: false,
     poller: null
   };
 
@@ -330,6 +331,20 @@
       });
   }
 
+  // 行动分组：基础调查与已解锁的阵营协助保持平铺，其余收进「更多行动」折叠区。
+  const PRIMARY_ACTION_IDS = new Set(['investigate', 'deep_scan']);
+
+  function splitActions(actions) {
+    const primary = [];
+    const more = [];
+    for (const action of actions) {
+      const isPrimary = PRIMARY_ACTION_IDS.has(action.id)
+        || (Boolean(action.team_restriction) && !action.team_blocked);
+      (isPrimary ? primary : more).push(action);
+    }
+    return { primary, more };
+  }
+
   function renderRegionDetail() {
     const data = appState.data;
     const region = data.regions.find((item) => item.id === appState.selectedRegionId);
@@ -363,27 +378,42 @@
         actionsHtml = '<p class="helper-text">当前活动未在进行中，请等待工作人员开放互动。</p>';
       } else {
         const actions = regionActions(region);
+        const { primary, more } = splitActions(actions);
+        const actionButton = (action) => {
+          const disabled = action.unavailable || action.cooldown_left > 0 || appState.pendingInteract;
+          const hint = action.contribution_hint;
+          const tag = action.team_restriction
+            ? `<em class="action-tag${action.team_blocked ? ' blocked' : ''}">${escapeHtml(action.team_blocked ? action.unavailable : `${action.restriction_team_name}限定`)}</em>`
+            : '';
+          return `
+            <button type="button" class="action-btn${action.team_blocked ? ' is-team-locked' : ''}" data-action="${escapeHtml(action.id)}"
+              ${disabled ? 'disabled' : ''}>
+              <span class="action-name">${escapeHtml(action.name)}${tag}</span>
+              <span class="action-desc">${escapeHtml(action.description)}</span>
+              <span class="action-meta muted">
+                ⚡${action.energy_cost} · 贡献 ${hint.contribution[0]}~${hint.contribution[1]} · 削减异变 ${hint.anomaly[0]}~${hint.anomaly[1]}
+                ${action.cooldown_left > 0 ? ` · 冷却中 ${formatDuration(action.cooldown_left)}` : ''}
+                ${action.cooldown_sec > 0 && action.cooldown_left <= 0 ? ` · 冷却 ${formatDuration(action.cooldown_sec)}` : ''}
+              </span>
+            </button>
+          `;
+        };
         actionsHtml = `
-          <div class="action-list">
-            ${actions.map((action) => {
-              const disabled = action.unavailable || action.cooldown_left > 0 || appState.pendingInteract;
-              const hint = action.contribution_hint;
-              const tag = action.team_restriction
-                ? `<em class="action-tag${action.team_blocked ? ' blocked' : ''}">${escapeHtml(action.team_blocked ? action.unavailable : `${action.restriction_team_name}限定`)}</em>`
-                : '';
-              return `
-                <button type="button" class="action-btn${action.team_blocked ? ' is-team-locked' : ''}" data-action="${escapeHtml(action.id)}"
-                  ${disabled ? 'disabled' : ''}>
-                  <span class="action-name">${escapeHtml(action.name)}${tag}</span>
-                  <span class="action-desc">${escapeHtml(action.description)}</span>
-                  <span class="action-meta muted">
-                    ⚡${action.energy_cost} · 贡献 ${hint.contribution[0]}~${hint.contribution[1]} · 削减异变 ${hint.anomaly[0]}~${hint.anomaly[1]}
-                    ${action.cooldown_left > 0 ? ` · 冷却中 ${formatDuration(action.cooldown_left)}` : ''}
-                    ${action.cooldown_sec > 0 && action.cooldown_left <= 0 ? ` · 冷却 ${formatDuration(action.cooldown_sec)}` : ''}
-                  </span>
-                </button>
-              `;
-            }).join('')}
+          <div class="action-groups">
+            <div class="action-list is-primary">
+              ${primary.map(actionButton).join('')}
+            </div>
+            ${more.length ? `
+            <button type="button" class="action-toggle" data-toggle-actions
+              aria-expanded="${appState.moreActionsOpen}" aria-controls="more-actions">
+              <span class="action-toggle-label">${appState.moreActionsOpen ? '收起' : '更多行动'}</span>
+              <em class="action-toggle-count">${more.length}</em>
+              <i class="action-toggle-caret" aria-hidden="true"></i>
+            </button>
+            <div class="action-list is-more" id="more-actions"${appState.moreActionsOpen ? '' : ' hidden'}>
+              ${more.map(actionButton).join('')}
+            </div>
+            ` : ''}
           </div>
         `;
       }
@@ -428,6 +458,18 @@
     for (const button of elements.regionDetail.querySelectorAll('.action-btn:not([disabled])')) {
       button.addEventListener('click', () => {
         interact(region.id, button.dataset.action);
+      });
+    }
+
+    const actionsToggle = elements.regionDetail.querySelector('[data-toggle-actions]');
+    if (actionsToggle) {
+      actionsToggle.addEventListener('click', () => {
+        appState.moreActionsOpen = !appState.moreActionsOpen;
+        const moreList = elements.regionDetail.querySelector('.action-list.is-more');
+        if (moreList) moreList.hidden = !appState.moreActionsOpen;
+        actionsToggle.setAttribute('aria-expanded', String(appState.moreActionsOpen));
+        const label = actionsToggle.querySelector('.action-toggle-label');
+        if (label) label.textContent = appState.moreActionsOpen ? '收起' : '更多行动';
       });
     }
   }
