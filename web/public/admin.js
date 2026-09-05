@@ -122,9 +122,9 @@
             <span class="tag">${escapeHtml(NTJ.REGION_STATUS_LABELS[currentRegion.status] || '')}</span>
             <span class="muted small">异变 ${formatNumber(currentRegion.anomaly_remaining)} / ${formatNumber(currentRegion.max_anomaly)}</span>
           </span>
-          <button class="action-btn warn" data-activity="advance_stage">强制 CLEAR 当前区域，进入下一阶段</button>
+          <button class="action-btn warn" data-activity="advance_stage">强制解决当前区域</button>
         </div>
-        <p class="helper-text">适用于现场节目直接推进剧情；按推进顺序清除当前区域并解锁下一区域，操作会写入系统播报与日志。</p>
+        <p class="helper-text">适用于现场节目直接推进剧情：按推进顺序解决当前区域、注入对应奖品并解锁下一区域，玩家端会收到系统播报。</p>
       </div>
       ` : '<div class="admin-card"><h2>阶段控制</h2><p class="muted">全部区域已解决，剧情流程已完结。</p></div>'}
       <div class="admin-card">
@@ -174,8 +174,10 @@
       button.addEventListener('click', async () => {
         const action = button.dataset.activity;
         const confirmText = action === 'end'
-          ? '确定要结束活动吗？结束后玩家无法继续互动。'
-          : (action === 'advance_stage' ? `确认强制解决「${currentRegion ? currentRegion.name : ''}」的异变并进入下一阶段吗？` : null);
+          ? '确定要结束活动吗？结束后玩家无法继续互动与获取贡献，该操作会写入管理日志。'
+          : (action === 'advance_stage'
+            ? `将把「${currentRegion ? currentRegion.name : ''}」直接标记为已解决，注入对应奖品并解锁下一区域，玩家端会收到系统播报。此操作会写入管理日志。确定继续？`
+            : null);
         try {
           const res = await post('/api/admin/activity', { action }, { confirmText });
           if (res) {
@@ -216,7 +218,7 @@
                     <div class="btn-row">
                       <button class="action-btn" data-op="set_anomaly">设为输入值</button>
                       <button class="action-btn warn" data-op="force_unlock" ${region.status === 'locked' ? '' : 'disabled'}>强制解锁</button>
-                      <button class="action-btn warn" data-op="force_clear" ${region.status === 'cleared' ? 'disabled' : ''}>强制 CLEAR</button>
+                      <button class="action-btn warn" data-op="force_clear" ${region.status === 'cleared' ? 'disabled' : ''}>强制解决</button>
                       ${region.closed
                         ? '<button class="action-btn" data-op="reopen">重新开放</button>'
                         : '<button class="action-btn danger" data-op="close">临时关闭</button>'}
@@ -244,7 +246,9 @@
               return;
             }
           }
-          const confirmText = op === 'force_clear' ? '确定要强制 CLEAR 该区域吗？会解锁后续区域和奖品。' : null;
+          const confirmText = op === 'force_clear'
+            ? `将把「${regionName(regionId)}」直接标记为已解决，解锁后续区域与对应奖品。此操作会写入管理日志。确定继续？`
+            : null;
           try {
             const res = await post('/api/admin/region', body, { confirmText });
             if (res) {

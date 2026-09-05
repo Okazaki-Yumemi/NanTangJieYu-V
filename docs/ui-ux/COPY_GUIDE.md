@@ -37,6 +37,6 @@
 
 ## 已知待修文案
 
-- interactions.json phoenix_grill 妹红 outcome「力量 +1，异变 -0」与数值 anomaly[30,60] 矛盾（Iter3 修）。
-- faith_offering 早苗「潇洒地 Performing 了奇迹」中英夹生（Iter3 修）。
-- tengu_dash「全新闻自由，但今天不太值」表达不畅（Iter3 修）。
+-（Iter3 已修：妹红 outcome、早苗 Performing、文「采访自由」、admin 强制解决术语与确认框）
+- 后续 seeds 扫描中若发现新的数值-文案矛盾，修 text 时保持与 outcome 数值一致（文案不得描述与实际结算相反的结果）。
+- 抽奖 reel 的 WINNER DROP / PLAYER DROP 徽标为用户特意调整的 easter egg（f9b0358 / 6f512ce），不要“修正”它。

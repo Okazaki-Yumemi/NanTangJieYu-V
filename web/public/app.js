@@ -166,7 +166,7 @@
       toast('登录成功，欢迎回来！', 'success');
       enterHome(res.state);
     } catch (error) {
-      showError(elements.loginError, error.message || '登录失败。');
+      showError(elements.loginError, error.message || '登录失败，请确认昵称和密码后再试。');
     }
   }
 
