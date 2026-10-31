@@ -8,11 +8,11 @@ const game = require('../../web/public/fishing-game');
 const COOLDOWN_MS = process.env.FISHING_NO_COOLDOWN === '1' ? 0 : 5 * 60 * 1000;
 const NAMING_MIN_CM = 100;
 const FISH = [
-  { id: 'bitterling', name: '鳑鲏', rarity: '常见', weight: 380, min: 12, max: 35, difficulty: .2, color: '#c9be8e' },
-  { id: 'crucian', name: '鲫鱼', rarity: '常见', weight: 300, min: 20, max: 75, difficulty: .3, color: '#a7bec0' },
-  { id: 'carp', name: '鲤鱼', rarity: '少见', weight: 200, min: 45, max: 160, difficulty: .43, color: '#d7a16c' },
-  { id: 'catfish', name: '夜行鲶鱼', rarity: '稀有', weight: 80, min: 90, max: 280, difficulty: .58, color: '#8c9baa' },
-  { id: 'moon', name: '月下银鲤', rarity: '珍奇', weight: 34, min: 250, max: 1200, difficulty: .73, color: '#d9d6ae' },
+  { id: 'bitterling', name: '鳑鲏', rarity: '常见', weight: 180, min: 12, max: 35, difficulty: .2, color: '#c9be8e' },
+  { id: 'crucian', name: '鲫鱼', rarity: '常见', weight: 220, min: 20, max: 75, difficulty: .3, color: '#a7bec0' },
+  { id: 'carp', name: '鲤鱼', rarity: '少见', weight: 320, min: 45, max: 160, difficulty: .43, color: '#d7a16c' },
+  { id: 'catfish', name: '夜行鲶鱼', rarity: '稀有', weight: 200, min: 90, max: 280, difficulty: .58, color: '#8c9baa' },
+  { id: 'moon', name: '月下银鲤', rarity: '珍奇', weight: 74, min: 250, max: 1200, difficulty: .73, color: '#d9d6ae' },
   { id: 'tractor', name: '湖底拖拉机鱼', rarity: '离谱', weight: 5, min: 5000, max: 18000, difficulty: .86, color: '#a8b581' },
   { id: 'leviathan', name: '五百米的鱼', rarity: '传说', weight: 1, min: 50000, max: 50000, difficulty: .96, color: '#bb9dcd' }
 ];

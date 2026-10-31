@@ -72,6 +72,17 @@ test('rarest roll produces a 500 metre fish with very high difficulty',()=>{
   assert.ok(result.challenge.difficulty>=.96);
 });
 
+test('roughly 44 percent of casts encounter nameable fish while giant fish stay rare',()=>{
+  const total=fishing.FISH.reduce((sum,fish)=>sum+fish.weight,0);
+  assert.equal(total,1000);
+  const probability=fishing.FISH.reduce((sum,fish)=>{
+    const eligible=Math.max(0,fish.max-Math.max(fish.min,fishing.NAMING_MIN_CM)+1);
+    return sum+fish.weight/total*eligible/(fish.max-fish.min+1);
+  },0);
+  assert.ok(probability>.43 && probability<.45);
+  assert.equal(fishing.FISH.find(fish=>fish.id==='leviathan').weight/total,.001);
+});
+
 test('only a valid completed replay creates one catch; duplicate submissions are idempotent',()=>{
   const f=createFixture({userCount:1});const user=f.registered[0];const now=1700000000000;
   const cast=fishing.cast(f.state,user,now,(min,max)=>max===undefined?0:min);
