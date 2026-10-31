@@ -178,5 +178,85 @@
     listen(lever,'keyup',event=>{if(event.key===' '||event.key==='Enter')stop();});
     cleanups.push(stop);status.textContent='0%';
   }
-  NTJ.taskScenes={wipe,leaves,trash};
+  function memory(board, { listen, cleanups, complete, status, play, isSolved }) {
+    board.classList.add('memory-scene');
+    board.innerHTML='<div class="memory-lamps" aria-hidden="true"><i></i><i></i></div><div class="memory-grid"></div>';
+    const pattern=[];
+    while(pattern.length<3) {const n=Math.floor(Math.random()*9);if(!pattern.includes(n))pattern.push(n);}
+    const sequence=NTJ.taskMath.createMemorySequence(pattern);
+    const timers=new Set();
+    const later=(fn,delay)=>{const timer=setTimeout(()=>{timers.delete(timer);fn();},delay);timers.add(timer);};
+    let round=2;
+    let ready=false;
+    const buttons=Array.from({length:9},(_,i)=>{
+      const button=document.createElement('button');
+      button.type='button';button.textContent=String(i+1);button.setAttribute('aria-label',`位置 ${i+1}`);
+      board.querySelector('.memory-grid').appendChild(button);
+      listen(button,'click',()=>{
+        if(!ready||isSolved())return;
+        play('connect');
+        const result=sequence.accept(i);
+        if(!result.matched) {
+          ready=false;board.classList.add('wrong');status.textContent='再看一遍。';
+          later(()=>{board.classList.remove('wrong');playback();},600);return;
+        }
+        button.classList.add('lit');later(()=>button.classList.remove('lit'),180);
+        if(result.advance || result.complete) {
+          ready=false;
+          board.querySelectorAll('.memory-lamps i')[round-2].classList.add('on');
+          if(round===3)complete();
+          else {round=3;later(playback,600);}
+        }
+      });
+      return button;
+    });
+    function playback() {
+      ready=false;status.textContent='记住亮起的顺序。';
+      buttons.forEach(button=>{button.disabled=true;button.classList.remove('lit');});
+      for(let i=0;i<round;i+=1) {
+        later(()=>{buttons[pattern[i]].classList.add('lit');play('connect');status.textContent=`亮起：${pattern[i]+1}`;},400+i*650);
+        later(()=>buttons[pattern[i]].classList.remove('lit'),800+i*650);
+      }
+      later(()=>{ready=true;buttons.forEach(button=>{button.disabled=false;});status.textContent='按刚才的顺序点亮。';},500+round*650);
+    }
+    cleanups.push(()=>{timers.forEach(timer=>clearTimeout(timer));timers.clear();});
+    playback();
+  }
+
+  function valve(board, { listen, complete, status, play, isSolved }) {
+    board.classList.add('valve-scene');
+    board.innerHTML='<div class="water-gauge" aria-hidden="true"><i></i><span>水位</span></div><div class="water-pipe" aria-hidden="true"></div><button type="button" class="valve-wheel" aria-label="排水阀，顺时针转动一圈；键盘方向右键转动"><i></i><i></i><i></i><span></span></button><div class="valve-direction" aria-hidden="true">顺时针 ↻</div>';
+    const wheel=board.querySelector('.valve-wheel');
+    let pointer=null;
+    let previous=null;
+    let angle=0;
+    let lastSound=0;
+    function turn(delta) {
+      if(isSolved())return;
+      angle=Math.max(0,Math.min(360,angle+delta));
+      board.style.setProperty('--angle',`${angle}deg`);
+      board.style.setProperty('--water',`${100-angle/360*100}%`);
+      status.textContent=`${Math.round(angle/360*100)}%`;
+      if(performance.now()-lastSound>160) {play('rub');lastSound=performance.now();}
+      if(angle>=360)complete();
+    }
+    function bearing(event) {
+      const r=wheel.getBoundingClientRect();
+      return Math.atan2(event.clientY-r.top-r.height/2,event.clientX-r.left-r.width/2)*180/Math.PI;
+    }
+    function stop(){pointer=null;previous=null;wheel.classList.remove('turning');}
+    listen(wheel,'pointerdown',event=>{if(event.button!==0||pointer!==null||isSolved())return;pointer=event.pointerId;previous=bearing(event);wheel.setPointerCapture(pointer);wheel.classList.add('turning');});
+    listen(wheel,'pointermove',event=>{
+      if(pointer!==event.pointerId)return;
+      const next=bearing(event);
+      const delta=(next-previous+540)%360-180;
+      previous=next;
+      // 忽略跨过圆心造成的大幅跳角，必须实际沿阀轮转动。
+      if(Math.abs(delta)<70)turn(delta);
+    });
+    listen(wheel,'pointerup',stop);listen(wheel,'pointercancel',stop);listen(wheel,'blur',stop);listen(window,'blur',stop);
+    listen(wheel,'keydown',event=>{if(event.key==='ArrowRight'||event.key==='ArrowLeft'){event.preventDefault();turn(event.key==='ArrowRight'?20:-20);}});
+    status.textContent='0%';
+  }
+  NTJ.taskScenes={wipe,leaves,trash,memory,valve};
 })();

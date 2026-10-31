@@ -2,7 +2,7 @@
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { createWipeMask } = require('../../web/public/task-logic');
+const { createWipeMask, createMemorySequence } = require('../../web/public/task-logic');
 
 test('repeated rubbing in one spot does not manufacture cleaning progress', () => {
   const mask = createWipeMask();
@@ -31,4 +31,16 @@ test('covering the pane clears it; strokes outside the pane do not count', () =>
   let coverage;
   for (let y = 20; y < 400; y += 40) coverage = mask.stroke({ x: 0, y }, { x: 640, y }, 36);
   assert.equal(coverage, 1);
+});
+
+test('memory task requires both rounds, and a mistake restarts only the current round', () => {
+  const sequence = createMemorySequence([1, 4, 6]);
+  assert.equal(sequence.accept(1).complete, false);
+  assert.equal(sequence.accept(4).advance, true);
+  assert.equal(sequence.accept(1).complete, false);
+  assert.equal(sequence.accept(6).matched, false);
+  assert.equal(sequence.accept(4).matched, false);
+  assert.equal(sequence.accept(1).complete, false);
+  assert.equal(sequence.accept(4).complete, false);
+  assert.equal(sequence.accept(6).complete, true);
 });

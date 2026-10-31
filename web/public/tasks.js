@@ -8,14 +8,16 @@
     wipe: { title: '擦净玻璃', hint: '按住擦拭，露出窗外的风景。' },
     leaves: { title: '清理落叶', hint: '把落叶拖进左边的吸口。' },
     trash: { title: '清空垃圾', hint: '把右侧拉杆拉到底，保持住。' },
+    memory: { title: '复现闪光', hint: '看清顺序，再照着点一遍。' },
+    valve: { title: '转开水阀', hint: '顺时针转动阀轮，把积水排掉。' },
     tune: { title: '对准信号', hint: '把三个光点移到标记处。' },
     seal: { title: '封住裂隙', hint: '按住符印，直到裂隙闭合。' }
   };
   const POOLS = {
     investigate: ['wipe', 'wires', 'leaves'],
     patrol: ['leaves', 'trash'],
-    ask_reimu: ['seal'], ask_marisa: ['wires'], deep_scan: ['tune'],
-    lake_netting: ['leaves'], faith_offering: ['wipe'],
+    ask_reimu: ['seal'], ask_marisa: ['wires'], deep_scan: ['tune', 'memory'],
+    lake_netting: ['leaves', 'valve'], faith_offering: ['wipe'],
     phoenix_grill: ['trash'], sword_training: ['seal'],
     tengu_dash: ['wipe'], unguarded_wander: ['leaves', 'wipe']
   };
@@ -302,6 +304,7 @@
         reset();
       }
       dialog.showModal();
+      dialog.querySelector('.task-close').focus({ preventScroll: true });
     });
   }
 

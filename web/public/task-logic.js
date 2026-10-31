@@ -27,7 +27,27 @@
       }
     };
   }
-  const api = { createWipeMask };
+  function createMemorySequence(pattern) {
+    if (pattern.length !== 3 || pattern.some(value => !Number.isInteger(value) || value < 0 || value > 8)) {
+      throw new Error('闪光序列必须包含三个有效位置');
+    }
+    let round = 2;
+    let index = 0;
+    let done = false;
+    return {
+      accept(value) {
+        if (done) return { matched: true, complete: true, advance: false, round };
+        if (value !== pattern[index]) { index = 0; return { matched: false, complete: false, advance: false, round }; }
+        index += 1;
+        if (index < round) return { matched: true, complete: false, advance: false, round };
+        index = 0;
+        if (round === 3) { done = true; return { matched: true, complete: true, advance: false, round }; }
+        round = 3;
+        return { matched: true, complete: false, advance: true, round };
+      }
+    };
+  }
+  const api = { createWipeMask, createMemorySequence };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.NTJ.taskMath = api;
 })(typeof window === 'undefined' ? globalThis : window);

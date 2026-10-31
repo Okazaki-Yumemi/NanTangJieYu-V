@@ -114,3 +114,25 @@
   .trash-scene { padding: 18px 12px; gap: 14px; }.lever-track { width: 43px; }.trash-lever { width: 62px; }
 }
 @media(prefers-reduced-motion:reduce) { .loose-leaf, .task-clear { transition: none; } }
+
+.memory-scene { padding: 20px 40px 28px; background: #394a49; }
+.memory-lamps { display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; }
+.memory-lamps i { width: 13px; height: 13px; border: 2px solid #a4b5a0; border-radius: 50%; background: #243b37; }
+.memory-lamps i.on { background: #d6d3a1; box-shadow: 0 0 8px #e9dba755; }
+.memory-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+.memory-grid button { aspect-ratio: 1.4; border: 3px solid #2a393c; border-radius: 8px; background: #657a79; box-shadow: inset 0 4px #91a19a,inset 0 -7px #405758,0 4px #213332; color: #b4c1b1; font: 700 20px ui-monospace,monospace; }
+.memory-grid button:disabled { opacity: 1; cursor: default; }
+.memory-grid button.lit { color: #31453d; background: #e3d99b; box-shadow: inset 0 4px #eee7b7,inset 0 -7px #b6b17f,0 0 16px #e3d99b55; }
+.memory-scene.wrong { background: #744b43; }
+.valve-scene { height: 350px; display: flex; align-items: center; justify-content: center; padding-left: 60px; background: #718784; --water:100%;--angle:0deg; }
+.water-pipe { position: absolute; left: 0; right: 0; top: 41%; height: 54px; background: #485f5d; border-block: 5px solid #8faaa0; box-shadow: inset 0 -9px #354e4d; }
+.water-gauge { position: absolute; left: 18px; top: 16%; bottom: 16%; width: 40px; background: #233d42; border: 5px solid #415b59; box-shadow: 0 2px #a0b2a4; overflow: hidden; }
+.water-gauge i { position: absolute; bottom: 0; left: 0; right: 0; height: var(--water); background: repeating-linear-gradient(0deg,#74aeb1 0 18px,#b3cdbe 19px 20px); }
+.water-gauge span { position: absolute; bottom: 5px; left: 7px; color: #e2edcd; writing-mode: vertical-rl; font-size: 12px; }
+.valve-wheel { position: relative; width: 210px; height: 210px; padding: 0; border: 16px solid #ac6249; border-radius: 50%; background: none; box-shadow: inset 0 3px #e3a375,0 4px 0 3px #653e36; transform: rotate(var(--angle)); touch-action: none; cursor: grab; }
+.valve-wheel i { position: absolute; left: calc(50% - 9px); top: 0; bottom: 0; width: 18px; background: #ac6249; border-left: 3px solid #d48a62; }
+.valve-wheel i:nth-child(2) { transform: rotate(60deg); }.valve-wheel i:nth-child(3) { transform: rotate(120deg); }
+.valve-wheel span { position: absolute; width: 44px; height: 44px; left: calc(50% - 22px); top: calc(50% - 22px); border: 7px solid #d38e62; border-radius: 50%; background: #76534a; }
+.valve-wheel.turning { cursor: grabbing; }
+.valve-direction { position: absolute; bottom: 20px; color: #294842; font-size: 13px; letter-spacing: .1em; }
+@media(max-width:500px) { .memory-scene { padding-inline: 20px; }.valve-wheel { width: 170px; height: 170px; border-width: 12px; }.valve-scene { height: 310px; padding-left: 50px; } }
