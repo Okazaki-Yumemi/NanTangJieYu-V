@@ -4,7 +4,8 @@ const { randomInt } = require('node:crypto');
 const { newId } = require('../auth');
 const { validateDisplayName } = require('./players');
 const game = require('../../web/public/fishing-game');
-const COOLDOWN_MS = 5 * 60 * 1000;
+// 现场试玩可临时取消冷却；不改动已保存的冷却记录。
+const COOLDOWN_MS = process.env.FISHING_NO_COOLDOWN === '1' ? 0 : 5 * 60 * 1000;
 const NAMING_MIN_CM = 100;
 const FISH = [
   { id: 'bitterling', name: '鳑鲏', rarity: '常见', weight: 380, min: 12, max: 35, difficulty: .2, color: '#c9be8e' },
@@ -33,8 +34,9 @@ function view(state, user, now = Date.now()) {
   return {
     logged_in: Boolean(user), banned: Boolean(user?.banned),
     display_name: user?.display_name || '',
-    cooldown_sec: Math.max(0,Math.ceil(((item?.next_cast_at || 0)-now)/1000)),
-    next_cast_at: item?.next_cast_at || 0,
+    cooldown_sec: COOLDOWN_MS ? Math.max(0,Math.ceil(((item?.next_cast_at || 0)-now)/1000)) : 0,
+    next_cast_at: COOLDOWN_MS ? (item?.next_cast_at || 0) : 0,
+    cooldown_enabled: COOLDOWN_MS > 0,
     server_time: now, best: item?.best || null, last_catch: item?.last_catch || null,
     catches: item?.catches || 0, rows: leaderboard(state),
     naming_min_cm: NAMING_MIN_CM, history: item?.history || []
@@ -43,7 +45,7 @@ function view(state, user, now = Date.now()) {
 function cast(state, user, now = Date.now(), pick = randomInt) {
   if (user.banned) return {error:'FORBIDDEN',message:'该账号已被封禁。'};
   const existing = record(state,user.id);
-  if (existing && existing.next_cast_at > now) return {error:'FISHING_COOLDOWN',message:'鱼还没回来，再等一会儿。',retry_in_sec:Math.ceil((existing.next_cast_at-now)/1000)};
+  if (COOLDOWN_MS && existing && existing.next_cast_at > now) return {error:'FISHING_COOLDOWN',message:'鱼还没回来，再等一会儿。',retry_in_sec:Math.ceil((existing.next_cast_at-now)/1000)};
   let roll = pick(1000);
   const fish = FISH.find(item => {roll-=item.weight;return roll<0;});
   const length = pick(fish.min,fish.max+1);

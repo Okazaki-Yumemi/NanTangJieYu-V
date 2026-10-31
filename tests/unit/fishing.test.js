@@ -4,7 +4,21 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fishing = require('../../server/domain/fishing');
 const game = require('../../web/public/fishing-game');
+const { execFileSync } = require('node:child_process');
 const { createFixture } = require('../helpers/fixture');
+
+test('preview mode bypasses stored cooldowns and allows consecutive casts',()=>{
+  const output=execFileSync(process.execPath,['-e',`
+    const fishing=require('./server/domain/fishing');
+    const user={id:'preview'};
+    const state={users:{preview:user},fishing:{players:{preview:{next_cast_at:Date.now()+300000}}}};
+    const first=fishing.cast(state,user);
+    const second=fishing.cast(state,user);
+    const view=fishing.view(state,user);
+    process.stdout.write(JSON.stringify({first:!!first.challenge,second:!!second.challenge,cooldown:view.cooldown_sec,enabled:view.cooldown_enabled}));
+  `],{cwd:require('node:path').resolve(__dirname,'../..'),env:{...process.env,FISHING_NO_COOLDOWN:'1'},encoding:'utf8'});
+  assert.deepEqual(JSON.parse(output),{first:true,second:true,cooldown:0,enabled:false});
+});
 
 function play(config) {
   const state=game.createGame(config);

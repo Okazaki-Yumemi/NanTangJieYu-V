@@ -58,6 +58,9 @@
       view=await api('GET','/api/player/fishing/state');
       serverOffset=view.server_time-Date.now();
       $('fisher-name').textContent=view.display_name;
+      $('fishing-rule').textContent=view.cooldown_enabled
+        ? '不消耗能量 · 每 5 分钟一竿。抛竿即开始计时，离开或鱼逃走也需要等待。'
+        : '不消耗能量 · 试玩期间无冷却，可以连续抛竿。';
       $('fishing-login').classList.toggle('hidden',view.logged_in);
       renderRanks(view.rows);renderHistory();renderButton();
       if(!selectedFish && view.last_catch)showCatch(view.last_catch);
