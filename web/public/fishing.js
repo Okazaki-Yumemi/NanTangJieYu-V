@@ -5,8 +5,8 @@
   const { api, escapeHtml: esc } = NTJ;
   const sprites={bitterling:'yellow',crucian:'blue',carp:'orange',catfish:'green',moon:'yellow',tractor:'green',leviathan:'red'};
   const sprite = fish => `/assets/fish/${sprites[fish.fish_id] || 'blue'}.png`;
-  const length = cm => cm >= 100 ? `${Number((cm/100).toFixed(2))} 米` : `${cm} 厘米`;
-  const metres = cm => `${Number((cm/100).toFixed(2))} 米`;
+  const length = cm => FishingAmounts.format(cm);
+  const metres = cm => FishingAmounts.format(cm,true);
   const clock = sec => `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
   let view=null;
   let serverOffset=0;
@@ -67,10 +67,10 @@
   function renderShop() {
     $('fish-wallet').textContent=metres(view.wallet_cm || 0);
     $('fish-total').textContent=metres(view.total_cm || 0);
-    $('shop-chance').textContent=view.jackpot_test_mode?'大奖鱼测试：五百米鱼 50% · 拖拉机鱼 30% · 银鲤 20%':`当前鱼饵：约 ${Math.round(view.big_fish_chance*100)}% 的抛竿会遇到满一米的鱼。`;
+    $('shop-chance').textContent=view.jackpot_test_mode?'大奖鱼测试：叠界巨鱼 50% · 拖拉机鱼 30% · 银鲤 20%':`当前鱼饵：约 ${Math.round(view.big_fish_chance*100)}% 的抛竿会遇到满一米的鱼。`;
     $('fishing-shop').innerHTML=(view.shop || []).map(item=>{
       const max=item.level>=item.max_level;
-      const unavailable=!view.logged_in || view.banned || active || casting || buying || max || view.wallet_cm<item.next_cost_cm;
+      const unavailable=!view.logged_in || view.banned || active || casting || buying || max || FishingAmounts.compare(view.wallet_cm,item.next_cost_cm)<0;
       return `<article class="gear-card"><i class="gear-icon gear-${esc(item.id)}" aria-hidden="true"></i><div><h3>${esc(item.name)} <small>Lv.${item.level} / ${item.max_level}</small></h3><p>${esc(item.description)}${item.next_big_fish_chance ? ` 下一级约 ${Math.round(item.next_big_fish_chance*100)}% 遇到大鱼。` : ""}</p><div class="gear-levels" aria-hidden="true">${Array.from({length:item.max_level},(_,index)=>`<i class="${index<item.level?'on':''}"></i>`).join('')}</div></div><button type="button" data-gear="${esc(item.id)}" data-level="${item.level}" ${unavailable?'disabled':''}>${max?'已满级':`升级 · ${length(item.next_cost_cm)}`}</button></article>`;
     }).join('');
     for(const button of $('fishing-shop').querySelectorAll('[data-gear]'))button.addEventListener('click',async()=>{
@@ -90,6 +90,7 @@
       view=await api('GET','/api/player/fishing/state');
       serverOffset=view.server_time-Date.now();
       $('fisher-name').textContent=view.display_name;
+      $('extreme-fish-limit').textContent=`极端鱼当前上限：${length(view.extreme_limit_cm)}。随榜首纪录翻倍，没有光年封顶。`;
       $('fishing-rule').textContent=view.cooldown_enabled
         ? `不消耗能量 · 每 ${view.cooldown_interval_sec} 秒一竿。从抛竿开始计时。`
         : '不消耗能量 · 试玩期间无冷却，可以连续抛竿。';
