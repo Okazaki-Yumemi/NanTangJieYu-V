@@ -6,15 +6,15 @@
   const MAX_TICKS = 2250;
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   function gearLevel(config, id) { return clamp(Math.floor(Number(config.gear?.[id]) || 0),0,5); }
-  function zoneSize(config) { return clamp(.27 - clamp(config.difficulty, 0, 1) * .19 + gearLevel(config,'rod')*.015,.075,.35); }
+  function zoneSize(config) { return clamp(.34 - clamp(config.difficulty, 0, 1) * .20 + gearLevel(config,'rod')*.015,.12,.42); }
   function fishPosition(tick, config) {
     const t = tick * DT;
     const d = config.difficulty;
     const phase = (config.seed % 1000) / 1000 * Math.PI * 2;
-    return clamp(.5 + .27 * Math.sin(t * (.75 + d * 1.55) + phase) + .12 * Math.sin(t * (1.35 + d * 3.1) + phase * 1.7) + .045 * d * Math.sin(t * (3.1 + d * 2.4) + phase * .7), .07, .93);
+    return clamp(.5 + .27 * Math.sin(t * (.6 + d * 1.2) + phase) + .12 * Math.sin(t * (1.05 + d * 2.5) + phase * 1.7) + .03 * d * Math.sin(t * (2.8 + d * 2) + phase * .7), .07, .93);
   }
   function createGame(config) {
-    return { tick: 0, y: .72, velocity: 0, fish: fishPosition(0, config), progress: .25, status: 'playing' };
+    return { tick: 0, y: .72, velocity: 0, fish: fishPosition(0, config), progress: .35, status: 'playing' };
   }
   function step(state, held, config) {
     if (state.status !== 'playing') return state;
@@ -25,8 +25,8 @@
     if (state.y === half || state.y === 1 - half) state.velocity = 0;
     state.fish = fishPosition(state.tick, config);
     const inside = Math.abs(state.fish - state.y) <= half;
-    if (inside) state.progress += DT * (.115 - config.difficulty * .025 + gearLevel(config,'reel')*.006);
-    else if (state.tick > 75) state.progress -= DT * (.095 + config.difficulty * .09) * (1-gearLevel(config,'line')*.08);
+    if (inside) state.progress += DT * (.14 - config.difficulty * .025 + gearLevel(config,'reel')*.006);
+    else if (state.tick > 150) state.progress -= DT * (.06 + config.difficulty * .055) * (1-gearLevel(config,'line')*.08);
     state.progress = clamp(state.progress, 0, 1);
     if (state.progress >= 1) state.status = 'caught';
     else if (state.progress <= 0 || state.tick >= MAX_TICKS) state.status = 'escaped';

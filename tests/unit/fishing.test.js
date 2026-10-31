@@ -44,9 +44,9 @@ test('shared fishing simulation can be replayed exactly and is playable across d
 });
 
 test('harder fish have smaller green zones, shared by drawing and hit detection',()=>{
-  assert.ok(game.zoneSize({difficulty:.2})>.23);
-  assert.ok(game.zoneSize({difficulty:.73})<.15);
-  assert.ok(game.zoneSize({difficulty:.99})<.1);
+  assert.ok(game.zoneSize({difficulty:.2})>=.30);
+  assert.ok(game.zoneSize({difficulty:.73})<.21);
+  assert.ok(game.zoneSize({difficulty:.99})<.15);
   assert.ok(game.zoneSize({difficulty:.2})>game.zoneSize({difficulty:.5}));
   assert.ok(game.zoneSize({difficulty:.5})>game.zoneSize({difficulty:.99}));
 });
@@ -142,13 +142,14 @@ test('old retained catches are credited once and survive serialization without d
 test('rod widens the zone, reel fills faster, line reduces loss, bait increases big fish odds',()=>{
   const config={difficulty:.7,seed:12345};
   assert.ok(game.zoneSize({...config,gear:{rod:5}})>game.zoneSize(config));
-  const base=game.createGame(config);base.tick=120;base.y=.5;base.fish=.5;
+  const base=game.createGame(config);base.tick=180;base.y=.5;base.fish=.5;
   const reel={...base};
   // 找到当前固定轨迹附近的可捕获位置，避免把控制惯性误当装备效果。
-  base.y=game.fishPosition(121,config);reel.y=base.y;
+  base.y=game.fishPosition(181,config);reel.y=base.y;
   game.step(base,false,config);game.step(reel,false,{...config,gear:{reel:5}});
   assert.ok(reel.progress>base.progress);
-  const loose={...game.createGame(config),tick:120,y:.95};const protectedLine={...loose};
+  const outside=game.fishPosition(181,config)>.5?.1:.9;
+  const loose={...game.createGame(config),tick:180,y:outside};const protectedLine={...loose};
   game.step(loose,false,config);game.step(protectedLine,false,{...config,gear:{line:5}});
   assert.ok(protectedLine.progress>loose.progress);
   let previous=fishing.bigFishChance({bait:0});
