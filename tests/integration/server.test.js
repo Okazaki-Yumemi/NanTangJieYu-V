@@ -369,6 +369,38 @@ describe('HTTP integration: full event journey', () => {
     assert.ok(res.json.prize_track.some((prize) => prize.available));
   });
 
+  it('fishing enforces authentication, persistent cooldown, replay validation and safe naming', async () => {
+    const noAuth=await request('POST','/api/player/fishing/cast',{body:{}});
+    assert.equal(noAuth.status,401);
+    const cast=await request('POST','/api/player/fishing/cast',{body:{},headers:{Cookie:playerACookie}});
+    assert.equal(cast.status,200);
+    const challenge=cast.json.challenge;
+    const again=await request('POST','/api/player/fishing/cast',{body:{},headers:{Cookie:playerACookie}});
+    assert.equal(again.status,429);
+    const core=require('../../web/public/fishing-game');
+    // 隔离测试中的时间提前，避免真的等待收杆；正式接口不接受客户端时钟。
+    await app.store.transact(state=>{
+      const attempt=Object.values(state.fishing.players).find(item=>item.attempt.id===challenge.id).attempt;
+      attempt.created_at-=45000;attempt.difficulty=.2;attempt.length_cm=150;
+      return {ok:true};
+    });
+    const config={...challenge,difficulty:.2};
+    const game=core.createGame(config);const controls=[];let last=false;
+    while(game.status==='playing') {
+      const held=game.y+game.velocity*.2>core.fishPosition(game.tick+10,config);
+      if(held!==last){controls.push({tick:game.tick,held});last=held;}
+      core.step(game,held,config);
+    }
+    const saved=await request('POST','/api/player/fishing/finish',{body:{id:challenge.id,ticks:game.tick,controls},headers:{Cookie:playerACookie}});
+    assert.equal(saved.status,200);assert.equal(saved.json.result.caught,true);
+    const named=await request('POST','/api/player/fishing/name',{body:{id:challenge.id,name:'湖边大王'},headers:{Cookie:playerACookie}});
+    assert.equal(named.status,200);
+    const forbidden=await request('POST','/api/player/fishing/name',{body:{id:challenge.id,name:'色 情'},headers:{Cookie:playerACookie}});
+    assert.equal(forbidden.status,400);
+    const ranks=await request('GET','/api/fishing/leaderboard');
+    assert.equal(ranks.json.rows[0].custom_name,'湖边大王');
+  });
+
   it('restart keeps the state (persistence)', async () => {
     const stateBefore = (await request('GET', '/api/public/state')).json;
     await new Promise((resolve) => server.close(resolve));
@@ -387,6 +419,9 @@ describe('HTTP integration: full event journey', () => {
     assert.equal(stateAfter.activity.status, 'running');
     const gate = stateAfter.regions.find((region) => region.id === 'siyuan_gate');
     assert.equal(gate.status, 'cleared');
+    const fishingState=await request('GET','/api/player/fishing/state',{headers:{Cookie:playerACookie}});
+    assert.ok(fishingState.json.cooldown_sec>0);
+    assert.equal(fishingState.json.best.custom_name,'湖边大王');
   });
 
   it('ledger file records the audit trail', async () => {
