@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>任务试玩 · 东方南堂界遇 V</title>
+    <link rel="stylesheet" href="/styles.css?v=11" />
+    <link rel="stylesheet" href="/player.css?v=10" />
+    <link rel="stylesheet" href="/atmosphere.css?v=3" />
+    <link rel="stylesheet" href="/tasks.css?v=2" />
+  </head>
+  <body class="player-body">
+    <main class="player-shell">
+      <header class="brand-head">
+        <p class="brand-eyebrow">东方南堂界遇 V</p>
+        <h1 class="brand-title">调查任务试玩</h1>
+        <p class="brand-subtitle">无需登录，可以反复试。这里不消耗能量，也不结算奖励。</p>
+      </header>
+      <div class="task-practice-list">
+        <button class="ghost-btn" type="button" data-task="wipe">擦玻璃<small>把雾气擦掉。</small></button>
+        <button class="ghost-btn" type="button" data-task="leaves">清落叶<small>拖进吸口。</small></button>
+        <button class="ghost-btn" type="button" data-task="trash">倒垃圾<small>拉下排空杆。</small></button>
+        <button class="ghost-btn" type="button" data-task="wires">接电线<small>接上四组线头。</small></button>
+        <button class="ghost-btn" type="button" data-task="tune">对信号<small>把光点移到刻度上。</small></button>
+        <button class="ghost-btn" type="button" data-task="seal">封裂隙<small>按住符印。</small></button>
+      </div>
+      <p id="practice-result" role="status" class="helper-text center">选择一个任务开始。</p>
+      <a class="display-link center" href="/">返回活动</a>
+    </main>
+    <script src="/common.js?v=11"></script>
+    <script src="/task-logic.js?v=1"></script>
+    <script src="/task-scenes.js?v=1"></script>
+    <script src="/tasks.js?v=2"></script>
+    <script src="/practice.js?v=1"></script>
+  </body>
+</html>

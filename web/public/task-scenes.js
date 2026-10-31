@@ -1,0 +1,182 @@
+'use strict';
+
+/* 场景负责物件和反馈；任务生命周期、取消与结算由 tasks.js 统一管理。 */
+(function initTaskScenes() {
+  const leafArt = '<svg viewBox="0 0 70 52" aria-hidden="true"><path d="M5 38Q13 0 62 8Q66 46 21 45Z" fill="currentColor" stroke="#553f2d" stroke-width="3"/><path d="M9 43L55 15M24 32L24 20M36 24L48 32" fill="none" stroke="#785737" stroke-width="2"/></svg>';
+
+  function leaves(board, { listen, cleanups, complete, status, play, isSolved }) {
+    board.classList.add('leaf-scene');
+    board.innerHTML = '<div class="filter-grille" aria-hidden="true"></div><button type="button" class="leaf-vent" aria-label="吸入口，选中落叶后点击此处清理"><i></i><i></i><i></i><span>吸入口</span></button><span class="machine-label" aria-hidden="true">进气过滤箱</span>';
+    const vent = board.querySelector('.leaf-vent');
+    let selected = null;
+    let dragging = null;
+    let count = 0;
+    const positions = [[.4,.2],[.7,.23],[.52,.48],[.82,.58],[.4,.78],[.72,.83]];
+    const colors = ['#d3a15a', '#ba7448', '#cbb965', '#9eaf66', '#d3a15a', '#af7750'];
+    const leaves = positions.map(([x,y], index) => {
+      const leaf = document.createElement('button');
+      leaf.type = 'button';
+      leaf.className = 'loose-leaf';
+      leaf.setAttribute('aria-label', `落叶 ${index + 1}`);
+      leaf.setAttribute('aria-pressed', 'false');
+      leaf.style.cssText = `left:${x*100}%;top:${y*100}%;--turn:${index*51-30}deg;color:${colors[index]}`;
+      leaf.innerHTML = leafArt;
+      board.appendChild(leaf);
+      listen(leaf, 'click', () => {
+        if (leaf.disabled || isSolved()) return;
+        selected = leaf;
+        leaves.forEach(item => item.setAttribute('aria-pressed', String(item === leaf)));
+        vent.classList.add('ready');
+      });
+      listen(leaf, 'pointerdown', event => {
+        if (event.button !== 0 || dragging || leaf.disabled || isSolved()) return;
+        const r = board.getBoundingClientRect();
+        const l = leaf.getBoundingClientRect();
+        dragging = { id:event.pointerId, leaf, ox:event.clientX-(l.left+l.width/2), oy:event.clientY-(l.top+l.height/2) };
+        leaf.setPointerCapture(event.pointerId);
+        leaf.classList.add('dragging');
+        vent.classList.add('ready');
+        leaf.style.left = `${(event.clientX-r.left-dragging.ox)/r.width*100}%`;
+      });
+      listen(leaf, 'pointermove', event => {
+        if (!dragging || dragging.id !== event.pointerId || dragging.leaf !== leaf) return;
+        const r = board.getBoundingClientRect();
+        leaf.style.left = `${Math.max(.07,Math.min(.93,(event.clientX-r.left-dragging.ox)/r.width))*100}%`;
+        leaf.style.top = `${Math.max(.08,Math.min(.92,(event.clientY-r.top-dragging.oy)/r.height))*100}%`;
+      });
+      listen(leaf, 'pointerup', event => {
+        if (!dragging || dragging.id !== event.pointerId || dragging.leaf !== leaf) return;
+        dragging = null;
+        leaf.classList.remove('dragging');
+        const r = vent.getBoundingClientRect();
+        const l = leaf.getBoundingClientRect();
+        const cx = l.left + l.width/2;
+        const cy = l.top + l.height/2;
+        if (cx >= r.left-12 && cx <= r.right+12 && cy >= r.top-12 && cy <= r.bottom+12) collect(leaf);
+      });
+      listen(leaf, 'pointercancel', () => { dragging = null; leaf.classList.remove('dragging'); });
+      return leaf;
+    });
+    function collect(leaf) {
+      if (leaf.disabled || isSolved()) return;
+      leaf.disabled = true;
+      leaf.classList.add('collected');
+      leaf.setAttribute('aria-pressed', 'false');
+      selected = null;
+      count += 1;
+      play('rub');
+      vent.classList.remove('ready');
+      status.textContent = `${count} / 6`;
+      if (count === leaves.length) complete();
+    }
+    listen(vent, 'click', () => { if (selected) collect(selected); });
+    cleanups.push(() => { dragging = null; });
+    status.textContent = '0 / 6';
+  }
+
+  function wipe(board, { listen, complete, status, play, isSolved }) {
+    board.classList.add('wipe-scene');
+    board.innerHTML = `<div class="glass-pane"><svg class="window-view" viewBox="0 0 640 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs><linearGradient id="window-sky" x2="0" y2="1"><stop stop-color="#798a9e"/><stop offset="1" stop-color="#c5d4cb"/></linearGradient></defs>
+      <path fill="url(#window-sky)" d="M0 0H640V400H0Z"/><circle cx="477" cy="80" r="31" fill="#e9dba7"/>
+      <path d="M0 243Q130 190 240 230T640 222V400H0Z" fill="#719288"/><path d="M0 290Q200 228 390 276T640 282V400H0Z" fill="#478083"/>
+      <path d="M0 341Q160 308 330 344T640 332M30 365H210M350 378H590" fill="none" stroke="#a1bdb1" stroke-width="4" opacity=".6"/>
+      <g fill="#d1c4a5" stroke="#5a615b" stroke-width="5"><path d="M197 285V164H222V285ZM417 285V164H442V285Z"/><path d="M185 171L319 113L454 171Z" fill="#575f68"/><path d="M218 174H421V205H218Z"/></g>
+      <path d="M252 191H385" stroke="#85806a" stroke-width="4"/>
+      <path d="M68 297V147M566 290V140" stroke="#555f55" stroke-width="16"/><g fill="#586e59"><circle cx="58" cy="140" r="56"/><circle cx="100" cy="175" r="44"/><circle cx="563" cy="132" r="62"/><circle cx="605" cy="180" r="47"/></g>
+      <g fill="#d7a5a1"><circle cx="58" cy="113" r="32"/><circle cx="102" cy="165" r="27"/><circle cx="551" cy="108" r="37"/></g>
+      </svg><canvas width="640" height="400" tabindex="0" role="application" aria-label="雾玻璃，按住拖动擦拭；键盘方向键移动抹布，按住空格擦拭"></canvas><i class="wipe-cloth" aria-hidden="true"></i></div>`;
+    const canvas = board.querySelector('canvas');
+    const ctx = canvas.getContext('2d');
+    const cloth = board.querySelector('.wipe-cloth');
+    const mask = NTJ.taskMath.createWipeMask();
+    const fog = ctx.createLinearGradient(0,0,640,400);
+    fog.addColorStop(0,'#9aa9acd9'); fog.addColorStop(.5,'#c9cec1f5'); fog.addColorStop(1,'#718989e8');
+    ctx.fillStyle = fog; ctx.fillRect(0,0,640,400);
+    // 固定随机斑痕只绘制一次，擦掉的就是玩家实际经过的位置。
+    for (let i=0;i<85;i+=1) {
+      ctx.beginPath(); ctx.ellipse((i*137)%640,(i*83)%400,13+i%22,3+i%8,i*.8,0,Math.PI*2);
+      ctx.fillStyle = i%2 ? '#677f842f' : '#edf0d436'; ctx.fill();
+    }
+    let pointer = null;
+    let previous = null;
+    let keyboard = {x:320,y:200};
+    let rubbing = false;
+    let lastSound = 0;
+    function erase(point) {
+      if (isSolved()) return;
+      const from = previous || point;
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillStyle = '#000'; ctx.strokeStyle = '#000';
+      ctx.lineWidth = 78; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(from.x,from.y); ctx.lineTo(point.x,point.y); ctx.stroke();
+      ctx.beginPath(); ctx.arc(point.x,point.y,39,0,Math.PI*2); ctx.fill();
+      const ratio = mask.stroke(from,point,36);
+      cloth.style.left = `${point.x/640*100}%`; cloth.style.top = `${point.y/400*100}%`;
+      cloth.classList.add('visible');
+      status.textContent = `${Math.min(100,Math.round(ratio/.78*100))}%`;
+      if (performance.now()-lastSound>160) { play('rub'); lastSound=performance.now(); }
+      previous = point;
+      if (ratio >= .78) { ctx.clearRect(0,0,640,400); cloth.classList.remove('visible'); complete(); }
+    }
+    function point(event) {
+      const r = canvas.getBoundingClientRect();
+      return {x:Math.max(0,Math.min(640,(event.clientX-r.left)/r.width*640)),y:Math.max(0,Math.min(400,(event.clientY-r.top)/r.height*400))};
+    }
+    function stop() { pointer=null; previous=null; rubbing=false; cloth.classList.remove('visible'); }
+    listen(canvas,'pointerdown',event=>{ if(event.button!==0 || pointer!==null)return; pointer=event.pointerId; previous=null; canvas.setPointerCapture(pointer); erase(point(event)); });
+    listen(canvas,'pointermove',event=>{ if(pointer===event.pointerId)erase(point(event)); });
+    listen(canvas,'pointerup',stop); listen(canvas,'pointercancel',stop); listen(window,'blur',stop);
+    listen(canvas,'keydown',event=>{
+      if (event.key===' ') {event.preventDefault();rubbing=true;erase(keyboard);return;}
+      const delta={ArrowLeft:[-24,0],ArrowRight:[24,0],ArrowUp:[0,-24],ArrowDown:[0,24]}[event.key];
+      if(!delta)return;
+      event.preventDefault();keyboard={x:Math.max(0,Math.min(640,keyboard.x+delta[0])),y:Math.max(0,Math.min(400,keyboard.y+delta[1]))};
+      if(rubbing)erase(keyboard);
+      else {cloth.style.left=`${keyboard.x/640*100}%`;cloth.style.top=`${keyboard.y/400*100}%`;cloth.classList.add('visible');}
+    });
+    listen(canvas,'keyup',event=>{if(event.key===' ')stop();}); listen(canvas,'blur',stop);
+    status.textContent='0%';
+  }
+
+  function trash(board, { listen, cleanups, complete, status, play, isSolved }) {
+    board.classList.add('trash-scene');
+    board.innerHTML='<div class="trash-hopper"><span class="machine-label">收集舱</span><div class="trash-pieces"></div><div class="hatch" aria-hidden="true"><i></i><i></i></div></div><div class="lever-track"><span>关</span><button type="button" class="trash-lever" aria-label="垃圾舱拉杆，向下拖动到底并保持，键盘按住空格"><i></i></button><span>开</span></div>';
+    const pieces=board.querySelector('.trash-pieces');
+    for(let i=0;i<12;i+=1) {
+      const piece=document.createElement('i');
+      piece.className=`trash-piece piece-${i%3}`;
+      piece.style.cssText=`--x:${14+(i*29)%72}%;--y:${12+(i*37)%67}%;--angle:${i*63}deg;--delay:${i*.035}s`;
+      piece.innerHTML=i%3===0?leafArt:'';
+      pieces.appendChild(piece);
+    }
+    const lever=board.querySelector('.trash-lever');
+    const track=board.querySelector('.lever-track');
+    let pointer=null;
+    let frame=0;
+    let last=0;
+    let drained=0;
+    let pull=0;
+    function position(value) {pull=value; board.style.setProperty('--pull',String(value));}
+    function tick(now) {
+      const elapsed=Math.min(80,now-last);last=now;
+      if(pull>.82 && !document.hidden)drained=Math.min(1,drained+elapsed/1800);
+      board.style.setProperty('--drained',String(drained));
+      board.classList.toggle('draining',pull>.82);
+      status.textContent=`${Math.round(drained*100)}%`;
+      if(drained===1) {board.classList.add('emptied');complete();return;}
+      frame=requestAnimationFrame(tick);
+    }
+    function start(){if(frame||isSolved())return;last=performance.now();frame=requestAnimationFrame(tick);}
+    function stop(){pointer=null;position(0);board.classList.remove('draining');cancelAnimationFrame(frame);frame=0;}
+    function move(event){const r=track.getBoundingClientRect();position(Math.max(0,Math.min(1,(event.clientY-r.top-36)/(r.height-72))));}
+    listen(lever,'pointerdown',event=>{if(event.button!==0||pointer!==null||isSolved())return;pointer=event.pointerId;lever.setPointerCapture(pointer);play('rub');move(event);start();});
+    listen(lever,'pointermove',event=>{if(event.pointerId===pointer)move(event);});
+    listen(lever,'pointerup',stop);listen(lever,'pointercancel',stop);listen(lever,'blur',stop);listen(window,'blur',stop);
+    listen(document,'visibilitychange',()=>{if(document.hidden)stop();});
+    listen(lever,'keydown',event=>{if(event.key===' '||event.key==='Enter'){event.preventDefault();if(isSolved())return;position(1);start();}});
+    listen(lever,'keyup',event=>{if(event.key===' '||event.key==='Enter')stop();});
+    cleanups.push(stop);status.textContent='0%';
+  }
+  NTJ.taskScenes={wipe,leaves,trash};
+})();

@@ -86,6 +86,7 @@
         const count = counts && counts[team.id] !== undefined ? counts[team.id] : team.member_count;
         return `
           <button type="button" class="team-pick${pickedTeam === team.id ? ' picked' : ''}" data-team="${escapeHtml(team.id)}"
+            aria-pressed="${pickedTeam === team.id}"
             style="--team-color: ${escapeHtml(team.color)}; --team-soft: ${escapeHtml(team.color_soft)}">
             <span class="team-pick-portrait">
               <img src="${escapeHtml(team.portrait_url)}" alt="${escapeHtml(team.captain)}"
@@ -103,6 +104,7 @@
         pickedTeam = button.dataset.team;
         for (const item of elements.teamPicks.querySelectorAll('.team-pick')) {
           item.classList.toggle('picked', item === button);
+          item.setAttribute('aria-pressed', String(item === button));
         }
       });
     }
@@ -663,6 +665,19 @@
     appState.pendingInteract = true;
     renderRegionDetail();
     try {
+      const action = appState.data.interactions.find(item => item.id === actionId);
+      if (action && appState.data.me.energy < action.energy_cost) {
+        toast('能量不足，休息一下再出发。', 'warn');
+        return;
+      }
+      appState.modalOpen = true;
+      let completed;
+      try {
+        completed = await NTJ.tasks.run({ actionId, name: action ? action.name : '调查' });
+      } finally {
+        appState.modalOpen = false;
+      }
+      if (!completed) return;
       const res = await api('POST', '/api/player/interact', {
         region_id: regionId,
         action_id: actionId,
@@ -689,6 +704,9 @@
     } finally {
       appState.pendingInteract = false;
       renderRegionDetail();
+      if (!appState.modalOpen) {
+        elements.regionDetail.querySelector(`button[data-action="${CSS.escape(actionId)}"]`)?.focus({ preventScroll: true });
+      }
     }
   }
 
@@ -753,6 +771,7 @@
 
   // 会话失效（服务端修剪 / 被强制下线 / 多端冲突）：停止轮询并送回登录视图。
   function handleAuthLost() {
+    NTJ.tasks.cancel();
     if (appState.poller) {
       appState.poller.stop();
       appState.poller = null;
