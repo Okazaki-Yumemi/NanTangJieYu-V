@@ -4,6 +4,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fishing = require('../../server/domain/fishing');
 const game = require('../../web/public/fishing-game');
+const amounts = require('../../web/public/fishing-amounts');
 const { execFileSync } = require('node:child_process');
 const { createFixture } = require('../helpers/fixture');
 
@@ -71,7 +72,7 @@ test('cast cooldown survives serialization and never consumes activity energy',(
   assert.ok(fishing.cast(restored,user,now+30000).challenge);
 });
 
-test('rarest roll produces a 500 metre fish with very high difficulty',()=>{
+test('rarest roll can reach the initial 500 metre limit with very high difficulty',()=>{
   const f=createFixture({userCount:1});
   const rolls=[999,50000,30,12345];
   const result=fishing.cast(f.state,f.registered[0],1700000000000,()=>rolls.shift());
@@ -79,6 +80,40 @@ test('rarest roll produces a 500 metre fish with very high difficulty',()=>{
   assert.equal(attempt.fish_id,'leviathan');
   assert.equal(attempt.length_cm,50000);
   assert.ok(result.challenge.difficulty>=.96);
+});
+
+test('extreme fish limit doubles the leaderboard record, including beyond one light year',()=>{
+  const f=createFixture({userCount:1});const user=f.registered[0];
+  f.state.fishing.players[user.id]={best:{id:'record',length_cm:50000,caught_at:1},catches:1};
+  assert.equal(fishing.extremeLimit(f.state),100000);
+  let previous=50000n;
+  for(let i=0;i<48;i++){
+    const limit=fishing.extremeLimit(f.state);
+    assert.equal(amounts.integer(limit),previous*2n);
+    f.state.fishing.players[user.id].best.length_cm=limit;
+    previous=amounts.integer(limit);
+  }
+  assert.ok(previous>amounts.LIGHT_YEAR_CM);
+  const result=fishing.cast(f.state,user,1700000000000,(min,max)=>max===undefined?min-1:min);
+  const length=f.state.fishing.players[user.id].attempt.length_cm;
+  assert.ok(amounts.integer(length)>previous);
+  assert.ok(amounts.integer(length)<=previous*2n);
+  assert.ok(result.challenge.difficulty>=.96);
+});
+
+test('cosmic lengths, balances and ranking retain single-centimetre precision through JSON',()=>{
+  const f=createFixture({userCount:2});const [first,second]=f.registered;
+  const lightYear=amounts.LIGHT_YEAR_CM;
+  f.state.fishing.players[first.id]={best:{id:'a',length_cm:lightYear.toString(),caught_at:1},catches:1};
+  f.state.fishing.players[second.id]={best:{id:'b',length_cm:(lightYear+1n).toString(),caught_at:2},catches:1};
+  assert.equal(fishing.leaderboard(f.state)[0].user_id,second.id);
+  fishing.upgrade(f.state,first,{gear_id:'rod',expected_level:0});
+  const restored=JSON.parse(JSON.stringify(f.state));
+  const view=fishing.view(restored,first);
+  assert.equal(amounts.integer(view.wallet_cm),lightYear-200n);
+  assert.equal(amounts.integer(view.total_cm),lightYear);
+  assert.equal(amounts.format(lightYear.toString()),'1 光年');
+  assert.equal(amounts.format(100000),'1 千米');
 });
 
 test('roughly 44 percent of casts encounter nameable fish while giant fish stay rare',()=>{

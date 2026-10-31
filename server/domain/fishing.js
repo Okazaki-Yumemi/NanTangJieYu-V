@@ -1,6 +1,7 @@
 'use strict';
 
-const { randomInt } = require('node:crypto');
+const { randomInt, randomBytes } = require('node:crypto');
+const amounts=require('../../web/public/fishing-amounts');
 const { newId } = require('../auth');
 const { validateDisplayName } = require('./players');
 const game = require('../../web/public/fishing-game');
@@ -22,7 +23,7 @@ const FISH = [
   { id: 'catfish', name: '夜行鲶鱼', rarity: '稀有', weight: 200, min: 90, max: 280, difficulty: .58, color: '#8c9baa' },
   { id: 'moon', name: '月下银鲤', rarity: '珍奇', weight: 74, min: 250, max: 1200, difficulty: .73, color: '#d9d6ae' },
   { id: 'tractor', name: '湖底拖拉机鱼', rarity: '离谱', weight: 5, min: 5000, max: 18000, difficulty: .86, color: '#a8b581' },
-  { id: 'leviathan', name: '五百米的鱼', rarity: '传说', weight: 1, min: 50000, max: 50000, difficulty: .96, color: '#bb9dcd' }
+  { id: 'leviathan', name: '叠界巨鱼', rarity: '传说', weight: 1, min: 25000, max: 50000, difficulty: .96, color: '#bb9dcd' }
 ];
 function data(state) {
   state.fishing ||= { players: {} };
@@ -33,9 +34,9 @@ function record(state, userId) { return state.fishing?.players?.[userId] || null
 function economy(item = {}) {
   // 旧版本未累计长度，只能从仍留存的鱼篓与纪录补发；同一钓获按 id 去重。
   const retained = new Map([...(item.history || []),item.best,item.last_catch].filter(Boolean).map(fish=>[fish.id,fish]));
-  const legacyTotal=[...retained.values()].reduce((sum,fish)=>sum+Math.max(0,Math.floor(fish.length_cm || 0)),0);
-  const total=Number.isSafeInteger(item.total_cm) && item.total_cm>=0?item.total_cm:legacyTotal;
-  const wallet=Number.isSafeInteger(item.wallet_cm) && item.wallet_cm>=0?item.wallet_cm:total;
+  const legacyTotal=[...retained.values()].reduce((sum,fish)=>amounts.add(sum,fish.length_cm),0);
+  const total=item.total_cm!==undefined?amounts.serialize(item.total_cm):legacyTotal;
+  const wallet=item.wallet_cm!==undefined?amounts.serialize(item.wallet_cm):total;
   const gear=Object.fromEntries(GEAR.map(({id})=>[id,Math.max(0,Math.min(5,Math.floor(Number(item.gear?.[id]) || 0)))]));
   return {total_cm:total,wallet_cm:wallet,gear};
 }
@@ -65,7 +66,7 @@ function leaderboard(state) {
   return Object.entries(state.fishing?.players || {})
     .filter(([id, value]) => value.best && state.users[id] && !state.users[id].banned)
     .map(([id, value]) => ({ ...value.best, user_id: id, display_name: state.users[id].display_name, catches: value.catches }))
-    .sort((a,b) => b.length_cm - a.length_cm || a.caught_at - b.caught_at || a.user_id.localeCompare(b.user_id))
+    .sort((a,b) => amounts.compare(b.length_cm,a.length_cm) || a.caught_at - b.caught_at || a.user_id.localeCompare(b.user_id))
     .slice(0,30).map((row,index) => ({ ...row, rank:index+1 }));
 }
 function view(state, user, now = Date.now()) {
@@ -82,7 +83,8 @@ function view(state, user, now = Date.now()) {
     server_time: now, best: item?.best || null, last_catch: item?.last_catch || null,
     catches: item?.catches || 0, rows: leaderboard(state),
     naming_min_cm: NAMING_MIN_CM, history: item?.history || [],
-    ...funds, shop:shopView(funds.gear),big_fish_chance:bigFishChance(funds.gear,jackpot),jackpot_test_mode:jackpot
+    ...funds, shop:shopView(funds.gear),big_fish_chance:bigFishChance(funds.gear,jackpot),jackpot_test_mode:jackpot,
+    extreme_limit_cm:extremeLimit(state)
   };
 }
 function cast(state, user, now = Date.now(), pick = randomInt) {
@@ -93,7 +95,10 @@ function cast(state, user, now = Date.now(), pick = randomInt) {
   const pool=fishWeights(item.gear,JACKPOT_TEST_MODE && Boolean(user.fishing_test_account));
   let roll = pick(pool.reduce((sum,fish)=>sum+fish.weight,0));
   const fish = pool.find(item => {roll-=item.weight;return roll<0;});
-  const length = pick(fish.min,fish.max+1);
+  const limit=fish.id==='leviathan'?extremeLimit(state):fish.max;
+  const recordLength=leaderboard(state)[0]?.length_cm || 0;
+  const minimum=fish.id==='leviathan'?(amounts.compare(recordLength,25000)>=0?amounts.add(recordLength,1):25000):fish.min;
+  const length = randomLength(minimum,limit,pick);
   const difficulty = Math.min(.99,fish.difficulty + pick(0,61)/1000);
   const attempt = {id:newId('cast'),seed:pick(1,1000000),difficulty,gear:{...item.gear},fish_id:fish.id,length_cm:length,created_at:now,expires_at:now+90000,result:null};
   item.next_cast_at=now+COOLDOWN_MS;item.attempt=attempt;
@@ -113,11 +118,11 @@ function finish(state, user, payload, now = Date.now()) {
     const fish = FISH.find(value=>value.id===attempt.fish_id);
     const catchRecord={id:attempt.id,fish_id:fish.id,name:fish.name,rarity:fish.rarity,color:fish.color,length_cm:attempt.length_cm,difficulty:attempt.difficulty,caught_at:now};
     item.catches+=1;
-    item.total_cm+=catchRecord.length_cm;
-    item.wallet_cm+=catchRecord.length_cm;
+    item.total_cm=amounts.add(item.total_cm,catchRecord.length_cm);
+    item.wallet_cm=amounts.add(item.wallet_cm,catchRecord.length_cm);
     item.last_catch=catchRecord;
     item.history=[...(item.history || []),catchRecord].slice(-20);
-    if (!item.best || catchRecord.length_cm>item.best.length_cm) item.best=catchRecord;
+    if (!item.best || amounts.compare(catchRecord.length_cm,item.best.length_cm)>0) item.best=catchRecord;
     attempt.result={caught:true,fish:catchRecord};
   } else attempt.result={caught:false};
   return {ok:true,result:attempt.result};
@@ -132,8 +137,8 @@ function upgrade(state,user,payload) {
   if(payload.expected_level!==level)return {error:'BAD_REQUEST',message:'装备等级已经变化，请刷新商店。'};
   if(level>=GEAR_COSTS.length)return {error:'BAD_REQUEST',message:'这件装备已经满级。'};
   const price=GEAR_COSTS[level];
-  if(item.wallet_cm<price)return {error:'BAD_REQUEST',message:'米数还不够，再钓几条。'};
-  item.wallet_cm-=price;item.gear[spec.id]+=1;
+  if(amounts.compare(item.wallet_cm,price)<0)return {error:'BAD_REQUEST',message:'米数还不够，再钓几条。'};
+  item.wallet_cm=amounts.subtract(item.wallet_cm,price);item.gear[spec.id]+=1;
   return {ok:true,gear_id:spec.id,level:item.gear[spec.id],spent_cm:price,wallet_cm:item.wallet_cm};
 }
 function nameFish(state,user,payload,seeds) {
@@ -141,11 +146,23 @@ function nameFish(state,user,payload,seeds) {
   const item=record(state,user.id);
   const copies=[...(item?.history || []),item?.best,item?.last_catch,item?.attempt?.result?.fish].filter(fish=>fish && fish.id===payload.id);
   if(!copies.length)return {error:'BAD_REQUEST',message:'没有找到你的这条鱼。'};
-  if(copies[0].length_cm<NAMING_MIN_CM)return {error:'BAD_REQUEST',message:'满 1 米的鱼才能命名。'};
+  if(amounts.compare(copies[0].length_cm,NAMING_MIN_CM)<0)return {error:'BAD_REQUEST',message:'满 1 米的鱼才能命名。'};
   if(typeof payload.name!=='string')return {error:'BAD_REQUEST',message:'请输入鱼名。'};
   const check=validateDisplayName(payload.name,seeds.activity,seeds.sensitiveWords);
   if(check.error)return {error:'BAD_REQUEST',message:check.error.replaceAll('昵称','鱼名')};
   copies.forEach(fish=>{fish.custom_name=check.displayName;});
   return {ok:true,fish:copies[0]};
 }
-module.exports={COOLDOWN_MS,NAMING_MIN_CM,FISH,GEAR,GEAR_COSTS,fishWeights,bigFishChance,economy,cast,finish,nameFish,upgrade,view,leaderboard};
+function extremeLimit(state) {
+  const best=amounts.integer(leaderboard(state)[0]?.length_cm || 0);
+  return amounts.serialize(best*2n>50000n?best*2n:50000n);
+}
+function randomLength(min,max,pick=randomInt) {
+  const low=amounts.integer(min),high=amounts.integer(max),span=high-low+1n;
+  if(high<BigInt(Number.MAX_SAFE_INTEGER) && span<281474976710656n)return pick(Number(low),Number(high)+1);
+  const bits=span.toString(2).length,bytes=Math.ceil(bits/8),mask=(1n<<BigInt(bits))-1n;
+  let roll;
+  do {roll=BigInt('0x'+randomBytes(bytes).toString('hex'))&mask;} while(roll>=span);
+  return amounts.serialize(low+roll);
+}
+module.exports={COOLDOWN_MS,NAMING_MIN_CM,FISH,GEAR,GEAR_COSTS,fishWeights,bigFishChance,economy,cast,finish,nameFish,upgrade,view,leaderboard,extremeLimit,randomLength};
