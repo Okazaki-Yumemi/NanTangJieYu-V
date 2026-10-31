@@ -1,0 +1,100 @@
+/* 活动视觉：夜色、季节纹样、悬浮沙盘。仅玩家端和大屏加载。 */
+:root {
+  --bg: #101626;
+  --panel: #1b2538;
+  --panel-strong: #222e43;
+  --ink: #f2eddf;
+  --ink-soft: #a9b5c9;
+  --line: #b7c9df26;
+  --gold: #e1c28b;
+}
+#ntj-backdrop {
+  background:
+    radial-gradient(ellipse at 12% 12%, #50426c40, transparent 48%),
+    radial-gradient(ellipse at 90% 85%, #246c7140, transparent 48%), #101626;
+}
+/* 五色光纹下叠一层淡纹样，保留夜色沙盘的层次。 */
+#ntj-backdrop::after {
+  content: ''; position: absolute; inset: 0; opacity: .045;
+  background-image: repeating-radial-gradient(circle at 0 100%, transparent 0 29px, #bdcbd8 30px, transparent 31px 50px);
+  background-size: 100px 70px;
+  mask-image: linear-gradient(110deg, #000, transparent 45%, transparent 75%, #000);
+}
+.brand-title, .display-title h1, .display-card h2 {
+  font-family: 'Noto Serif SC', 'Songti SC', SimSun, serif;
+}
+.brand-head { position: relative; padding: 28px 16px 36px; border: 1px solid #d9bc7940; border-radius: 3px; background: linear-gradient(120deg, #342d4966, #18283a66); isolation: isolate; }
+.brand-head::before { content: 'V'; position: absolute; right: 16px; top: 2px; font-size: 150px; opacity: .1; margin: 0; z-index: -1; }
+.brand-head::after { content: '春  夏  秋  冬'; display: block; margin-top: 24px; color: var(--gold); font: 13px/1.5 SimSun, serif; letter-spacing: .6em; }
+.brand-head .brand-title { margin-top: 18px; }
+.team-pick { background: radial-gradient(ellipse at 35% 100%, color-mix(in srgb, var(--team-color) 20%, transparent), transparent 85%), #1b2538; position: relative; overflow: hidden; }
+.team-pick::after { content: ''; position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; border: 1px solid var(--team-color); rotate: 45deg; opacity: .6; }
+.team-pick.picked { border-color: var(--team-color); box-shadow: inset 0 -3px var(--team-color); }
+#home-view > .panel-block { padding: 20px 16px; border: 1px solid var(--line); background: #1a243370; border-radius: 4px; }
+.section-head .block-title::before { content: ''; display: block; width: 6px; height: 6px; background: var(--gold); rotate: 45deg; }
+.team-battle { background: linear-gradient(100deg, #a83d5615, transparent 45%, #dcad3c15); border: 1px solid var(--line); border-radius: 4px; }
+.me-card { border-top: 2px solid #b59a70; background: #1b2538; }
+.display-header { position: relative; padding-block: 18px; background: linear-gradient(90deg, #382d4655, transparent 65%); border-bottom-color: #dec28a55; }
+.display-header::after { content: ''; position: absolute; width: 120px; bottom: -2px; left: 28px; height: 3px; background: var(--gold); }
+.display-title h1 { font-size: 32px; letter-spacing: .16em; }
+.display-eyebrow { font-size: 11px; color: #b7b4c7; }
+.display-grid { grid-template-columns: minmax(250px, .9fr) minmax(440px, 1.7fr) minmax(270px, 1fr); gap: 18px; }
+.display-card, .vs-panel { position: relative; border-radius: 5px; border-color: #b5c7e02b; background: linear-gradient(140deg, #263148cc, #172234e6); }
+.display-card::before { content: ''; position: absolute; top: -1px; left: -1px; width: 22px; height: 22px; border-top: 2px solid #c6b082; border-left: 2px solid #c6b082; pointer-events: none; }
+.display-card h2 { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; padding-bottom: 12px; border-bottom: 1px solid var(--line); font-size: 18px; }
+.vs-panel { background: radial-gradient(ellipse at 0 0, #9c3f6030, transparent 65%), radial-gradient(ellipse at 100% 100%, #e9bd5420, transparent 65%), #1b2538; }
+.vs-portrait { filter: drop-shadow(0 8px 12px #050c1a80); }
+.vs-score { font-family: Georgia, serif; font-weight: 400; }
+.display-region { border-radius: 3px; background: #15203388; }
+.display-prize { border-radius: 3px; }
+.map-card { flex: 1.4; min-height: 0; }
+.map-card .campus-map-wrap { max-width: none; background: none; flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.campus-map-wrap { position: relative; }
+.map-scene { --map-tilt: 32deg; aspect-ratio: 1.5; perspective: 1100px; perspective-origin: 50% 30%; isolation: isolate; }
+.map-scene::before { content: ''; position: absolute; left: 8%; right: 8%; bottom: 6%; height: 28%; background: radial-gradient(ellipse, #58a7d52b, transparent 70%); border-bottom: 1px solid #80c9dc30; border-radius: 50%; }
+.map-plane { left: 3%; right: 3%; bottom: 18%; animation: island-hover 8s ease-in-out infinite; }
+.map-ground { overflow: visible; filter: drop-shadow(0 30px 14px #020815aa); }
+.map-dust { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.map-dust i { position: absolute; left: var(--x); top: var(--y); width: 3px; height: 3px; border-radius: 50%; background: #d4e8f9; box-shadow: 0 0 6px #8dc9f5; animation: dust-rise var(--duration) var(--delay) ease-in-out infinite; opacity: 0; }
+.marker-label { font-family: 'Noto Serif SC', 'Songti SC', SimSun, serif; }
+.marker-orb { width: 30px; height: 30px; }
+.marker-glyph { font-size: 15px; }
+.marker-float { min-width: 44px; min-height: 44px; }
+.map-marker.is-locked { opacity: .65; }
+@keyframes island-hover { 0%,100% { translate: 0 0; } 50% { translate: 0 -9px; } }
+@keyframes dust-rise { 0%,100% { opacity: 0; translate: 0 15px; } 35%,65% { opacity: .65; } 90% { translate: 6px -26px; } }
+@media (min-width: 1001px) { .map-card .map-scene { width: 100%; } }
+@media (max-width: 1000px) { .display-grid { grid-template-columns: 1fr; } .map-card { flex: none; } }
+@media (max-width: 600px) {
+  .map-scene { aspect-ratio: 1.12; --map-tilt: 25deg; }
+  .map-plane { left: 0; right: 0; bottom: 27%; }
+  .marker-label { font-size: 10px; }
+  .marker-status, .marker-order { display: none; }
+  .marker-orb { width: 24px; height: 24px; }
+  .marker-glyph { font-size: 12px; }
+  .display-title h1 { font-size: 22px; }
+  .display-header { padding-inline: 16px; gap: 12px; }
+  .display-header-right { flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+  .display-grid { padding-inline: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .map-plane, .map-dust i { animation: none; } .map-dust { display: none; } }
+
+/* 长分数和横向校园在不同投影尺寸下保持在面板内。 */
+.vs-row { grid-template-columns: 76px minmax(0, 1fr); gap: 4px 12px; }
+.vs-row .vs-portrait { grid-column: 1; grid-row: 1 / 3; width: 76px; height: 104px; }
+.vs-row .vs-team { grid-column: 2; grid-row: 1; align-self: end; }
+.vs-row .vs-score { grid-column: 2; grid-row: 2; font-size: clamp(26px, 2.7vw, 40px); align-self: start; }
+.vs-row.right { grid-template-columns: minmax(0, 1fr) 76px; }
+.vs-row.right .vs-portrait { grid-column: 2; }
+.vs-row.right .vs-team { grid-column: 1; grid-row: 1; }
+.vs-row.right .vs-score { grid-column: 1; grid-row: 2; text-align: right; }
+.vs-team strong { font-size: 18px; }
+.map-card .map-scene { flex: 1; min-height: 0; aspect-ratio: auto; width: 100%; }
+.map-card .map-plane { left: 7%; right: 7%; bottom: 8%; }
+.map-card .campus-map-wrap { min-height: 0; }
+.map-marker.is-locked { opacity: 1; }
+.map-marker.is-locked .marker-float { opacity: .85; }
+.map-marker[data-region="admin_building"] .marker-float { margin-left: -36px; }
+.map-marker[data-region="kaixuan_gate"] .marker-float { margin-left: 18px; }
+@media (max-width: 1000px) { .map-card .map-scene { flex: none; aspect-ratio: 1.5; } }
+@media (max-width: 600px) { .map-card .map-scene { aspect-ratio: 1.12; } .map-card .map-plane { left: 0; right: 0; bottom: 27%; } }

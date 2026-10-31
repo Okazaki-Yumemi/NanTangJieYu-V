@@ -7,13 +7,13 @@
  * 立牌用 rotateX(-tilt) 反向转正，像立在地面上的广告牌；选中时上浮 + 高亮 + 光柱。
  *
  * NTJ.renderCampusMap(container, regions, { onSelect }) → { update(regions, selectedId) }
- * 区域坐标来自 shared/seeds/regions.json 的 map.x / map.y（viewBox 380×560）。
+ * 已知区域使用下方官方图参考坐标（viewBox 760×460），其余使用 region.map。
  */
 
 (function initMap() {
   const NS = 'http://www.w3.org/2000/svg';
-  const VIEW_W = 380;
-  const VIEW_H = 560;
+  const VIEW_W = 760;
+  const VIEW_H = 460;
 
   function svgEl(tag, attrs = {}, parent) {
     const el = document.createElementNS(NS, tag);
@@ -28,137 +28,91 @@
 
   /* ---------- 地面地形（跟随地面一起倾斜） ---------- */
 
+  // 依据交大校园管理办公室发布的闵行校区二维地图重绘。
+  // 采用北向上的艺术化平面；坐标独立于旧活动种子，已有数据无需迁移。
+  const CAMPUS_POINTS = {
+    siyuan_gate: { x: 94, y: 426 },
+    siyuan_lake: { x: 112, y: 302 },
+    kaixuan_gate: { x: 590, y: 426 },
+    diancao: { x: 586, y: 208 },
+    hanze_lake: { x: 318, y: 214 },
+    admin_building: { x: 590, y: 366 }
+  };
+  const mapPoint = region => CAMPUS_POINTS[region.id] || region.map;
+
   function buildGround(root) {
     const defs = svgEl('defs', {}, root);
     defs.innerHTML = `
-      <radialGradient id="ntj-ground-base" cx="50%" cy="34%" r="82%">
-        <stop offset="0%" stop-color="#1a2136"/>
-        <stop offset="58%" stop-color="#131828"/>
-        <stop offset="100%" stop-color="#0c0f1a"/>
-      </radialGradient>
-      <linearGradient id="ntj-lake" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#1d3d5c"/>
-        <stop offset="100%" stop-color="#122a44"/>
+      <linearGradient id="ntj-terrain" x2="0" y2="1">
+        <stop stop-color="#263d44"/><stop offset="1" stop-color="#172b39"/>
       </linearGradient>
-      <linearGradient id="ntj-wall" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#1a2136"/>
-        <stop offset="100%" stop-color="#10141f"/>
+      <linearGradient id="ntj-lake" x2="0" y2="1">
+        <stop stop-color="#65c9cf"/><stop offset="1" stop-color="#277a9a"/>
       </linearGradient>
-      <pattern id="ntj-grid" width="34" height="34" patternUnits="userSpaceOnUse">
-        <path d="M 34 0 L 0 0 0 34" fill="none" stroke="rgba(255,255,255,0.045)" stroke-width="1"/>
-      </pattern>
-    `;
-
-    // 底板
-    svgEl('rect', {
-      x: 5, y: 5, width: VIEW_W - 10, height: VIEW_H - 10, rx: 26,
-      fill: 'url(#ntj-ground-base)', stroke: 'rgba(255,255,255,0.16)', 'stroke-width': 1.5
-    }, root);
-    svgEl('rect', {
-      x: 5, y: 5, width: VIEW_W - 10, height: VIEW_H - 10, rx: 26,
-      fill: 'url(#ntj-grid)'
-    }, root);
-
-    // 环校道路
-    svgEl('rect', {
-      x: 40, y: 48, width: VIEW_W - 80, height: VIEW_H - 96, rx: 20,
-      fill: 'none', stroke: '#232c42', 'stroke-width': 11
-    }, root);
-    svgEl('rect', {
-      x: 40, y: 48, width: VIEW_W - 80, height: VIEW_H - 96, rx: 20,
-      fill: 'none', stroke: '#2e3a56', 'stroke-width': 5.5
-    }, root);
-    svgEl('rect', {
-      x: 40, y: 48, width: VIEW_W - 80, height: VIEW_H - 96, rx: 20,
-      fill: 'none', stroke: 'rgba(255,255,255,0.22)', 'stroke-width': 1.1, 'stroke-dasharray': '7 9'
-    }, root);
-
-    // 主干路
-    const roads = [
-      { d: 'M 186 516 L 186 48 Q 186 30 204 30', w: 9 },
-      { d: 'M 52 300 L 328 300', w: 8 },
-      { d: 'M 60 430 L 300 430', w: 6 },
-      { d: 'M 104 248 L 186 300', w: 4.5 },
-      { d: 'M 272 302 L 306 480', w: 4.5 },
-      { d: 'M 158 128 L 112 248', w: 4.5 }
+      <pattern id="ntj-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+        <path d="M20 0H0V20" fill="none" stroke="#aedbe0" stroke-opacity=".045"/>
+      </pattern>`;
+    const outline = 'M26 24 L618 24 L724 65 L735 409 L714 432 L24 432 Z';
+    // 外露的岩层与上沿，让校园成为悬空沙盘。
+    svgEl('path', { d: outline, transform: 'translate(0 16)', fill: '#0c1729', stroke: '#526987', 'stroke-width': 2 }, root);
+    svgEl('path', { d: outline, transform: 'translate(0 8)', fill: '#23354d', stroke: '#405b70' }, root);
+    svgEl('path', { d: outline, fill: 'url(#ntj-terrain)', stroke: '#8eb6b4', 'stroke-width': 1.5 }, root);
+    svgEl('path', { d: outline, fill: 'url(#ntj-grid)' }, root);
+    // 西区 / 东区、北部运动区、东区中轴草坪。
+    for (const [x,y,w,h] of [[38,280,55,115],[445,38,120,75],[568,168,132,135],[566,386,142,31],[670,66,46,53],[39,40,48,58]]) {
+      svgEl('rect', {x,y,width:w,height:h,rx:8,fill:'#315345','fill-opacity':.8,stroke:'#527967','stroke-width':.6}, root);
+    }
+    // 主要水系：淡水河贯穿南北，思源湖在西区，涵泽湖在中部。
+    svgEl('path', {d:'M442 28 Q427 73 445 114 T443 206 Q440 261 454 291 T459 359 L461 426',fill:'none',stroke:'#438fa3','stroke-width':9},root);
+    svgEl('path', {d:'M32 270 Q172 274 236 268 T439 274 M455 345 Q568 351 730 366',fill:'none',stroke:'#397f96','stroke-width':5},root);
+    const lakes = [
+      'M83 270 Q106 254 124 272 L140 280 Q134 299 142 312 L129 335 Q104 345 91 323 L82 310 Q70 290 83 270Z',
+      'M300 188 Q317 185 330 194 L335 208 L352 211 L352 234 Q333 247 306 238 L300 218Z',
+      'M353 121 Q377 112 391 133 L400 141 L389 158 L365 161 L349 148Z',
+      'M569 271 Q587 253 620 262 L639 276 Q615 305 586 298Z'
     ];
-    for (const road of roads) {
-      svgEl('path', {
-        d: road.d, fill: 'none', stroke: '#27304a',
-        'stroke-width': road.w, 'stroke-linecap': 'round'
-      }, root);
-      svgEl('path', {
-        d: road.d, fill: 'none', stroke: 'rgba(255,255,255,0.16)', 'stroke-width': 1,
-        'stroke-dasharray': '5 8', 'stroke-linecap': 'round'
-      }, root);
-    }
-
-    // 思源湖（西南）
-    svgEl('path', {
-      d: 'M 74 402 q 22 -16 46 -8 q 26 8 22 30 q -4 24 -30 26 q -30 2 -42 -16 q -8 -18 4 -32 z',
-      fill: 'url(#ntj-lake)', stroke: '#3d6f9e', 'stroke-width': 1.4
-    }, root);
-    svgEl('ellipse', { class: 'lake-shimmer', cx: 100, cy: 424, rx: 14, ry: 4, fill: 'rgba(160,215,255,0.35)' }, root);
-    // 涵泽湖（中西部）
-    svgEl('path', {
-      d: 'M 72 226 q 18 -12 38 -6 q 20 6 16 24 q -4 18 -24 20 q -24 2 -32 -12 q -6 -14 2 -26 z',
-      fill: 'url(#ntj-lake)', stroke: '#3d6f9e', 'stroke-width': 1.4
-    }, root);
-    svgEl('ellipse', { class: 'lake-shimmer lake-shimmer-late', cx: 94, cy: 240, rx: 10, ry: 3, fill: 'rgba(160,215,255,0.3)' }, root);
-
-    // 电草草坪（中东部）
-    svgEl('rect', {
-      x: 228, y: 262, width: 96, height: 78, rx: 16,
-      fill: '#13291d', stroke: '#31684a', 'stroke-width': 1.3
-    }, root);
-    svgEl('path', {
-      d: 'M 244 330 l 6 -10 l 6 10 m 14 -14 l 6 -10 l 6 10 m 14 -12 l 6 -10 l 6 10',
-      stroke: '#3f7a58', 'stroke-width': 1.6, fill: 'none', 'stroke-linecap': 'round'
-    }, root);
-
-    // 小树林点缀
-    const trees = [[70, 180], [84, 168], [320, 220], [332, 232], [64, 470], [78, 458], [300, 128], [314, 140], [228, 210]];
-    for (const [tx, ty] of trees) {
-      svgEl('circle', { cx: tx, cy: ty, r: 5.5, fill: '#16301f', stroke: '#2c5a3c', 'stroke-width': 1 }, root);
-      svgEl('circle', { cx: tx - 1.4, cy: ty - 1.6, r: 2.1, fill: 'rgba(110,190,130,0.4)' }, root);
-    }
-
-    // 校舍（2.5D：南墙面 + 顶面）
+    for (const d of lakes) svgEl('path',{d,fill:'url(#ntj-lake)',stroke:'#a2e4db','stroke-width':1.1},root);
+    // 东西向骨干道、南北向道路及沪金高速（校园的真实分隔）。
+    const roads = ['M30 120 H719','M30 259 H728','M30 406 L728 419','M102 28 V426','M258 28 V426','M577 28 V426','M700 70 V423','M30 361 L426 352','M472 120 L714 345'];
+    for (const d of roads) svgEl('path',{d,fill:'none',stroke:'#71908c','stroke-width':4,'stroke-opacity':.65},root);
+    svgEl('path',{d:'M236 27 L239 426',fill:'none',stroke:'#101e30','stroke-width':13},root);
+    svgEl('path',{d:'M236 27 L239 426',fill:'none',stroke:'#78909e','stroke-width':1.2,'stroke-dasharray':'7 5'},root);
+    // 按官方图的建筑分区布置体块；省略小建筑，不虚构楼宇名称。
     const blocks = [
-      { x: 226, y: 96, w: 44, h: 30 },
-      { x: 288, y: 150, w: 52, h: 36 },
-      { x: 84, y: 316, w: 40, h: 30 },
-      { x: 136, y: 340, w: 54, h: 34 },
-      { x: 214, y: 380, w: 46, h: 30 },
-      { x: 64, y: 130, w: 42, h: 32 },
-      { x: 226, y: 470, w: 56, h: 34 }
+      [118,46,44,12],[174,46,33,12],[118,72,44,13],[174,72,33,13],[118,94,30,12],[176,94,30,12],
+      [40,141,38,22],[111,139,42,18],[172,141,40,22],[111,173,35,17],[173,180,37,18],[40,210,36,22],
+      [160,283,49,20],[158,319,49,17],[154,365,53,21],[104,366,35,21],
+      [279,45,41,24],[341,44,42,20],[278,82,38,20],[339,83,44,18],
+      [280,145,39,15],[284,169,35,12],[359,185,49,22],[369,223,39,15],
+      [280,283,36,22],[333,282,33,16],[380,284,40,28],[280,324,36,23],[331,322,35,18],[380,327,40,27],
+      [280,370,36,18],[333,372,32,17],[380,376,39,23],
+      [478,47,39,18],[592,43,43,22],[591,81,41,18],[481,144,43,25],[534,144,30,22],
+      [646,146,41,17],[649,190,40,18],[478,281,33,32],[478,329,36,21],
+      [539,330,27,20],[577,341,49,24],[646,335,39,18],[645,380,43,17]
     ];
-    for (const b of blocks) {
-      const depth = 7;
-      // 南墙（正面）
-      svgEl('path', {
-        d: `M ${b.x} ${b.y + b.h} L ${b.x + depth} ${b.y + b.h + depth} L ${b.x + b.w + depth} ${b.y + b.h + depth} L ${b.x + b.w} ${b.y + b.h} Z`,
-        fill: 'url(#ntj-wall)'
-      }, root);
-      // 顶面
-      svgEl('rect', {
-        x: b.x, y: b.y, width: b.w, height: b.h, rx: 4,
-        fill: '#242e4a', stroke: '#3d4a70', 'stroke-width': 1
-      }, root);
-      // 顶面窗带
-      svgEl('rect', {
-        x: b.x + 6, y: b.y + b.h * 0.32, width: b.w - 12, height: b.h * 0.2, rx: 1.6,
-        fill: 'rgba(150,200,255,0.22)'
-      }, root);
+    for (const [x,y,w,h] of blocks) {
+      svgEl('path',{d:`M${x} ${y+h}l4 5h${w}l-4 -5Z`,fill:'#304458',stroke:'#82959e','stroke-width':.4},root);
+      svgEl('path',{d:`M${x+w} ${y}l4 5v${h}l-4 -5Z`,fill:'#3c5364'},root);
+      svgEl('rect',{x,y,width:w,height:h,rx:2,fill:'#647888',stroke:'#a0b5b9','stroke-width':.6},root);
+      svgEl('path',{d:`M${x+4} ${y+4}H${x+w-4}`,stroke:'#c1d7d3','stroke-opacity':.4,'stroke-width':2},root);
     }
-
-    // 指北针（躺在地面上）
-    const compass = svgEl('g', { transform: 'translate(342, 42)' }, root);
-    svgEl('circle', { r: 12, fill: 'rgba(23,28,43,0.9)', stroke: 'rgba(255,255,255,0.24)' }, compass);
-    svgEl('path', { d: 'M 0 -7.5 L 3.6 4.4 L 0 1.8 L -3.6 4.4 Z', fill: '#ffd166' }, compass);
-    svgEl('text', {
-      x: 0, y: -15.5, 'text-anchor': 'middle', 'font-size': 9, fill: '#8b91a7'
-    }, compass).textContent = 'N';
+    // 沿主路的树冠，为夜色沙盘补充自然体积。
+    for (let i = 0; i < 22; i += 1) {
+      const x = 42 + i * 30;
+      for (const y of [130, 397]) {
+        if (x > 224 && x < 262) continue;
+        svgEl('ellipse',{cx:x+2,cy:y+3,rx:5,ry:3,fill:'#0b1e28'},root);
+        svgEl('circle',{cx:x,cy:y-1,r:4,fill:i%3 ? '#477969' : '#bd9870',stroke:'#91b39a','stroke-width':.4},root);
+      }
+    }
+    // 西南运动场。
+    svgEl('rect',{x:42,y:305,width:43,height:64,rx:18,fill:'#735d70',stroke:'#ab91a0','stroke-width':2},root);
+    svgEl('rect',{x:50,y:313,width:27,height:48,rx:10,fill:'#365f52',stroke:'#8bb2a0','stroke-width':1},root);
+    for (const [x,y,label] of [[183,395,'西区'],[537,106,'东区'],[250,106,'S4'],[580,449,'东川路']]) {
+      svgEl('text',{x,y,fill:'#b3d0cf','font-size':11,'letter-spacing':3,'text-anchor':'middle'},root).textContent=label;
+    }
+    svgEl('path',{d:'M714 48V22 M709 29L714 20L719 29',fill:'none',stroke:'#e9cf91','stroke-width':1.4},root);
+    svgEl('text',{x:714,y:14,fill:'#e9cf91','font-size':10,'text-anchor':'middle'},root).textContent='N';
   }
 
   /* ---------- 区域立牌（直立 billboard） ---------- */
@@ -166,8 +120,9 @@
   function buildMarker(layer, region) {
     const marker = document.createElement('div');
     marker.className = 'map-marker';
-    marker.style.left = `${(region.map.x / VIEW_W) * 100}%`;
-    marker.style.top = `${(region.map.y / VIEW_H) * 100}%`;
+    marker.dataset.region = region.id;
+    marker.style.left = `${(mapPoint(region).x / VIEW_W) * 100}%`;
+    marker.style.top = `${(mapPoint(region).y / VIEW_H) * 100}%`;
 
     // 地面元素（贴地）
     const disc = document.createElement('i');
@@ -241,6 +196,15 @@
     scene.className = 'map-scene';
     const plane = document.createElement('div');
     plane.className = 'map-plane';
+    const particles = document.createElement('div');
+    particles.className = 'map-dust';
+    particles.setAttribute('aria-hidden', 'true');
+    for (let i = 0; i < 18; i += 1) {
+      const dot = document.createElement('i');
+      dot.style.cssText = `--x:${(i * 37 + 11) % 100}%;--y:${(i * 23 + 17) % 100}%;--delay:${-i * 1.3}s;--duration:${9 + i % 7}s`;
+      particles.appendChild(dot);
+    }
+    scene.appendChild(particles);
     scene.appendChild(plane);
     container.appendChild(scene);
 
@@ -306,7 +270,7 @@
 
     function update(nextRegions, selectedId) {
       const sorted = [...nextRegions].sort((a, b) => a.order - b.order);
-      const points = sorted.map((region) => `${region.map.x},${region.map.y}`).join(' ');
+      const points = sorted.map((region) => `${mapPoint(region).x},${mapPoint(region).y}`).join(' ');
       route.setAttribute('d', `M ${points.split(' ').join(' L ')}`);
 
       scene.classList.toggle('has-selection', Boolean(selectedId));
@@ -329,6 +293,7 @@
         marker.style.setProperty('--season-color', season.color);
         marker.style.setProperty('--season-soft', season.soft);
 
+        refs.float.setAttribute('aria-pressed', String(isSelected));
         refs.float.setAttribute('aria-label', `${region.name}（${region.closed ? '临时关闭' : (NTJ.REGION_STATUS_LABELS[region.status] || '')}）`);
         refs.glyph.textContent = region.status === 'cleared' ? '✓' : (region.season_label || '?');
         refs.label.textContent = region.name;

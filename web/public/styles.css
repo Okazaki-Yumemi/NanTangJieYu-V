@@ -1,25 +1,25 @@
 /* 东方南堂界遇 V —— 共享基础样式
-   主题：天空璋/后户之国风 —— 黑色基底、五色光晕背景、毛玻璃浮窗 */
+   主题：深墨底色、朱红点缀、暖白排版 */
 
 :root {
-  --bg: #06070c;
-  --panel: rgba(16, 19, 30, 0.55);
-  --panel-strong: rgba(17, 20, 32, 0.82);
+  --bg: #141918;
+  --panel: #1c2220;
+  --panel-strong: #242b28;
   --panel-inset: rgba(255, 255, 255, 0.05);
-  --ink: #eef0f8;
-  --ink-soft: #9aa0b5;
+  --ink: #eee9df;
+  --ink-soft: #a6afa7;
   --line: rgba(255, 255, 255, 0.13);
   --line-soft: rgba(255, 255, 255, 0.08);
-  --accent: #ff4d6d;
-  --accent-soft: rgba(255, 77, 109, 0.16);
-  --gold: #ffd166;
+  --accent: #d57868;
+  --accent-soft: rgba(213, 120, 104, 0.12);
+  --gold: #d8bc83;
   --gold-soft: rgba(255, 209, 102, 0.14);
   --up: #4ade80;
   --down: #ff6b81;
-  --radius: 14px;
+  --radius: 6px;
   --font-sans: 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei UI', 'Microsoft YaHei', system-ui, sans-serif;
-  --glass-blur: blur(12px) saturate(1.25);
-  --shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --glass-blur: none;
+  --shadow: none;
   --map-halo: rgba(5, 6, 12, 0.88);
 }
 
@@ -97,17 +97,14 @@ input {
   transition: width 0.5s ease;
 }
 
-/* ---------- 动态背景：五色光晕 + 漂浮光点 ---------- */
+/* ---------- 五色光纹：隐岐奈主题 ---------- */
 
 #ntj-backdrop {
   position: fixed;
   inset: 0;
   z-index: -1;
-  overflow: hidden;
-  background:
-    radial-gradient(1100px 500px at 80% -100px, rgba(52, 38, 84, 0.35) 0%, transparent 70%),
-    radial-gradient(900px 480px at 10% 110%, rgba(20, 40, 70, 0.4) 0%, transparent 70%),
-    var(--bg);
+  pointer-events: none;
+  background: linear-gradient(115deg, #1e2422 0%, var(--bg) 55%);
 }
 
 #ntj-backdrop .ntj-blob {
@@ -116,7 +113,7 @@ input {
   height: 62vmax;
   border-radius: 50%;
   /* 径向渐变本身已软过渡到透明，不再叠加 blur 滤镜（5 层大面积 blur 是持续 GPU 大头） */
-  opacity: 0.42;
+  opacity: 0.32;
   will-change: transform, opacity;
   mix-blend-mode: screen;
 }
@@ -151,7 +148,7 @@ input {
   background: radial-gradient(circle, #9a5cff 0%, transparent 60%);
   top: -20%; right: 22%;
   animation: blob-drift-5 40s ease-in-out infinite alternate;
-  opacity: 0.4;
+  opacity: 0.32;
 }
 
 @keyframes blob-drift-1 {
@@ -179,46 +176,11 @@ input {
   to { transform: translate(-18vw, 22vh) scale(0.88); }
 }
 
-.ntj-particles {
-  position: absolute;
-  inset: 0;
-}
-
-.ntj-particles i {
-  position: absolute;
-  left: var(--x);
-  top: var(--y);
-  width: var(--s);
-  height: var(--s);
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.75);
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
-  opacity: 0;
-  animation:
-    particle-float var(--d) linear infinite,
-    particle-twinkle var(--t) ease-in-out infinite;
-  animation-delay: var(--delay), var(--delay);
-}
-
-@keyframes particle-float {
-  from { transform: translateY(4vh); }
-  to { transform: translateY(-12vh); }
-}
-
-@keyframes particle-twinkle {
-  0%, 100% { opacity: 0; }
-  50% { opacity: 0.85; }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  #ntj-backdrop .ntj-blob,
-  .ntj-particles i {
-    animation: none;
-    opacity: 0.25;
-  }
+  #ntj-backdrop .ntj-blob { animation: none; }
 }
 
-/* ---------- 毛玻璃浮窗 ---------- */
+/* ---------- 共用面板 ---------- */
 
 .glass {
   background: var(--panel);
@@ -290,7 +252,7 @@ input {
   width: 3.5px;
   height: 15px;
   border-radius: 2px;
-  background: linear-gradient(180deg, var(--accent), var(--gold));
+  background: var(--accent);
 }
 
 .eyebrow {
@@ -345,8 +307,9 @@ input {
   margin: 4px 0 2px;
   font-size: 30px;
   letter-spacing: 0.08em;
-  color: var(--accent);
-  text-shadow: 0 0 24px rgba(255, 77, 109, 0.45);
+  color: var(--ink);
+  font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
+  font-weight: 600;
 }
 
 .brand-title.small {
@@ -395,20 +358,20 @@ input {
   width: 100%;
   border: none;
   border-radius: 12px;
-  background: linear-gradient(135deg, #ff4d6d, #c81e4a);
+  background: #a94e40;
   color: #fff;
   font-size: 16.5px;
   font-weight: 700;
   padding: 13px;
   letter-spacing: 0.08em;
-  box-shadow: 0 4px 18px rgba(255, 77, 109, 0.35);
+  box-shadow: none;
 }
 
 .ghost-btn {
-  border: 1.4px solid rgba(255, 77, 109, 0.65);
+  border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--accent-soft);
-  color: #ff8fa3;
+  color: #e3a698;
   font-size: 15px;
   font-weight: 600;
   padding: 11px;
@@ -435,7 +398,7 @@ input {
   font-weight: 700;
   white-space: nowrap;
   background: var(--accent-soft);
-  color: #ff8fa3;
+  color: #e3a698;
 }
 
 .status-chip.status-running {
@@ -1097,5 +1060,25 @@ input {
 
   .map-plane {
     transition: none;
+  }
+}
+
+/* 键盘操作与触屏共用的明确反馈。 */
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 4px;
+}
+button, input, select, textarea { color-scheme: dark; }
+.primary-btn, .ghost-btn { min-height: 44px; border-radius: 6px; }
+@media (hover: hover) {
+  .primary-btn:hover:not(:disabled) { background: #bd5b4c; }
+  .ghost-btn:hover:not(:disabled) { border-color: var(--ink-soft); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

@@ -680,3 +680,60 @@ i.energy-dot.on {
     width: 150px;
   }
 }
+
+/* 玩家页面：以地图为主，记录与榜单用细线分区。 */
+.player-shell { padding-top: 28px; }
+#home-view { display: flex; flex-direction: column; gap: 24px; }
+.brand-head { text-align: left; padding: 16px 0 28px; border-bottom: 1px solid var(--line); }
+.brand-head::before {
+  content: 'V';
+  display: block;
+  font: italic 56px/1 Georgia, serif;
+  color: var(--gold);
+  margin-bottom: 24px;
+}
+.brand-head .brand-title { font-size: clamp(28px, 6vw, 38px); margin: 12px 0; }
+.brand-eyebrow { letter-spacing: 0.12em; color: var(--ink-soft); }
+.brand-subtitle { line-height: 1.8; }
+#register-view { gap: 28px; }
+#register-view .panel-block { padding: 0; border: 0; background: none; }
+#register-view .block-title { margin-bottom: 20px; }
+#register-view .field-group { margin-bottom: 18px; }
+#register-view .panel-block + .panel-block { padding-top: 26px; border-top: 1px solid var(--line); }
+.home-header { background: none; border: 0; border-bottom: 1px solid var(--line); padding: 0 0 20px; border-radius: 0; }
+.home-header .brand-title { margin-top: 8px; }
+.home-header-side { flex-wrap: wrap; justify-content: flex-end; }
+.display-link { color: var(--ink-soft); border-color: var(--line); border-radius: 4px; padding: 8px 10px; }
+#home-view > .panel-block { padding: 24px 0 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: none; }
+.section-head { margin-bottom: 20px; gap: 8px 16px; }
+.block-title { font-size: 17px; font-weight: 600; }
+.block-title::before { display: none; }
+.team-pick { display: grid; grid-template-columns: auto minmax(0, 1fr); text-align: left; align-content: center; gap: 4px 10px; border-width: 1px; border-radius: 6px; padding: 16px 12px; background: var(--panel); color: var(--ink); }
+.team-pick.picked { box-shadow: none; }
+.team-pick-portrait { grid-row: 1 / 3; width: 64px; background: none; }
+.team-pick strong { font-size: 14px; align-self: end; color: color-mix(in srgb, var(--team-color) 65%, var(--ink)); }
+.team-pick .muted { align-self: start; margin: 0; font-size: 12px; }
+.team-battle { padding: 16px 8px; border-width: 0 0 1px; border-radius: 0; background: none; }
+.me-card { padding: 18px; border-radius: 6px; }
+.me-stats { margin-top: 16px; }
+.me-stats > div { border-left-style: solid; }
+.me-stats strong { font-size: 19px; font-weight: 600; }
+.prize-card { border-radius: 4px; background: none; padding: 12px 8px; }
+.prize-card.unlocked { border-color: #8b7957; background: rgba(216,188,131,0.05); box-shadow: none; }
+.prize-image { border: 0; border-radius: 2px; background: rgba(255,255,255,0.035); }
+.footer-note { padding: 12px 0; }
+@media (max-width: 380px) {
+  .team-pick { grid-template-columns: 1fr; text-align: center; justify-items: center; padding: 12px 6px; }
+  .team-pick-portrait { grid-row: auto; }
+  .player-shell { padding-inline: 14px; }
+  .battle-portrait { flex-basis: 40px; width: 40px; height: 60px; }
+  .battle-bar-wrap { width: 64px; }
+  .battle-side { gap: 4px; }
+  .battle-info strong { font-size: 12px; }
+  .home-header { align-items: flex-start; gap: 8px; }
+  .home-header-side { max-width: 90px; }
+}
+@media (min-width: 700px) {
+  .player-shell { padding-top: 48px; padding-inline: 28px; }
+  .brand-head { padding-top: 12px; }
+}
