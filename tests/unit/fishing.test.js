@@ -26,8 +26,8 @@ function play(config) {
   let last=false;
   while(state.status==='playing') {
     // 提前考虑惯性，代表一个可复现的跟鱼控制策略。
-    const target=game.fishPosition(state.tick+10,config);
-    const held=state.y+state.velocity*.2>target;
+    const target=game.fishPosition(state.tick+5,config);
+    const held=state.y+state.velocity*.13>target;
     if(held!==last) {controls.push({tick:state.tick,held});last=held;}
     game.step(state,held,config);
   }
@@ -41,6 +41,14 @@ test('shared fishing simulation can be replayed exactly and is playable across d
     assert.equal(state.status,'caught',`difficulty ${difficulty}`);
     assert.deepEqual(game.replay(config,controls,state.tick),state);
   }
+});
+
+test('harder fish have smaller green zones, shared by drawing and hit detection',()=>{
+  assert.ok(game.zoneSize({difficulty:.2})>.24);
+  assert.ok(game.zoneSize({difficulty:.73})<.15);
+  assert.ok(game.zoneSize({difficulty:.99})<.1);
+  assert.ok(game.zoneSize({difficulty:.2})>game.zoneSize({difficulty:.5}));
+  assert.ok(game.zoneSize({difficulty:.5})>game.zoneSize({difficulty:.99}));
 });
 
 test('cast cooldown survives serialization and never consumes activity energy',()=>{

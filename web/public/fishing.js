@@ -101,7 +101,7 @@
     active={challenge,state:FishingGame.createGame(challenge),controls:[],held:false,frame:0,last:performance.now(),accumulator:0};
     $('fishing-overlay').classList.remove('hidden');
     $('fish-temper').textContent=challenge.difficulty>.85?'鱼劲儿很大':challenge.difficulty>.55?'鱼很灵活':'鱼影轻快';
-    $('catch-zone').style.height=`${(.38-challenge.difficulty*.21)*100}%`;
+    $('catch-zone').style.height=`${FishingGame.zoneSize(challenge)*100}%`;
     $('fishing-message').textContent='咬钩了！';
     document.querySelector('.pond-scene').scrollIntoView({ block:'center', behavior:'auto' });
     $('reel-button').focus({preventScroll:true});
