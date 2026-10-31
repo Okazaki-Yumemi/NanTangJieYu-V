@@ -6,6 +6,7 @@
   const sprites={bitterling:'yellow',crucian:'blue',carp:'orange',catfish:'green',moon:'yellow',tractor:'green',leviathan:'red'};
   const sprite = fish => `/assets/fish/${sprites[fish.fish_id] || 'blue'}.png`;
   const length = cm => cm >= 100 ? `${Number((cm/100).toFixed(2))} 米` : `${cm} 厘米`;
+  const metres = cm => `${Number((cm/100).toFixed(2))} 米`;
   const clock = sec => `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
   let view=null;
   let serverOffset=0;
@@ -14,11 +15,22 @@
   let selectedFish=null;
   let pending=null;
   let submitting=false;
+  let buying=false;
+  const anglers=[['reimu','博丽灵梦'],['marisa','雾雨魔理沙'],['aya','射命丸文'],['chen','橙'],['cirno','琪露诺'],['eirin','八意永琳'],['kaguya','蓬莱山辉夜'],['kanako','八坂神奈子'],['koishi','古明地恋'],['meiling','红美铃'],['mokou','藤原妹红'],['momiji','犬走椛'],['nitori','河城荷取'],['patchouli','帕秋莉'],['sanae','东风谷早苗'],['satori','古明地觉'],['suwako','洩矢诹访子'],['tewi','因幡帝'],['youmu','魂魄妖梦'],['yukari','八云紫'],['yuyuko','西行寺幽幽子']];
+  function pickAngler() {
+    let previous='';try{previous=sessionStorage.getItem('ntj-last-angler') || '';}catch{}
+    const pool=anglers.filter(([id])=>id!==previous);
+    const [id,name]=pool[Math.floor(Math.random()*pool.length)];
+    const image=document.querySelector('.pond-angler');image.src=`/assets/characters/${id}.png`;image.alt=`湖边的${name}`;
+    try{sessionStorage.setItem('ntj-last-angler',id);}catch{}
+  }
+  pickAngler();
   const pendingKey='ntj-fishing-pending';
   try { pending=JSON.parse(sessionStorage.getItem(pendingKey) || 'null'); } catch { /* 浏览器禁用存储时仍可游玩。 */ }
 
   function renderButton() {
     const button=$('cast-button');
+    if(buying){button.disabled=true;button.textContent='正在升级装备…';return;}
     if(active || casting) {button.disabled=true;button.textContent=active?'鱼儿上钩了':'正在抛竿…';return;}
     if(pending) {button.disabled=submitting;button.textContent=submitting?'正在保存…':'重试保存钓获';return;}
     if(!view)return;
@@ -52,17 +64,37 @@
     $('fish-history-list').innerHTML=recent.length?recent.map(fish=>`<button type="button" class="history-fish" data-fish="${esc(fish.id)}"><img src="${sprite(fish)}" alt="" /><span>${esc(fish.custom_name || fish.name)}</span><small>${length(fish.length_cm)}</small></button>`).join(''):'<p class="muted small">鱼篓还是空的。</p>';
     for(const button of $('fish-history-list').querySelectorAll('[data-fish]'))button.addEventListener('click',()=>showCatch(history.find(f=>f.id===button.dataset.fish)));
   }
+  function renderShop() {
+    $('fish-wallet').textContent=metres(view.wallet_cm || 0);
+    $('fish-total').textContent=metres(view.total_cm || 0);
+    $('shop-chance').textContent=`当前鱼饵：约 ${Math.round(view.big_fish_chance*100)}% 的抛竿会遇到满一米的鱼。`;
+    $('fishing-shop').innerHTML=(view.shop || []).map(item=>{
+      const max=item.level>=item.max_level;
+      const unavailable=!view.logged_in || view.banned || active || casting || buying || max || view.wallet_cm<item.next_cost_cm;
+      return `<article class="gear-card"><i class="gear-icon gear-${esc(item.id)}" aria-hidden="true"></i><div><h3>${esc(item.name)} <small>Lv.${item.level} / ${item.max_level}</small></h3><p>${esc(item.description)}${item.next_big_fish_chance ? ` 下一级约 ${Math.round(item.next_big_fish_chance*100)}% 遇到大鱼。` : ""}</p><div class="gear-levels" aria-hidden="true">${Array.from({length:item.max_level},(_,index)=>`<i class="${index<item.level?'on':''}"></i>`).join('')}</div></div><button type="button" data-gear="${esc(item.id)}" data-level="${item.level}" ${unavailable?'disabled':''}>${max?'已满级':`升级 · ${length(item.next_cost_cm)}`}</button></article>`;
+    }).join('');
+    for(const button of $('fishing-shop').querySelectorAll('[data-gear]'))button.addEventListener('click',async()=>{
+      if(buying || active || casting)return;
+      const gearId=button.dataset.gear;const level=Number(button.dataset.level);
+      buying=true;renderShop();renderButton();
+      try {
+        const result=await api('POST','/api/player/fishing/upgrade',{gear_id:gearId,expected_level:level});
+        $('shop-message').textContent=`升级完成，Lv.${result.level}。下一竿就能用。`;
+      } catch(error){$('shop-message').textContent=error.message || '没买成功，请重试。';}
+      finally{buying=false;await refresh();renderButton();}
+    });
+  }
   async function refresh() {
-    if(active || casting || submitting)return;
+    if(active || casting || submitting || buying)return;
     try {
       view=await api('GET','/api/player/fishing/state');
       serverOffset=view.server_time-Date.now();
       $('fisher-name').textContent=view.display_name;
       $('fishing-rule').textContent=view.cooldown_enabled
-        ? '不消耗能量 · 每 5 分钟一竿。抛竿即开始计时，离开或鱼逃走也需要等待。'
+        ? `不消耗能量 · 每 ${view.cooldown_interval_sec} 秒一竿。从抛竿开始计时。`
         : '不消耗能量 · 试玩期间无冷却，可以连续抛竿。';
       $('fishing-login').classList.toggle('hidden',view.logged_in);
-      renderRanks(view.rows);renderHistory();renderButton();
+      renderRanks(view.rows);renderHistory();renderShop();renderButton();
       if(!selectedFish && view.last_catch)showCatch(view.last_catch);
     } catch(error){$('fishing-message').textContent=error.message || '鱼情暂时没查到，请稍后重试。';}
   }
@@ -73,7 +105,7 @@
     try {
       const response=await api('POST','/api/player/fishing/finish',pending);
       pending=null;savePending();
-      if(response.result.caught){$('fishing-message').textContent='钓上来了！';showCatch(response.result.fish);}
+      if(response.result.caught){$('fishing-message').textContent=`钓上来了！米数 +${length(response.result.fish.length_cm)}`;showCatch(response.result.fish);}
       else $('fishing-message').textContent='鱼跑了。歇一会儿，待会儿再来。';
     } catch(error) {
       $('fishing-message').textContent=error.message || '没有保存成功，可以重试。';
@@ -127,11 +159,11 @@
       }
       run.frame=requestAnimationFrame(frame);
     }
-    active.frame=requestAnimationFrame(frame);renderButton();
+    active.frame=requestAnimationFrame(frame);renderShop();renderButton();
   }
   $('cast-button').addEventListener('click',async()=>{
     if(pending){submit();return;}
-    if(casting || active)return;
+    if(casting || active || buying)return;
     casting=true;renderButton();
     try {
       const result=await api('POST','/api/player/fishing/cast',{});
@@ -192,6 +224,7 @@
   window.addEventListener('pagehide',()=>{stopGame();cancelAnimationFrame(pondFrame);clearInterval(timer);clearInterval(poll);});
   window.addEventListener('pageshow',event=>{
     if(!event.persisted)return;
+    pickAngler();
     lastPaint=0;drawPond(performance.now());
     timer=setInterval(renderButton,1000);poll=setInterval(refresh,15000);refresh();
   });

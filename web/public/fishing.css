@@ -61,3 +61,24 @@
 .fishing-credits {display:block;margin-top:20px;color:#90a799;font-size:10px;}
 @media(max-width:760px){.fishing-layout{grid-template-columns:1fr;}.fishing-shell{padding:18px 14px 40px;}.fishing-header h1{font-size:23px;}.pond-scene{aspect-ratio:1.05;}.reel-panel{height:78%;}.catch-result{grid-template-columns:95px 1fr;}.caught-portrait img{width:95px;}.fishing-overlay{gap:6px;}#reel-button{width:120px;padding-inline:8px;font-size:15px;}#fish-temper{margin-left:10px;}#abandon-button{position:absolute;top:3px;right:3px;}}
 @media(prefers-reduced-motion:reduce){.pond-bobber{animation:none;}}
+
+.tackle-shop { margin-top:24px;padding:20px 16px;border:3px solid #66543c;background:#b7a67c;color:#293e35;box-shadow:inset 0 0 0 2px #d9c79d; }
+.shop-heading { display:flex;align-items:center;justify-content:space-between;gap:12px; }
+.shop-heading h2 { font:600 23px 'Songti SC',SimSun,serif;margin:0; }
+.shop-heading>div { text-align:right;font-size:12px; }
+.shop-heading strong { font-size:20px;color:#294b3a; }
+.shop-heading small { display:block;margin-top:4px;color:#59674b;font-size:10px; }
+.shop-rule,#shop-chance { font-size:11px;line-height:1.7;color:#5a634a;margin:12px 0; }
+.gear-card { display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:12px;align-items:center;padding:18px 0;border-top:1px solid #6b694e55; }
+.gear-card h3 { margin:0;font-size:15px; }.gear-card h3 small { font-size:10px;color:#667053;font-weight:400;white-space:nowrap; }
+.gear-card p { margin:7px 0;color:#59674b;font-size:11px;line-height:1.6; }
+.gear-card button { min-height:42px;border:2px solid #5b6446;background:#839566;color:#203a2d;padding:8px;font-size:12px;white-space:nowrap;box-shadow:inset 0 2px #b1bd88,inset 0 -3px #667b53; }
+.gear-card button:disabled { opacity:.55;box-shadow:none; }
+.gear-levels { display:flex;gap:4px; }.gear-levels i { width:13px;height:5px;background:#717a5e55; }.gear-levels i.on { background:#4b7050; }
+.gear-icon { display:block;position:relative;width:32px;height:36px;image-rendering:pixelated; }
+.gear-rod { border-right:5px solid #795739;rotate:20deg; }.gear-rod::after { content:'';position:absolute;right:7px;top:0;bottom:6px;border-right:2px solid #e4d5a1; }
+.gear-reel { border:7px solid #617864;border-radius:50%;box-shadow:inset 0 0 0 3px #c4c8a3; }.gear-reel::after { content:'';position:absolute;left:50%;top:50%;width:16px;border-top:4px solid #4b5f51;rotate:-30deg; }
+.gear-line { border:4px dashed #526f68;border-radius:50%; }.gear-line::after { content:'';position:absolute;inset:7px;border:2px solid #526f68;border-radius:50%; }
+.gear-bait { width:20px;height:28px;margin:auto;background:#b98368;border:4px solid #8c654e;border-radius:8px 8px 3px 3px;rotate:20deg; }.gear-bait::after { content:'';position:absolute;left:-8px;right:-8px;top:7px;border-top:5px solid #d6a585; }
+#shop-message { min-height:18px;font-size:12px;line-height:1.6;margin:8px 0 0; }
+@media(max-width:500px) { .gear-card { grid-template-columns:28px minmax(0,1fr);gap:8px; }.gear-card button { grid-column:2;justify-self:start; }.gear-icon { scale:.8; }.tackle-shop { padding:16px 12px; } }

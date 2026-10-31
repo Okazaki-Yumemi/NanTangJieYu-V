@@ -6,7 +6,7 @@
     <title>湖边钓鱼 · 东方南堂界遇 V</title>
     <link rel="stylesheet" href="/styles.css?v=11" />
     <link rel="stylesheet" href="/atmosphere.css?v=4" />
-    <link rel="stylesheet" href="/fishing.css?v=1" />
+    <link rel="stylesheet" href="/fishing.css?v=2" />
   </head>
   <body>
     <main class="fishing-shell">
@@ -44,13 +44,18 @@
               <p id="fish-name-error" role="status"></p>
             </form>
           </section>
+          <section class="tackle-shop" aria-labelledby="shop-title">
+            <div class="shop-heading"><h2 id="shop-title">湖边渔具铺</h2><div><span>可用 <strong id="fish-wallet">0 米</strong></span><small>累计钓获 <span id="fish-total">0 米</span></small></div></div>
+            <p class="shop-rule">鱼获按长度换米数，永久升级装备。购买后从下一竿生效。</p>
+            <p id="shop-chance"></p><div id="fishing-shop"></div><p id="shop-message" role="status"></p>
+          </section>
           <section class="fish-history"><h2>我的鱼篓</h2><div id="fish-history-list"><p>还没有钓到鱼。</p></div></section>
         </section>
         <aside class="fishing-board"><h2>大鱼榜</h2><p>按每个人钓到的最长一条排。</p><ol id="fishing-ranks"></ol><p class="fishing-lore">湖里偶尔有点离谱的东西。<br />五百米？也不是没有可能。</p><a class="fishing-credits" href="/assets/fish/CREDITS.txt" target="_blank" rel="noopener">像素鱼素材 · EXCITESZZ / CC0</a></aside>
       </div>
     </main>
     <script src="/common.js?v=11"></script>
-    <script src="/fishing-game.js?v=2"></script>
-    <script src="/fishing.js?v=3"></script>
+    <script src="/fishing-game.js?v=4"></script>
+    <script src="/fishing.js?v=5"></script>
   </body>
 </html>
