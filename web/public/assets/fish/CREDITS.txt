@@ -1,0 +1,14 @@
+2D Retro Fish
+Author: EXCITESZZ
+Source: https://opengameart.org/content/2d-retro-fish
+License: CC0 1.0 Universal
+License URL: https://creativecommons.org/publicdomain/zero/1.0/
+
+Downloaded 2026-10-31. Original PNG files, renamed locally:
+Fish2_0.png -> red.png
+FishBlue.png -> blue.png
+GreenFish_0.png -> green.png
+YellowFish_0.png -> yellow.png
+OrangeFish_0.png -> orange.png
+
+These are decorative pixel sprites for fictional in-game fish, not biological illustrations.

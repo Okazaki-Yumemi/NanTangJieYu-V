@@ -1,4 +1,6 @@
 /* 活动视觉：夜色、季节纹样、悬浮沙盘。仅玩家端和大屏加载。 */
+.fishing-entry { display: flex; align-items: center; gap: 12px; padding: 13px 16px; background: #28443a; border: 1px solid #b9bd8255; color: #e4d4a8; text-decoration: none; border-radius: 4px; }
+.fishing-entry small { color: #abbfa9; font-size: 11px; flex: 1; }
 :root {
   --bg: #101626;
   --panel: #1b2538;

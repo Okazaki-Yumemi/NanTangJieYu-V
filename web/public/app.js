@@ -180,6 +180,10 @@
   // ---------- 主视图渲染 ----------
 
   function enterHome(data) {
+    if (new URLSearchParams(window.location.search).get('next') === 'fishing') {
+      window.location.replace('/fishing.html');
+      return;
+    }
     elements.registerView.classList.add('hidden');
     elements.homeView.classList.remove('hidden');
     appState.data = data;

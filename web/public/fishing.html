@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>湖边钓鱼 · 东方南堂界遇 V</title>
+    <link rel="stylesheet" href="/styles.css?v=11" />
+    <link rel="stylesheet" href="/atmosphere.css?v=4" />
+    <link rel="stylesheet" href="/fishing.css?v=1" />
+  </head>
+  <body>
+    <main class="fishing-shell">
+      <header class="fishing-header"><a href="/">← 回校园</a><h1>湖边钓鱼</h1><span id="fisher-name"></span></header>
+      <div class="fishing-layout">
+        <section class="fishing-main" aria-label="钓鱼场景">
+          <div class="pond-scene">
+            <canvas id="pond-canvas" width="240" height="150" aria-label="校园湖畔的像素场景"></canvas>
+            <img class="pond-angler" src="/assets/characters/reimu.png" alt="湖边的灵梦" />
+            <div class="pond-bobber" aria-hidden="true"></div>
+            <span class="pond-sign">钓鱼请勿惊动湖底的东西</span>
+            <div id="fishing-overlay" class="fishing-overlay hidden">
+              <div class="reel-panel">
+                <div class="fish-lane"><i id="catch-zone"></i><img id="fish-shadow" src="/assets/fish/blue.png" alt="鱼影" /></div>
+                <div class="catch-meter" role="progressbar" aria-label="收杆进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="catch-fill"></i></div>
+                <span id="fish-temper"></span>
+              </div>
+              <button type="button" id="reel-button">按住收线</button>
+              <p class="reel-hint">按住抬高绿条，松手下沉。把鱼留在绿条里。</p>
+              <button type="button" id="abandon-button" class="fishing-text-button">收竿离开</button>
+            </div>
+          </div>
+          <div class="fishing-controls">
+            <p id="fishing-message" role="status">湖面很安静。</p>
+            <button type="button" id="cast-button" class="cast-button" disabled>正在查看鱼情…</button>
+            <a id="fishing-login" href="/?next=fishing" class="hidden">先登录，再来甩一竿 →</a>
+            <p class="fishing-rule">不消耗能量 · 每 5 分钟一竿<br />抛竿即开始计时，离开或鱼逃走也需要等待。</p>
+          </div>
+          <section id="catch-result" class="catch-result hidden" aria-live="polite">
+            <div class="caught-portrait"><img id="caught-sprite" src="/assets/fish/blue.png" alt="钓获的鱼" /></div>
+            <div><span id="caught-rarity"></span><h2 id="caught-name"></h2><strong id="caught-length"></strong><p id="caught-description"></p></div>
+            <form id="fish-name-form" class="hidden">
+              <label for="fish-nickname">这条鱼够大，可以给它起个名字。</label>
+              <div><input id="fish-nickname" maxlength="16" placeholder="鱼名，最多 16 字" autocomplete="off" /><button type="submit">命名</button></div>
+              <p id="fish-name-error" role="status"></p>
+            </form>
+          </section>
+          <section class="fish-history"><h2>我的鱼篓</h2><div id="fish-history-list"><p>还没有钓到鱼。</p></div></section>
+        </section>
+        <aside class="fishing-board"><h2>大鱼榜</h2><p>按每个人钓到的最长一条排。</p><ol id="fishing-ranks"></ol><p class="fishing-lore">湖里偶尔有点离谱的东西。<br />五百米？也不是没有可能。</p><a class="fishing-credits" href="/assets/fish/CREDITS.txt" target="_blank" rel="noopener">像素鱼素材 · EXCITESZZ / CC0</a></aside>
+      </div>
+    </main>
+    <script src="/common.js?v=11"></script>
+    <script src="/fishing-game.js?v=1"></script>
+    <script src="/fishing.js?v=2"></script>
+  </body>
+</html>
