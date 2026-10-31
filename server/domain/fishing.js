@@ -7,6 +7,7 @@ const game = require('../../web/public/fishing-game');
 // 现场试玩可临时取消冷却；不改动已保存的冷却记录。
 const COOLDOWN_MS = process.env.FISHING_NO_COOLDOWN === '1' ? 0 : 30 * 1000;
 const NAMING_MIN_CM = 100;
+const JACKPOT_TEST_MODE = process.env.FISHING_JACKPOT_TEST === '1';
 const GEAR_COSTS = [200,600,1500,3500,8000];
 const GEAR = [
   {id:'rod',name:'鱼竿',effect:'绿条宽度',description:'每级扩大绿条 1.5 个百分点。'},
@@ -43,13 +44,17 @@ function account(state,userId) {
   Object.assign(item,economy(item));
   return item;
 }
-function fishWeights(gear = {}) {
+function fishWeights(gear = {}, jackpot = false) {
+  if (jackpot) {
+    const weights={leviathan:500,tractor:300,moon:200};
+    return FISH.map(fish=>({...fish,weight:weights[fish.id] || 0}));
+  }
   const level=Math.max(0,Math.min(5,Math.floor(gear.bait || 0)));
   const boost={carp:12,catfish:22,moon:28,tractor:18,leviathan:8};
   return FISH.map(fish=>({...fish,weight:level?fish.weight*(boost[fish.id]?100+level*boost[fish.id]:100-level*9):fish.weight}));
 }
-function bigFishChance(gear) {
-  const pool=fishWeights(gear);const total=pool.reduce((sum,fish)=>sum+fish.weight,0);
+function bigFishChance(gear, jackpot = false) {
+  const pool=fishWeights(gear,jackpot);const total=pool.reduce((sum,fish)=>sum+fish.weight,0);
   return pool.reduce((sum,fish)=>sum+fish.weight/total*Math.max(0,fish.max-Math.max(fish.min,NAMING_MIN_CM)+1)/(fish.max-fish.min+1),0);
 }
 function shopView(gear) {
@@ -66,6 +71,7 @@ function leaderboard(state) {
 function view(state, user, now = Date.now()) {
   const item = user ? record(state,user.id) : null;
   const funds=economy(item || {});
+  const jackpot=JACKPOT_TEST_MODE && Boolean(user?.fishing_test_account);
   return {
     logged_in: Boolean(user), banned: Boolean(user?.banned),
     display_name: user?.display_name || '',
@@ -76,7 +82,7 @@ function view(state, user, now = Date.now()) {
     server_time: now, best: item?.best || null, last_catch: item?.last_catch || null,
     catches: item?.catches || 0, rows: leaderboard(state),
     naming_min_cm: NAMING_MIN_CM, history: item?.history || [],
-    ...funds, shop:shopView(funds.gear),big_fish_chance:bigFishChance(funds.gear)
+    ...funds, shop:shopView(funds.gear),big_fish_chance:bigFishChance(funds.gear,jackpot),jackpot_test_mode:jackpot
   };
 }
 function cast(state, user, now = Date.now(), pick = randomInt) {
@@ -84,7 +90,7 @@ function cast(state, user, now = Date.now(), pick = randomInt) {
   const existing = record(state,user.id);
   if (COOLDOWN_MS && existing && existing.next_cast_at > now) return {error:'FISHING_COOLDOWN',message:'鱼还没回来，再等一会儿。',retry_in_sec:Math.ceil((existing.next_cast_at-now)/1000)};
   const item=account(state,user.id);
-  const pool=fishWeights(item.gear);
+  const pool=fishWeights(item.gear,JACKPOT_TEST_MODE && Boolean(user.fishing_test_account));
   let roll = pick(pool.reduce((sum,fish)=>sum+fish.weight,0));
   const fish = pool.find(item => {roll-=item.weight;return roll<0;});
   const length = pick(fish.min,fish.max+1);

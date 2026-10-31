@@ -7,6 +7,15 @@ const game = require('../../web/public/fishing-game');
 const { execFileSync } = require('node:child_process');
 const { createFixture } = require('../helpers/fixture');
 
+test('jackpot test pool has 50 percent giant fish and does not change the normal pool',()=>{
+  const pool=fishing.fishWeights({bait:5},true);
+  const total=pool.reduce((sum,fish)=>sum+fish.weight,0);
+  assert.equal(pool.find(fish=>fish.id==='leviathan').weight/total,.5);
+  assert.equal(pool.find(fish=>fish.id==='tractor').weight/total,.3);
+  assert.equal(pool.find(fish=>fish.id==='moon').weight/total,.2);
+  assert.equal(fishing.fishWeights({bait:0}).find(fish=>fish.id==='leviathan').weight,1);
+});
+
 test('preview mode bypasses stored cooldowns and allows consecutive casts',()=>{
   const output=execFileSync(process.execPath,['-e',`
     const fishing=require('./server/domain/fishing');

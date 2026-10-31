@@ -67,7 +67,7 @@
   function renderShop() {
     $('fish-wallet').textContent=metres(view.wallet_cm || 0);
     $('fish-total').textContent=metres(view.total_cm || 0);
-    $('shop-chance').textContent=`当前鱼饵：约 ${Math.round(view.big_fish_chance*100)}% 的抛竿会遇到满一米的鱼。`;
+    $('shop-chance').textContent=view.jackpot_test_mode?'大奖鱼测试：五百米鱼 50% · 拖拉机鱼 30% · 银鲤 20%':`当前鱼饵：约 ${Math.round(view.big_fish_chance*100)}% 的抛竿会遇到满一米的鱼。`;
     $('fishing-shop').innerHTML=(view.shop || []).map(item=>{
       const max=item.level>=item.max_level;
       const unavailable=!view.logged_in || view.banned || active || casting || buying || max || view.wallet_cm<item.next_cost_cm;
