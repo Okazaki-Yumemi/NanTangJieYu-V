@@ -381,7 +381,7 @@ describe('HTTP integration: full event journey', () => {
     // 隔离测试中的时间提前，避免真的等待收杆；正式接口不接受客户端时钟。
     await app.store.transact(state=>{
       const attempt=Object.values(state.fishing.players).find(item=>item.attempt.id===challenge.id).attempt;
-      attempt.created_at-=45000;attempt.difficulty=.2;attempt.length_cm=150;
+      attempt.created_at-=45000;attempt.difficulty=.2;attempt.length_cm=350;
       return {ok:true};
     });
     const config={...challenge,difficulty:.2};
@@ -399,6 +399,15 @@ describe('HTTP integration: full event journey', () => {
     assert.equal(forbidden.status,400);
     const ranks=await request('GET','/api/fishing/leaderboard');
     assert.equal(ranks.json.rows[0].custom_name,'湖边大王');
+    const purchase=await request('POST','/api/player/fishing/upgrade',{body:{gear_id:'rod',expected_level:0},headers:{Cookie:playerACookie}});
+    assert.equal(purchase.status,200);
+    assert.equal(purchase.json.wallet_cm,150);
+    const repeated=await request('POST','/api/player/fishing/upgrade',{body:{gear_id:'rod',expected_level:0},headers:{Cookie:playerACookie}});
+    assert.equal(repeated.status,400);
+    const fishingState=await request('GET','/api/player/fishing/state',{headers:{Cookie:playerACookie}});
+    assert.equal(fishingState.json.total_cm,350);
+    assert.equal(fishingState.json.wallet_cm,150);
+    assert.equal(fishingState.json.gear.rod,1);
   });
 
   it('restart keeps the state (persistence)', async () => {
@@ -422,6 +431,8 @@ describe('HTTP integration: full event journey', () => {
     const fishingState=await request('GET','/api/player/fishing/state',{headers:{Cookie:playerACookie}});
     assert.ok(fishingState.json.cooldown_sec>0);
     assert.equal(fishingState.json.best.custom_name,'湖边大王');
+    assert.equal(fishingState.json.gear.rod,1);
+    assert.equal(fishingState.json.wallet_cm,150);
   });
 
   it('ledger file records the audit trail', async () => {

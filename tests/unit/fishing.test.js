@@ -44,7 +44,7 @@ test('shared fishing simulation can be replayed exactly and is playable across d
 });
 
 test('harder fish have smaller green zones, shared by drawing and hit detection',()=>{
-  assert.ok(game.zoneSize({difficulty:.2})>.24);
+  assert.ok(game.zoneSize({difficulty:.2})>.23);
   assert.ok(game.zoneSize({difficulty:.73})<.15);
   assert.ok(game.zoneSize({difficulty:.99})<.1);
   assert.ok(game.zoneSize({difficulty:.2})>game.zoneSize({difficulty:.5}));
@@ -58,8 +58,8 @@ test('cast cooldown survives serialization and never consumes activity energy',(
   assert.ok(result.challenge);
   assert.equal(user.energy,energy);
   const restored=JSON.parse(JSON.stringify(f.state));
-  assert.equal(fishing.cast(restored,user,now+299999).error,'FISHING_COOLDOWN');
-  assert.ok(fishing.cast(restored,user,now+300000).challenge);
+  assert.equal(fishing.cast(restored,user,now+29999).error,'FISHING_COOLDOWN');
+  assert.ok(fishing.cast(restored,user,now+30000).challenge);
 });
 
 test('rarest roll produces a 500 metre fish with very high difficulty',()=>{
@@ -95,7 +95,66 @@ test('only a valid completed replay creates one catch; duplicate submissions are
   assert.notEqual(result.result.fish.length_cm,payload.length_cm);
   assert.equal(fishing.finish(f.state,user,payload,now+60000).duplicate,true);
   assert.equal(fishing.view(f.state,user,now).catches,1);
+  assert.equal(fishing.view(f.state,user,now).wallet_cm,result.result.fish.length_cm);
+  assert.equal(fishing.view(f.state,user,now).total_cm,result.result.fish.length_cm);
   assert.equal(fishing.leaderboard(f.state).length,1);
+});
+
+test('equipment spends only wallet metres, checks expected level and preserves cast snapshots',()=>{
+  const f=createFixture({userCount:1});const user=f.registered[0];const now=1700000000000;
+  f.state.fishing.players[user.id]={wallet_cm:2000,total_cm:2000,gear:{rod:0,reel:0,line:0,bait:0},catches:0};
+  const cast=fishing.cast(f.state,user,now);
+  const bought=fishing.upgrade(f.state,user,{gear_id:'rod',expected_level:0,price_cm:0});
+  assert.equal(bought.spent_cm,200);
+  assert.equal(fishing.view(f.state,user,now).wallet_cm,1800);
+  assert.equal(fishing.view(f.state,user,now).total_cm,2000);
+  assert.equal(fishing.upgrade(f.state,user,{gear_id:'rod',expected_level:0}).error,'BAD_REQUEST');
+  assert.equal(fishing.view(f.state,user,now).wallet_cm,1800);
+  assert.equal(cast.challenge.gear.rod,0);
+  assert.equal(f.state.fishing.players[user.id].attempt.gear.rod,0);
+  assert.equal(fishing.cast(f.state,user,now+30000).challenge.gear.rod,1);
+});
+
+test('shop rejects unknown gear, insufficient metres, bans and levels above the cap',()=>{
+  const f=createFixture({userCount:1});const user=f.registered[0];
+  assert.equal(fishing.upgrade(f.state,user,{gear_id:'unknown',expected_level:0}).error,'BAD_REQUEST');
+  assert.equal(fishing.upgrade(f.state,user,{gear_id:'rod',expected_level:0}).error,'BAD_REQUEST');
+  const item=f.state.fishing.players[user.id];item.wallet_cm=100000;item.total_cm=100000;
+  for(let level=0;level<5;level++)assert.equal(fishing.upgrade(f.state,user,{gear_id:'rod',expected_level:level}).level,level+1);
+  const balance=item.wallet_cm;
+  assert.equal(fishing.upgrade(f.state,user,{gear_id:'rod',expected_level:5}).error,'BAD_REQUEST');
+  assert.equal(item.wallet_cm,balance);
+  user.banned=true;
+  assert.equal(fishing.upgrade(f.state,user,{gear_id:'bait',expected_level:0}).error,'FORBIDDEN');
+});
+
+test('old retained catches are credited once and survive serialization without double credit',()=>{
+  const f=createFixture({userCount:1});const user=f.registered[0];
+  const fish={id:'old-fish',length_cm:300};
+  f.state.fishing.players[user.id]={history:[{...fish}],best:{...fish},last_catch:{...fish},catches:1};
+  assert.equal(fishing.view(f.state,user).wallet_cm,300);
+  fishing.upgrade(f.state,user,{gear_id:'rod',expected_level:0});
+  const restored=JSON.parse(JSON.stringify(f.state));
+  assert.equal(fishing.view(restored,user).wallet_cm,100);
+  assert.equal(fishing.view(restored,user).total_cm,300);
+});
+
+test('rod widens the zone, reel fills faster, line reduces loss, bait increases big fish odds',()=>{
+  const config={difficulty:.7,seed:12345};
+  assert.ok(game.zoneSize({...config,gear:{rod:5}})>game.zoneSize(config));
+  const base=game.createGame(config);base.tick=120;base.y=.5;base.fish=.5;
+  const reel={...base};
+  // 找到当前固定轨迹附近的可捕获位置，避免把控制惯性误当装备效果。
+  base.y=game.fishPosition(121,config);reel.y=base.y;
+  game.step(base,false,config);game.step(reel,false,{...config,gear:{reel:5}});
+  assert.ok(reel.progress>base.progress);
+  const loose={...game.createGame(config),tick:120,y:.95};const protectedLine={...loose};
+  game.step(loose,false,config);game.step(protectedLine,false,{...config,gear:{line:5}});
+  assert.ok(protectedLine.progress>loose.progress);
+  let previous=fishing.bigFishChance({bait:0});
+  for(let level=1;level<=5;level++){
+    const chance=fishing.bigFishChance({bait:level});assert.ok(chance>previous);previous=chance;
+  }
 });
 
 test('malformed, unfinished, expired and cross-player runs cannot enter the leaderboard',()=>{

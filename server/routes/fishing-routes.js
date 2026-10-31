@@ -16,7 +16,7 @@ function registerRoutes(router, appCtx) {
   router.get('/api/fishing/leaderboard', async (req,res) => {
     sendJson(res,200,{rows:fishing.leaderboard(store.getLatest())});
   });
-  for (const [path,action] of [['cast',fishing.cast],['finish',fishing.finish],['name',fishing.nameFish]]) {
+  for (const [path,action] of [['cast',fishing.cast],['finish',fishing.finish],['name',fishing.nameFish],['upgrade',fishing.upgrade]]) {
     router.post(`/api/player/fishing/${path}`,async(req,res)=>{
       let body;
       try { body=await collectBody(req); }
