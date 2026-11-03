@@ -59,6 +59,10 @@ test('duplicate client_request_id returns first result without double counting',
 test('energy is consumed and regen state stays consistent', () => {
   const fixture = createFixture({ userCount: 1 });
   const user = fixture.registered[0];
+  // Keep this cost test independent of the random energy refund outcome.
+  for (const action of fixture.seeds.interactions.filter(({ id }) => ['investigate', 'deep_scan'].includes(id))) {
+    action.outcomes = action.outcomes.filter((outcome) => !outcome.energy_delta);
+  }
   assert.equal(user.energy, 5);
 
   interact(fixture, user, { requestId: 'e1' });
