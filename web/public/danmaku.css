@@ -21,3 +21,5 @@
 .firefly-shell button { min-height: 44px; padding: 8px 22px; border: 1px solid #e6bf84; border-radius: 2px; background: #e6c89a; color: #2d2530; font-size: 16px; }
 #firefly-pause { background: transparent; color: #f0e0c1; }
 .firefly-shell :focus-visible { outline: 2px solid #ffe0a2; outline-offset: 3px; }
+.firefly-mode { display:flex; align-items:center; gap:10px; margin:10px 0; color:#f0e0c1; }
+.firefly-mode select { min-height:44px; padding:6px 12px; background:#282238; color:#f0e0c1; border:1px solid #a68b77; font:inherit; }

@@ -3,6 +3,7 @@
 
   const el = (name) => document.getElementById(`drum-${name}`);
   const chart = el('chart');
+  const difficulty = el('level');
   const start = el('start');
   const pause = el('pause');
   const mute = el('mute');
@@ -11,17 +12,25 @@
   const keyToDrum = { d: 'd', f: 'd', j: 'k', k: 'k' };
   const songs = [
     {
-      file: 'four-seasons', bpm: 92, window: 180,
+      file: 'four-seasons', bpm: 92,
+      phrases: ['ddkdkddk', 'kkdkkddk', 'ddkkdkkd', 'dkdkddkk', 'kdkddkdk', 'dddkddkk', 'kkdkddkk', 'dkdkkddk'],
+      accents: [6, 14, 24, 33, 42, 49, 56],
       bars: ['d...d.k.', 'd.k.d...', 'd.d.k.k.', 'd...k...', 'd.k.d.k.', 'd.d.k...', 'k.k.d.d.', 'd.k.d...'],
       onsets: [1610,1960,2500,2850,3190,3550,3910,4270,4620,4990,5340,5690,6210,6570,7100,7450,7810,8170,8610,9050,9500,9940,10300,10650,11270,11630,12070,12430,12780,13310,13850,14200,14730,15270,15620,15980,16330,16690,17040,17400,17750,18110,18460,18990,19530,19880,20410,20950,21300,21660,22190,22630,23080,23430,23790,24140,24680],
     },
     {
-      file: 'hidden-star', bpm: 126, window: 150,
+      file: 'hidden-star', bpm: 126,
+      phrases: ['dkdkkddd', 'kddkdkdk', 'ddkkdkdd', 'kkddkdkd', 'dkddkddk', 'kkdkdddk', 'dkdkkddk'],
+      accents: [5, 10, 18, 26, 32, 37, 45, 53],
       bars: ['d.k.ddk.', 'k.d.kkd.', 'dkkdd.k.', 'dkd.k.d.', 'dkdkd.k.', 'kddkk.d.', 'ddk.kddk', 'dkdkddk.'],
       onsets: [1360,1780,2140,2700,3210,3570,4110,4640,5000,5560,6070,6420,6970,7320,7850,8390,8750,9280,9820,10350,10710,11240,11780,12140,12500,12860,13220,13570,14730,15360,15710,16070,16430,16790,17140,17680,18210,18570,18930,19290,19640,20000,20360,20690,21070,21430,21780,22140,22680,23030,23390,23730,24110,24640],
     },
   ];
-  const lead = 1650;
+  const levels = {
+    normal: { window: 155, perfect: 68, lead: 1650, description: '单点 · 宽判定' },
+    hard: { window: 108, perfect: 43, lead: 1330, description: '切分与双敲 · ±108ms' },
+    expert: { window: 75, perfect: 29, lead: 1060, description: '密集交替与双敲 · ±75ms' },
+  };
   const delay = 2100;
   const bestKey = 'ntj-rhythm-best';
   let best = 0;
@@ -36,6 +45,48 @@
   let origin;
   let position = 0;
   let audioCursor = 0;
+
+  function compileChart(song, level, recorded) {
+    const beat = 60000 / song.bpm;
+    const pattern = song.bars.join('');
+    const base = recorded
+      ? song.onsets.map((at, i) => ({ at, kind: song.phrases.join('')[i] }))
+      : Array.from(pattern, (kind, i) => ({ kind, at: delay + i * beat / 2 })).filter(({ kind }) => kind !== '.');
+    const notes = [];
+    for (const [i, note] of base.entries()) {
+      const accent = recorded ? song.accents.includes(i) : i % 8 === 6;
+      if (level === 'normal' && i % 2 !== 0 && !accent) continue;
+      const chord = level === 'expert' && accent || level === 'hard' && accent && i % 3 !== 0;
+      notes.push({ ...note, chord });
+      if (chord) notes.push({ at: note.at, kind: note.kind === 'd' ? 'k' : 'd', chord: true });
+      const next = base[i + 1];
+      if (level !== 'expert' || !next || ![1, 2, 3, 6].includes(i % 8)) continue;
+      const gap = next.at - note.at;
+      // The recorded phrases follow the audible onset grid. Fill selected gaps with
+      // drum answers on that grid, leaving the ends of phrases open to breathe.
+      const fillable = recorded ? gap >= 320 && gap <= 580 : gap >= 225 && gap <= beat * 1.51;
+      if (fillable) {
+        const subdivisions = recorded && gap >= 470 ? 3 : 2;
+        for (let part = 1; part < subdivisions; part += 1) {
+          const kind = part % 2 ? (note.kind === 'd' ? 'k' : 'd') : note.kind;
+          notes.push({ at: note.at + Math.round(gap * part / subdivisions), kind });
+        }
+      }
+    }
+    return { notes, beat, beats: pattern.length / 2, end: recorded ? 25500 : delay + pattern.length * beat / 2, ...levels[level] };
+  }
+
+  function showChartInfo() {
+    const song = songs[Number(chart.value)];
+    const level = difficulty.value;
+    const { notes, description } = compileChart(song, level, true);
+    el('chart-info').textContent = `${notes.length} 击 · ${description}`;
+  }
+
+  function enableSelection(enabled) {
+    chart.disabled = !enabled;
+    difficulty.disabled = !enabled;
+  }
 
   function enableAudio() {
     if (muted) return;
@@ -100,6 +151,7 @@
       run.points += rating === 'perfect' ? 100 : 60;
     }
     el('call').textContent = { perfect: '正中', good: '合拍', miss: '漏拍' }[rating];
+    el('call').dataset.rating = rating;
     renderScore();
   }
 
@@ -115,18 +167,19 @@
     let distance = run.window;
     for (const entry of run.notes) {
       const gap = Math.abs(entry.at - time);
-      if (!entry.done && gap <= distance) {
+      if (!entry.done && entry.kind === kind && gap <= distance) {
         note = entry;
         distance = gap;
       }
     }
-    if (!note || note.kind !== kind) {
+    if (!note) {
       run.combo = 0;
-      el('call').textContent = note ? '敲错了' : '等鼓点';
+      el('call').textContent = '空击';
+      el('call').dataset.rating = 'miss';
       renderScore();
       return;
     }
-    resolve(note, distance <= run.window * .48 ? 'perfect' : 'good');
+    resolve(note, distance <= run.perfectWindow ? 'perfect' : 'good');
   }
 
   function clock(now) {
@@ -140,7 +193,7 @@
       track = null;
       stopAudio();
       phase = 'finished';
-      chart.disabled = false;
+      enableSelection(true);
       pause.disabled = true;
       start.disabled = false;
       start.textContent = '重新开演';
@@ -154,13 +207,13 @@
       const distance = note.at - position;
       if (distance < -run.window) {
         resolve(note, 'miss');
-      } else if (distance <= lead) {
+      } else if (distance <= run.lead) {
         if (!note.node) {
           note.node = document.createElement('i');
-          note.node.className = `drum-note${note.kind === 'k' ? ' rim' : ''}`;
+          note.node.className = `drum-note${note.kind === 'k' ? ' rim' : ''}${note.chord ? ' chord' : ''}`;
           notesLayer.append(note.node);
         }
-        note.node.style.left = `${18 + distance / lead * 86}%`;
+        note.node.style.left = `${18 + distance / run.lead * 86}%`;
       }
     }
     el('progress').value = Math.min(1, position / run.end);
@@ -173,7 +226,7 @@
     stopAudio();
     track?.pause();
     track = null;
-    chart.disabled = false;
+    enableSelection(true);
     pause.disabled = true;
     start.disabled = false;
     start.textContent = '再敲一曲';
@@ -210,24 +263,21 @@
   async function begin() {
     const resume = phase === 'paused';
     phase = 'loading';
-    chart.disabled = true;
+    enableSelection(false);
     start.disabled = true;
     el('result').textContent = '正在准备音轨…';
     enableAudio();
     if (!resume) {
       const song = songs[Number(chart.value)];
       track = await startTrack(song.file);
-      const beat = 60000 / song.bpm;
-      const pattern = song.bars.join('');
-      const notes = track
-        ? song.onsets.map((at, i) => ({ at, kind: 'ddkdkddk'[i % 8] }))
-        : Array.from(pattern, (kind, i) => ({ kind, at: delay + i * beat / 2 })).filter(({ kind }) => kind !== '.');
-      const end = track ? 25500 : delay + pattern.length * beat / 2;
-      run = { notes, beat, beats: pattern.length / 2, window: song.window, end, points: 0, combo: 0, maxCombo: 0, perfect: 0, good: 0, miss: 0 };
+      const { perfect: perfectWindow, ...compiled } = compileChart(song, difficulty.value, Boolean(track));
+      run = { ...compiled, perfectWindow, points: 0, combo: 0, maxCombo: 0, perfect: 0, good: 0, miss: 0 };
+      el('chart-info').textContent = `${run.notes.length} 击 · ${run.description}`;
       position = 0;
       audioCursor = 0;
       notesLayer.replaceChildren();
       el('call').textContent = '预备';
+      delete el('call').dataset.rating;
       renderScore();
     } else if (track) {
       try { await track.play(); } catch {
@@ -239,7 +289,7 @@
     }
     phase = 'playing';
     origin = performance.now() - position;
-    chart.disabled = true;
+    enableSelection(false);
     pause.disabled = false;
     start.disabled = true;
     el('result').textContent = track ? '本地曲目 · 前奏节选' : '练习音轨 · 合成伴奏';
@@ -283,6 +333,9 @@
   });
   start.addEventListener('click', begin);
   pause.addEventListener('click', pauseGame);
+  chart.addEventListener('change', showChartInfo);
+  difficulty.addEventListener('change', showChartInfo);
   document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
+  showChartInfo();
   renderScore();
 })();

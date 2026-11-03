@@ -5,7 +5,7 @@
 .crate-masthead p { margin: 8px 0 0; color: #d1b58c; letter-spacing: .22em; font-size: 12px; }
 .crate-masthead h1 { margin: 4px 0; font: 700 37px/1.2 'Songti SC', SimSun, serif; letter-spacing: .14em; }
 .crate-ticket { background: #ead9b6; color: #392e25; padding: 8px 10px; }
-.crate-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+.crate-tabs { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; }
 .crate-shell button { min-height: 44px; padding: 4px; font: inherit; color: inherit; border: 1px solid currentColor; border-radius: 2px; background: transparent; }
 .crate-shell button:focus-visible, #crate-board:focus-visible { outline: 3px solid #ffb47b; outline-offset: 2px; }
 .crate-tabs button[aria-pressed="true"] { background: #694138; border-color: #694138; color: #fff5dd; }
@@ -19,7 +19,15 @@
 .crate-cell.wall { background: var(--wall, #57705a); box-shadow: inset 0 3px #fff2, inset 0 -5px #0004; }
 .crate-cell.goal::before { content: ''; position: absolute; inset: 22%; border: 2px dashed #56372e; border-radius: 50%; background: #fff4; }
 .crate-cell.box::after { content: ''; position: absolute; inset: 11%; border: 2px solid #634634; border-radius: 5%; background: repeating-linear-gradient(45deg, transparent 0 39%, #805336 40% 49%, transparent 50% 100%), #cc9560; box-shadow: 0 2px #422a23a0, inset 0 0 0 3px #e4b275; }
-.crate-cell.box.goal::after { background-color: #dabb67; border-color: #7b502d; box-shadow: 0 2px #422a23a0, inset 0 0 0 3px #f8dd9a; }
+.crate-cell.placed::after { background-color: #dabb67; border-color: #7b502d; box-shadow: 0 2px #422a23a0, inset 0 0 0 3px #f8dd9a; }
+.crate-cell.goal:not([data-seal=""])::before, .crate-cell.box:not([data-box=""])::after {
+  display: grid;
+  place-items: center;
+  font: 700 clamp(11px, 3.4vw, 21px)/1 SimSun, serif;
+  color: #39251d;
+}
+.crate-cell.goal:not([data-seal=""])::before { content: attr(data-seal); inset: 12%; }
+.crate-cell.box:not([data-box=""])::after { content: attr(data-box); background-image: none; }
 .crate-cell.player::after { content: '✦'; position: absolute; inset: 12%; display: grid; place-content: center; color: #fff1ca; font-size: clamp(17px, 4vw, 28px); border-radius: 50%; background: #702e3d; border: 2px solid #fff2ce; box-shadow: 0 2px #44252a99; }
 .crate-tools { display: flex; gap: 8px; }
 .crate-tools button { padding-inline: 14px; }
@@ -30,3 +38,39 @@
 .crate-pad button:nth-child(2) { grid-column: 1; }
 #crate-message { margin: 8px 0 0; color: #ffdc9f; text-align: center; min-height: 1.55em; }
 .crate-help { color: #d7ccad; font-size: 13px; margin: 8px 0 0; text-align: center; }
+.crate-credit { display: block; margin-top: 10px; color: #d7ccad; font-size: 12px; text-align: center; }
+
+.crate-board-frame { box-shadow: inset 0 0 0 3px #251d19, inset 0 0 0 4px #b7996470; }
+.crate-cell { background-image: linear-gradient(155deg, #fff2, transparent 52%, #30211a22); }
+.crate-cell:nth-child(odd) { background-color: var(--floor-alt, #bcb18c); }
+.crate-cell.wall {
+  background-image: linear-gradient(155deg, #f3deb23d 0 14%, transparent 15% 68%, #16151c66 69%);
+  box-shadow: inset 0 0 0 2px #1c1c2280, inset 0 4px #fff2, inset 0 -6px #0004;
+}
+.crate-cell.goal::before {
+  border-style: double;
+  background: #ead7a9;
+  box-shadow: inset 0 0 0 2px #f8ebc4, 0 0 0 1px #9d7458;
+}
+.crate-cell.box::after, .crate-cell.box:not([data-box=""])::after {
+  background-image: repeating-linear-gradient(0deg, transparent 0 24%, #75452c95 25% 29%, transparent 30% 44%);
+  text-shadow: 0 1px #f6ce96;
+}
+.crate-cell.box.goal:not(.placed)::before {
+  inset: auto 0 0 auto;
+  width: 44%;
+  height: 44%;
+  z-index: 1;
+  font-size: 10px;
+}
+.crate-cell.player::after {
+  content: '';
+  inset: 8%;
+  background: #702e3d url('/assets/taisei/reimu-portrait.svg') center 6% / 140% auto no-repeat;
+}
+
+@media (max-width: 420px) {
+  .crate-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .crate-title { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 8px; }
+  .crate-title h2 { grid-column: 1 / -1; }
+}

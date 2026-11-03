@@ -11,15 +11,19 @@
   const keys = new Set();
   const arrows = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
   const player = { x: 180, y: 324 };
-  const storageKey = 'ntj-firefly-score-v2';
+  const sprite = new Image();
+  sprite.src = '/assets/reimu-survivors.png';
+  const mode = byId('mode');
   const duration = 36;
   const patterns = ['一符 · 花雨', '二符 · 横流', '三符 · 星环'];
   const colors = ['#ff9eaa', '#94d9ee', '#e0a6f4'];
-  let best = 0;
-  try { best = Math.max(0, Number(localStorage.getItem(storageKey)) || 0); } catch { /* Storage is optional. */ }
+  let expert = false;
+  let best = readBest();
   let phase = 'ready';
   let score = 0;
   let lamps = 0;
+  let spellLamps = 0;
+  let spell = 0;
   let grazes = 0;
   let guard = 0;
   let invulnerableUntil = 0;
@@ -36,6 +40,14 @@
   let target = null;
   let frame;
   let last;
+
+  function scoreKey() {
+    return expert ? 'ntj-firefly-expert-v1' : 'ntj-firefly-score-v2';
+  }
+
+  function readBest() {
+    try { return Math.max(0, Number(localStorage.getItem(scoreKey())) || 0); } catch { return 0; }
+  }
 
   function spawnLantern() {
     const half = player.x > width / 2 ? 28 : width / 2 + 30;
@@ -97,15 +109,19 @@
       ctx.fillStyle = '#fff0b0';
       ctx.fillRect(lantern.x - 2, lantern.y - 3, 4, 6);
     }
-    ctx.fillStyle = '#ffe7ba';
+    if (sprite.naturalWidth) {
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(sprite, 0, 0, 13, 13, Math.round(player.x) - 13, Math.round(player.y) - 14, 26, 26);
+    }
+    // This pin remains visible on the sprite so the player can read the hitbox.
+    ctx.fillStyle = '#211828';
     ctx.beginPath();
-    ctx.moveTo(player.x, player.y - 10);
-    ctx.lineTo(player.x + 10, player.y + 7);
-    ctx.lineTo(player.x, player.y + 4);
-    ctx.lineTo(player.x - 10, player.y + 7);
+    ctx.arc(player.x, player.y, 4, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#b65a60';
-    ctx.fillRect(player.x - 2, player.y - 2, 4, 4);
+    ctx.fillStyle = '#fff3bf';
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, 2, 0, Math.PI * 2);
+    ctx.fill();
     ctx.font = 'bold 12px system-ui';
     for (const note of notes) {
       ctx.globalAlpha = Math.max(0, 1 - (elapsed - note.at));
@@ -119,7 +135,7 @@
     byId('score').textContent = score;
     byId('time').textContent = Math.max(0, Math.ceil(duration - elapsed));
     byId('best').textContent = best;
-    const pattern = patterns[Math.min(2, Math.floor(elapsed / 12))];
+    const pattern = expert ? `${patterns[spell]} · 灯火 ${Math.min(spellLamps, 2)}/2` : patterns[spell];
     if (byId('pattern').textContent !== pattern) byId('pattern').textContent = pattern;
     byId('guard').textContent = guard === 8 ? '护身符就绪' : `护身符 ${guard}/8`;
   }
@@ -136,7 +152,7 @@
     releaseInput();
     if (nextPhase === 'over' && score > best) {
       best = score;
-      try { localStorage.setItem(storageKey, String(best)); } catch { /* Play works without storage. */ }
+      try { localStorage.setItem(scoreKey(), String(best)); } catch { /* Play works without storage. */ }
     }
     updateLedger();
     curtain.classList.remove('hidden');
@@ -144,6 +160,7 @@
     byId('detail').textContent = nextPhase === 'over' ? `拾灯 ${lamps} 盏 · 擦弹 ${grazes} 次` : '离开时会自动暂停';
     start.textContent = phase === 'paused' ? '继续' : '再来一次';
     pause.disabled = true;
+    mode.disabled = nextPhase === 'paused';
     start.focus({ preventScroll: true });
   }
 
@@ -168,6 +185,13 @@
       const y = 98 + Math.cos(wave * 1.2) * 33;
       for (let i = 0; i < 12; i += 1) launch(x, y, i * Math.PI / 6 + wave * .22, 115);
     }
+    if (expert && wave % 2 === 0) {
+      // Aim once, when the warning appears. Moving during the warning opens a lane.
+      const x = wave % 4 ? 4 : width - 4;
+      const y = pattern === 1 ? 4 : 64;
+      const aim = Math.atan2(player.y - y, player.x - x);
+      for (let i = -1; i <= 1; i += 1) launch(x, y, aim + i * .19, 151);
+    }
     return shots;
   }
 
@@ -177,7 +201,8 @@
     bullets.push(...warning);
     warning = null;
     wave += 1;
-    nextWave += elapsed < 12 ? 1.08 : elapsed < 24 ? 1.4 : 1.22;
+    const interval = elapsed < 12 ? 1.08 : elapsed < 24 ? 1.4 : 1.22;
+    nextWave += interval * (expert ? .83 : 1);
   }
 
   function award(points) {
@@ -232,15 +257,25 @@
     }
     if (Math.hypot(player.x - lantern.x, player.y - lantern.y) < 15) {
       lamps += 1;
+      spellLamps += 1;
       chain = elapsed - lastLamp < 4 ? Math.min(4, chain + 1) : 1;
       lastLamp = elapsed;
       award(chain * 10);
       spawnLantern();
     }
+    const boundary = elapsed >= (spell + 1) * 12;
+    const missedQuota = expert && boundary && spellLamps < 2;
+    if (boundary && !missedQuota && spell < 2) {
+      if (expert) award(30);
+      spell += 1;
+      spellLamps = 0;
+    }
     draw();
     updateLedger();
     if (hit) {
       end(`撞上弹幕 · ${score} 分`, 'over');
+    } else if (missedQuota) {
+      end(`${patterns[spell]}未破 · 需要拾起两盏灯`, 'over');
     } else if (elapsed >= duration) {
       award(50);
       end(`破符成功 · ${score} 分`, 'over');
@@ -253,6 +288,8 @@
     if (phase !== 'paused') {
       score = 0;
       lamps = 0;
+      spellLamps = 0;
+      spell = 0;
       grazes = 0;
       guard = 0;
       chain = 0;
@@ -268,11 +305,29 @@
       spawnLantern();
     }
     phase = 'playing';
+    mode.disabled = true;
     curtain.classList.add('hidden');
     pause.disabled = false;
     canvas.focus({ preventScroll: true });
     last = performance.now();
     frame = requestAnimationFrame(tick);
+  });
+
+  mode.addEventListener('change', () => {
+    expert = mode.value === 'expert';
+    best = readBest();
+    phase = 'ready';
+    elapsed = score = spell = spellLamps = guard = 0;
+    bullets = [];
+    notes = [];
+    warning = lantern = null;
+    invulnerableUntil = 0;
+    Object.assign(player, { x: 180, y: 324 });
+    byId('result').textContent = expert ? '符卡试炼' : '月下拾灯';
+    byId('detail').textContent = expert ? '每道符卡限时 12 秒，至少拾两盏灯。虚线瞄准出现后，记得换位。' : '穿过三道符卡，撑过 36 秒。';
+    start.textContent = '开始';
+    updateLedger();
+    draw();
   });
 
   function pauseGame() {
@@ -320,4 +375,5 @@
 
   draw();
   updateLedger();
+  sprite.addEventListener('load', () => { if (phase !== 'playing') draw(); });
 })();

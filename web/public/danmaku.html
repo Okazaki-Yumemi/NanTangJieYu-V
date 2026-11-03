@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>萤火弹幕 · 东方南堂界遇 V</title>
   <link rel="stylesheet" href="/styles.css?v=11" />
-  <link rel="stylesheet" href="/danmaku.css?v=3" />
+  <link rel="stylesheet" href="/danmaku.css?v=4" />
 </head>
 <body class="firefly-page">
   <main class="firefly-shell">
@@ -14,6 +14,7 @@
       <img src="/assets/taisei/wriggle-portrait.svg" alt="" />
       <div><span>四季游园会 · 符卡挑战</span><h1>萤火弹幕</h1><p>夜雀还没唱，萤火已经起来了。</p></div>
     </header>
+    <label class="firefly-mode">难度 <select id="firefly-mode"><option value="normal">巡夜</option><option value="expert">符卡试炼</option></select></label>
     <div class="firefly-ledger"><span>得分 <strong id="firefly-score">0</strong></span><span>余时 <strong id="firefly-time">36</strong></span><span>最高 <strong id="firefly-best">0</strong></span></div>
     <div class="firefly-strip"><span id="firefly-pattern" role="status">一符 · 花雨</span><span id="firefly-guard">护身符 0/8</span></div>
     <div class="firefly-stage">
@@ -27,6 +28,6 @@
     <p class="firefly-help">拖动或用方向键移动。虚线预告弹道，金灯可以连续拾取加分。贴近弹幕擦过八次，可挡下一次碰撞。</p>
     <button type="button" id="firefly-pause" disabled>暂停</button>
   </main>
-  <script src="/danmaku.js?v=3"></script>
+  <script src="/danmaku.js?v=4"></script>
 </body>
 </html>

@@ -5,18 +5,63 @@
 .dye-shell header p { font-size: 12px; letter-spacing: .16em; }
 .dye-shell h1 { margin: 4px 0 12px; font: 700 40px/1.2 'Songti SC', SimSun, serif; }
 .dye-shell > p { font-size: 14px; }
-.dye-board { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 2px; padding: 8px; border: 2px solid #a0845c; background: #30251f; }
-.dye-cell { aspect-ratio: 1; display: grid; place-items: center; color: #241f1d; font-size: clamp(13px, 4vw, 20px); font-weight: 700; }
-.dye-cell[data-wet] { box-shadow: inset 0 0 0 2px #fff4ca; }
-.dye-cell[data-wet]::before { content: '·'; position: absolute; transform: translate(-12px, -10px); }
+.dye-board {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 2px;
+  padding: 10px;
+  border: 2px solid #bc9d71;
+  outline: 1px solid #151913;
+  background: repeating-linear-gradient(90deg, #765738 0 2px, #684a30 3px 7px);
+  box-shadow: inset 0 0 0 3px #3f2b21, 0 7px 0 #181d17;
+}
+.dye-cell {
+  position: relative;
+  isolation: isolate;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  color: #241f1d;
+  font: 700 clamp(13px, 4vw, 22px)/1 'Songti SC', SimSun, serif;
+  box-shadow: inset 0 0 0 1px #251f2840, inset 0 0 0 3px #e5d1ae28;
+}
+.dye-cell[data-wet] { box-shadow: inset 0 0 0 2px #fff4cadb, inset 0 0 14px #38244260; }
+.dye-cell[data-wet]::before { content: ''; position: absolute; top: 6px; left: 6px; width: 5px; height: 5px; rotate: 45deg; background: #fff4ca; }
+.dye-cell[data-fresh] { animation: dye-absorb .42s ease-out; }
+@keyframes dye-absorb {
+  0% { filter: brightness(1.3); box-shadow: inset 0 0 0 11px #fff4ca; }
+  100% { filter: brightness(1); }
+}
 .dye-shell [data-dye="0"] { background-color: #dc9a94; }
 .dye-shell [data-dye="1"] { background-color: #a1bd8b; }
 .dye-shell [data-dye="2"] { background-color: #97b7cf; }
 .dye-shell [data-dye="3"] { background-color: #d7ae79; }
 .dye-shell [data-dye="4"] { background-color: #c5a6c7; }
-.dye-cell { background-image: repeating-linear-gradient(45deg, #241f1d0c 0 1px, transparent 1px 4px); }
+.dye-cell {
+  background-image:
+    repeating-linear-gradient(0deg, #241f1d13 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, #fff6d42e 0 1px, transparent 1px 3px);
+}
 .dye-palette, .dye-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .dye-shell button { min-height: 44px; padding: 7px 10px; border: 1px solid #a0845c; border-radius: 2px; background: #e6d1ab; color: #30251f; font-size: 16px; }
-.dye-palette button { flex: 1; }
-.dye-palette button[aria-pressed="true"] { box-shadow: inset 0 0 0 2px #30251f, inset 0 0 0 4px #fff4ca; }
+.dye-palette button {
+  flex: 1;
+  min-height: 54px;
+  padding-inline: 4px;
+  border: 3px solid #b09875;
+  border-radius: 22px 22px 16px 16px;
+  background-image: radial-gradient(ellipse at 30% 13%, #fff9d97d, transparent 60%);
+  box-shadow: inset 0 -5px #3d253b36, 0 3px #171c16;
+  font-family: 'Songti SC', SimSun, serif;
+  font-weight: 700;
+}
+.dye-palette button[aria-pressed="true"] { border-color: #fff4ca; }
+.dye-palette button:active:not(:disabled) { transform: translateY(2px); }
 .dye-actions { margin-top: 14px; }
+.dye-toolbar { display: flex; align-items: center; gap: 10px; }
+.dye-toolbar select { min-height: 44px; color: #30251f; background: #e6d1ab; font: inherit; }
+#dye-status { font-weight: 700; }
+.dye-sequence { min-height: 34px; display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.dye-sequence span { display: grid; place-items: center; width: 23px; height: 23px; color: #30251f; font-size: 12px; }
+.dye-palette button small { display: block; font-size: 11px; line-height: 1; margin-top: 3px; }
+@media (prefers-reduced-motion: reduce) { .dye-cell[data-fresh] { animation: none; } }

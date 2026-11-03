@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>四季推箱 · 东方南堂界遇 V</title>
   <link rel="stylesheet" href="/styles.css?v=11">
-  <link rel="stylesheet" href="/puzzle.css?v=1">
+  <link rel="stylesheet" href="/puzzle.css?v=2">
 </head>
 <body class="crate-page">
   <main class="crate-shell">
@@ -20,6 +20,7 @@
         <h2 id="crate-title"></h2>
         <span>步数 <strong id="crate-moves">0</strong></span>
         <span>纪录 <strong id="crate-best">—</strong></span>
+        <span>最短 <strong id="crate-par">—</strong></span>
       </div>
     </section>
     <div class="crate-board-frame">
@@ -37,8 +38,10 @@
       <button type="button" data-dir="right" aria-label="向右">→</button>
     </div>
     <p id="crate-message" role="status"></p>
-    <p class="crate-help">用方向键、滑动棋盘或点按箭头移动。把木箱推到圆印上。箱子只能推，不能拉。按 Z 撤销。</p>
+    <p class="crate-help" id="crate-rule"></p>
+    <p class="crate-help">方向键、滑动棋盘或点按箭头移动。按 Z 撤销。</p>
+    <a class="crate-credit" href="/art-credits.html">灵梦立绘署名</a>
   </main>
-  <script src="/puzzle.js?v=1" defer></script>
+  <script src="/puzzle.js?v=2" defer></script>
 </body>
 </html>

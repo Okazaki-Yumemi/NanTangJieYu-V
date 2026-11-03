@@ -5,15 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>染布摊 · 四季游园会</title>
   <link rel="stylesheet" href="/styles.css?v=11" />
-  <link rel="stylesheet" href="/dye.css?v=1" />
+  <link rel="stylesheet" href="/dye.css?v=2" />
 </head>
 <body class="dye-page">
   <main class="dye-shell">
     <a href="/arcade.html">← 四季游园会</a>
     <header><p>四季游园会 · 染布</p><h1>染布摊</h1></header>
-    <p>从左上角开始染。每选一种染料，已染的布会吸收相邻的同色布块。用完染料前，把整块布染成一色。</p>
+    <p>从左上角开始染。每次换色都会吸收相邻的同色布块。先想好要打通哪条路，眼前染得最多的一步也可能堵死后路。</p>
+    <div class="dye-toolbar">
+      <label for="dye-mode">选布</label>
+      <select id="dye-mode"><option value="daily">每日限量</option><option value="practice">工坊练习</option></select>
+    </div>
+    <p id="dye-rules"></p>
     <div id="dye-board" class="dye-board" role="img" aria-label="染布棋盘"></div>
     <p id="dye-status" role="status"></p>
+    <div id="dye-sequence" class="dye-sequence" aria-label="本局染色顺序"></div>
     <div class="dye-palette" role="group" aria-label="选择染料">
       <button type="button" data-dye="0" aria-label="选桃染">桃</button>
       <button type="button" data-dye="1" aria-label="选竹染">竹</button>
@@ -21,8 +27,8 @@
       <button type="button" data-dye="3" aria-label="选栗染">栗</button>
       <button type="button" data-dye="4" aria-label="选藤染">藤</button>
     </div>
-    <div class="dye-actions"><button id="dye-retry" type="button">重染这块</button><button id="dye-new" type="button">换块布</button></div>
+    <div class="dye-actions"><button id="dye-retry" type="button">重染这块</button><button id="dye-new" type="button">换块布</button><button id="dye-undo" type="button">撤销上一步</button></div>
   </main>
-  <script src="/dye.js?v=1"></script>
+  <script src="/dye.js?v=2"></script>
 </body>
 </html>
