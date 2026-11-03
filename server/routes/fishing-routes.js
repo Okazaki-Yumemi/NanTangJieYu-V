@@ -27,7 +27,9 @@ function registerRoutes(router, appCtx) {
           const sessionId=getCookie(req,SESSION_COOKIE);
           const user=players.getSessionUser(state,sessionId);
           if(!user)return store.abort({error:'USER_NOT_FOUND',message:'请先登录再来钓鱼。'});
-          const outcome=path==='cast'?action(state,user):path==='name'?action(state,user,body,appCtx.seeds):action(state,user,body);
+          const outcome=path==='cast'
+            ? action(state,user,undefined,undefined,body.rhythm === true)
+            : path==='name'?action(state,user,body,appCtx.seeds):action(state,user,body);
           if(outcome.error)return store.abort(outcome);
           state.sessions[sessionId].last_seen_at=Math.floor(Date.now()/1000);
           return outcome;

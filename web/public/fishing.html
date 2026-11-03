@@ -6,7 +6,7 @@
     <title>湖边钓鱼 · 东方南堂界遇 V</title>
     <link rel="stylesheet" href="/styles.css?v=11" />
     <link rel="stylesheet" href="/atmosphere.css?v=4" />
-    <link rel="stylesheet" href="/fishing.css?v=3" />
+    <link rel="stylesheet" href="/fishing.css?v=4" />
   </head>
   <body>
     <main class="fishing-shell">
@@ -25,7 +25,10 @@
                 <span id="fish-temper"></span>
               </div>
               <button type="button" id="reel-button">按住收线</button>
-              <p class="reel-hint">按住抬高绿条，松手下沉。把鱼留在绿条里。</p>
+              <div class="reel-guide">
+                <div id="reel-rhythm" class="reel-rhythm hidden"><i aria-hidden="true"></i><span>连稳 1.5 秒加速</span></div>
+                <p class="reel-hint">按住抬高绿条，松手下沉。把鱼留在绿条里。</p>
+              </div>
               <button type="button" id="abandon-button" class="fishing-text-button">收竿离开</button>
             </div>
           </div>
@@ -33,6 +36,14 @@
             <p id="fishing-message" role="status">湖面很安静。</p>
             <button type="button" id="cast-button" class="cast-button" disabled>正在查看鱼情…</button>
             <a id="fishing-login" href="/?next=fishing" class="hidden">先登录，再来甩一竿 →</a>
+            <div class="practice-cast">
+              <select id="practice-difficulty" aria-label="试钓难度">
+                <option value="0.25">浅水小鱼</option>
+                <option value="0.62">灵活大鱼</option>
+                <option value="0.96">湖底巨鱼</option>
+              </select>
+              <button type="button" id="practice-cast-button">免费试钓</button>
+            </div>
             <p id="fishing-rule" class="fishing-rule">不消耗能量 · 正在查看抛竿间隔…</p>
           </div>
           <section id="catch-result" class="catch-result hidden" aria-live="polite">
@@ -56,7 +67,7 @@
     </main>
     <script src="/common.js?v=11"></script>
     <script src="/fishing-amounts.js?v=1"></script>
-    <script src="/fishing-game.js?v=4"></script>
-    <script src="/fishing.js?v=6"></script>
+    <script src="/fishing-game.js?v=5"></script>
+    <script src="/fishing.js?v=7"></script>
   </body>
 </html>

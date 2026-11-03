@@ -136,3 +136,53 @@
 .valve-wheel.turning { cursor: grabbing; }
 .valve-direction { position: absolute; bottom: 20px; color: #294842; font-size: 13px; letter-spacing: .1em; }
 @media(max-width:500px) { .memory-scene { padding-inline: 20px; }.valve-wheel { width: 170px; height: 170px; border-width: 12px; }.valve-scene { height: 310px; padding-left: 50px; } }
+
+.pipe-scene {
+  padding: 12px 20px 18px;
+  background: repeating-linear-gradient(135deg, #354c4b 0 8px, #324745 8px 16px);
+}
+.pipe-header, .pipe-grid { width: min(100%, 300px); margin-inline: auto; }
+.pipe-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  color: #c8e3d8;
+  font-size: 13px;
+}
+.pipe-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 2px solid #202e2d;
+}
+.pipe-grid::before, .pipe-grid::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  width: 13px;
+  height: 9px;
+  transform: translateY(-50%);
+  border-radius: 4px;
+  pointer-events: none;
+}
+.pipe-grid::before { top: 12.5%; right: 100%; background: #7dd9c9; }
+.pipe-grid::after { top: 87.5%; left: 100%; background: #cf9a5c; }
+.pipe-tile {
+  position: relative;
+  display: grid;
+  place-items: stretch;
+  min-width: 0;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: #253b3b;
+  box-shadow: inset 0 0 0 1px #71897c55;
+  touch-action: manipulation;
+}
+.pipe-tile:hover { background: #314b4b; }
+.pipe-tile:active { background: #3d5652; }
+.pipe-tile:focus-visible { z-index: 1; outline: 3px solid #f4e3a8; outline-offset: -3px; }
+.pipe-tile svg { display: block; width: 100%; height: 100%; }
+.pipe-tile path { fill: none; stroke: #cf9a5c; stroke-width: 7; }
+.pipe-tile.wet path { stroke: #7dd9c9; }

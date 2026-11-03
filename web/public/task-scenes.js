@@ -258,5 +258,78 @@
     listen(wheel,'keydown',event=>{if(event.key==='ArrowRight'||event.key==='ArrowLeft'){event.preventDefault();turn(event.key==='ArrowRight'?20:-20);}});
     status.textContent='0%';
   }
-  NTJ.taskScenes={wipe,leaves,trash,memory,valve};
+  function pipes(board, { listen, complete, status, play, isSolved }) {
+    const size = 4;
+    const directions = ['上', '右', '下', '左'];
+    const endpoints = ['20 0', '40 20', '20 40', '0 20'];
+    const steps = [1, 1, 1, 2, 2, 2];
+    for (let i = steps.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [steps[i], steps[j]] = [steps[j], steps[i]];
+    }
+    const tiles = Array.from({ length: size * size }, () => [
+      Math.random() < .5 ? 1 : 2,
+      3
+    ]);
+    let position = 0;
+    let inlet = 3;
+    for (const outlet of [...steps, 1]) {
+      tiles[position] = [inlet, outlet];
+      position += outlet === 1 ? 1 : size;
+      inlet = (outlet + 2) % 4;
+    }
+
+    const rotations = tiles.map(() => Math.floor(Math.random() * 4));
+    rotations[0] = 1; // 每局至少需要修正入口。
+    board.classList.add('pipe-scene');
+    board.innerHTML = '<div class="pipe-header"><span>● 进水</span><span>排水 ○</span></div><div class="pipe-grid"></div>';
+    const grid = board.querySelector('.pipe-grid');
+    const buttons = tiles.map((_, index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'pipe-tile';
+      button.innerHTML = '<svg viewBox="0 0 40 40" aria-hidden="true"><path/></svg>';
+      listen(button, 'click', () => {
+        if (isSolved()) return;
+        rotations[index] = (rotations[index] + 1) % 4;
+        play('connect');
+        render();
+      });
+      grid.append(button);
+      return button;
+    });
+
+    function render() {
+      const openings = tiles.map((tile, index) =>
+        tile.map(direction => (direction + rotations[index]) % 4));
+      const wet = new Set();
+      let index = 0;
+      let entry = 3;
+      let drained = false;
+      while (!wet.has(index) && openings[index].includes(entry)) {
+        wet.add(index);
+        const exit = openings[index].find(direction => direction !== entry);
+        const row = Math.floor(index / size);
+        const column = index % size;
+        const nextRow = row + (exit === 2 ? 1 : exit === 0 ? -1 : 0);
+        const nextColumn = column + (exit === 1 ? 1 : exit === 3 ? -1 : 0);
+        if (nextRow < 0 || nextRow >= size || nextColumn < 0 || nextColumn >= size) {
+          drained = index === tiles.length - 1 && exit === 1;
+          break;
+        }
+        index = nextRow * size + nextColumn;
+        entry = (exit + 2) % 4;
+      }
+      buttons.forEach((button, i) => {
+        const [a, b] = openings[i];
+        button.querySelector('path').setAttribute('d', `M${endpoints[a]} Q20 20 ${endpoints[b]}`);
+        button.setAttribute('aria-label', `第${Math.floor(i / size) + 1}行第${i % size + 1}列，开口朝${directions[a]}和${directions[b]}，旋转管段`);
+        button.classList.toggle('wet', wet.has(i));
+      });
+      status.textContent = wet.size ? `水已流过 ${wet.size} 段` : '从左上角的进水口接起';
+      if (drained) complete();
+    }
+    render();
+  }
+  NTJ.taskScenes={wipe,leaves,trash,memory,valve,pipes};
 })();

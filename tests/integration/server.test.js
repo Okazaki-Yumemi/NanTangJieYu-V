@@ -372,9 +372,10 @@ describe('HTTP integration: full event journey', () => {
   it('fishing enforces authentication, persistent cooldown, replay validation and safe naming', async () => {
     const noAuth=await request('POST','/api/player/fishing/cast',{body:{}});
     assert.equal(noAuth.status,401);
-    const cast=await request('POST','/api/player/fishing/cast',{body:{},headers:{Cookie:playerACookie}});
+    const cast=await request('POST','/api/player/fishing/cast',{body:{rhythm:true},headers:{Cookie:playerACookie}});
     assert.equal(cast.status,200);
     const challenge=cast.json.challenge;
+    assert.equal(challenge.rhythm,true);
     const again=await request('POST','/api/player/fishing/cast',{body:{},headers:{Cookie:playerACookie}});
     assert.equal(again.status,429);
     const core=require('../../web/public/fishing-game');

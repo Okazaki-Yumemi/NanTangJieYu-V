@@ -100,3 +100,43 @@
 .map-marker[data-region="kaixuan_gate"] .marker-float { margin-left: 18px; }
 @media (max-width: 1000px) { .map-card .map-scene { flex: none; aspect-ratio: 1.5; } }
 @media (max-width: 600px) { .map-card .map-scene { aspect-ratio: 1.12; } .map-card .map-plane { left: 0; right: 0; bottom: 27%; } }
+
+.map-view-button {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px solid #b3c9cd66;
+  border-radius: 4px;
+  background: #152331;
+  color: #d6e6e2;
+  font-size: 12px;
+}
+.map-view-button[aria-pressed="true"] {
+  color: #f1dcac;
+  border-color: #cdb783;
+  background: #2b322f;
+}
+.map-view-button:focus-visible, .marker-float:focus-visible {
+  outline: 2px solid #f1dcac;
+  outline-offset: 4px;
+}
+.map-marker .marker-float:hover, .map-marker .marker-float:focus-visible {
+  opacity: 1;
+  filter: brightness(1.15);
+}
+.map-scene.map-flat {
+  --map-tilt: 0deg;
+  perspective: none;
+}
+.map-flat .map-plane {
+  transform: none;
+  animation: none;
+}
+.map-flat .map-dust, .map-flat::before {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lake-shimmer { animation: none; opacity: .48; }
+}

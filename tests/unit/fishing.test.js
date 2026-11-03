@@ -61,6 +61,22 @@ test('harder fish have smaller green zones, shared by drawing and hit detection'
   assert.ok(game.zoneSize({difficulty:.5})>game.zoneSize({difficulty:.99}));
 });
 
+test('steady tracking speeds up a new cast and survives server replay after reload',()=>{
+  const fixture=createFixture({userCount:1});
+  const user=fixture.registered[0];
+  const now=1700000000000;
+  const {challenge}=fishing.cast(fixture.state,user,now,(min,max)=>max===undefined?0:min,true);
+  const {state,controls}=play(challenge);
+  assert.equal(state.status,'caught');
+  assert.ok(state.tick<play({...challenge,rhythm:false}).state.tick);
+
+  const restored=JSON.parse(JSON.stringify(fixture.state));
+  const result=fishing.finish(restored,user,{
+    id:challenge.id,ticks:state.tick,controls,rhythm:false
+  },now+state.tick*game.DT*1000);
+  assert.equal(result.result.caught,true);
+});
+
 test('cast cooldown survives serialization and never consumes activity energy',()=>{
   const f=createFixture({userCount:1});const user=f.registered[0];const now=1700000000000;
   const energy=user.energy;

@@ -87,7 +87,7 @@ function view(state, user, now = Date.now()) {
     extreme_limit_cm:extremeLimit(state)
   };
 }
-function cast(state, user, now = Date.now(), pick = randomInt) {
+function cast(state, user, now = Date.now(), pick = randomInt, rhythm = false) {
   if (user.banned) return {error:'FORBIDDEN',message:'该账号已被封禁。'};
   const existing = record(state,user.id);
   if (COOLDOWN_MS && existing && existing.next_cast_at > now) return {error:'FISHING_COOLDOWN',message:'鱼还没回来，再等一会儿。',retry_in_sec:Math.ceil((existing.next_cast_at-now)/1000)};
@@ -100,9 +100,9 @@ function cast(state, user, now = Date.now(), pick = randomInt) {
   const minimum=fish.id==='leviathan'?(amounts.compare(recordLength,25000)>=0?amounts.add(recordLength,1):25000):fish.min;
   const length = randomLength(minimum,limit,pick);
   const difficulty = Math.min(.99,fish.difficulty + pick(0,61)/1000);
-  const attempt = {id:newId('cast'),seed:pick(1,1000000),difficulty,gear:{...item.gear},fish_id:fish.id,length_cm:length,created_at:now,expires_at:now+90000,result:null};
+  const attempt = {id:newId('cast'),seed:pick(1,1000000),difficulty,rhythm,gear:{...item.gear},fish_id:fish.id,length_cm:length,created_at:now,expires_at:now+90000,result:null};
   item.next_cast_at=now+COOLDOWN_MS;item.attempt=attempt;
-  return {ok:true,challenge:{id:attempt.id,seed:attempt.seed,difficulty,gear:attempt.gear,expires_at:attempt.expires_at},next_cast_at:now+COOLDOWN_MS,server_time:now};
+  return {ok:true,challenge:{id:attempt.id,seed:attempt.seed,difficulty,rhythm,gear:attempt.gear,expires_at:attempt.expires_at},next_cast_at:now+COOLDOWN_MS,server_time:now};
 }
 function finish(state, user, payload, now = Date.now()) {
   if (user.banned) return {error:'FORBIDDEN',message:'该账号已被封禁。'};

@@ -7,12 +7,22 @@
     <title>东方南堂界遇 V</title>
     <link rel="stylesheet" href="/styles.css?v=11" />
     <link rel="stylesheet" href="/player.css?v=10" />
-    <link rel="stylesheet" href="/atmosphere.css?v=4" />
-    <link rel="stylesheet" href="/tasks.css?v=3" />
+    <link rel="stylesheet" href="/atmosphere.css?v=5" />
+    <link rel="stylesheet" href="/tasks.css?v=4" />
+    <link rel="stylesheet" href="/outings.css?v=1" />
   </head>
   <body class="player-body">
     <main class="player-shell">
-      <a class="fishing-entry" href="/fishing.html"><span>湖边钓鱼</span><small>不消耗能量 · 大鱼榜</small><span aria-hidden="true">↗</span></a>
+      <nav class="campus-outings" aria-label="校园小游戏">
+        <a class="outing outing-lake" href="/fishing.html">
+          <span class="outing-copy"><strong>湖边钓鱼</strong><small>甩一竿，看看湖底藏了什么</small></span>
+          <span class="outing-arrow" aria-hidden="true">→</span>
+        </a>
+        <a class="outing outing-workshop" href="/practice.html">
+          <span class="outing-copy"><strong>调查练习室</strong><small>不用登录，随时练手</small></span>
+          <span class="outing-arrow" aria-hidden="true">→</span>
+        </a>
+      </nav>
       <!-- 注册 / 登录视图 -->
       <section id="register-view" class="panel hidden">
         <div class="brand-head">
@@ -168,10 +178,10 @@
     </div>
 
     <script src="/common.js?v=11"></script>
-    <script src="/map.js?v=6"></script>
+    <script src="/map.js?v=7"></script>
     <script src="/task-logic.js?v=1"></script>
-    <script src="/task-scenes.js?v=2"></script>
-    <script src="/tasks.js?v=3"></script>
+    <script src="/task-scenes.js?v=3"></script>
+    <script src="/tasks.js?v=4"></script>
     <script src="/app.js?v=12"></script>
   </body>
 </html>

@@ -10,14 +10,15 @@
     trash: { title: '清空垃圾', hint: '把右侧拉杆拉到底，保持住。' },
     memory: { title: '复现闪光', hint: '看清顺序，再照着点一遍。' },
     valve: { title: '转开水阀', hint: '顺时针转动阀轮，把积水排掉。' },
+    pipes: { title: '接通排水管', hint: '点按旋转管段，让水从左上流到右下。' },
     tune: { title: '对准信号', hint: '把三个光点移到标记处。' },
     seal: { title: '封住裂隙', hint: '按住符印，直到裂隙闭合。' }
   };
   const POOLS = {
-    investigate: ['wipe', 'wires', 'leaves'],
+    investigate: ['wipe', 'wires', 'leaves', 'pipes'],
     patrol: ['leaves', 'trash'],
     ask_reimu: ['seal'], ask_marisa: ['wires'], deep_scan: ['tune', 'memory'],
-    lake_netting: ['leaves', 'valve'], faith_offering: ['wipe'],
+    lake_netting: ['leaves', 'valve', 'pipes'], faith_offering: ['wipe'],
     phoenix_grill: ['trash'], sword_training: ['seal'],
     tengu_dash: ['wipe'], unguarded_wander: ['leaves', 'wipe']
   };

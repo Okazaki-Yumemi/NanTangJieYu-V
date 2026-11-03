@@ -1,0 +1,44 @@
+.campus-outings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.outing {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 106px;
+  padding: 12px;
+  border: 1px solid #b5bd8466;
+  border-radius: 5px;
+  color: #fff1d5;
+  text-decoration: none;
+  background-position: right center;
+  background-repeat: no-repeat;
+  background-size: auto, auto 100%;
+  transition: border-color 150ms ease;
+}
+
+.outing-lake {
+  background-color: #203e3a;
+  background-image: linear-gradient(90deg, #132e2a 8%, #132e2a22), url('/assets/outing-lake.svg');
+}
+
+.outing-workshop {
+  background-color: #493746;
+  background-image: linear-gradient(90deg, #322433 8%, #32243322), url('/assets/outing-workshop.svg');
+}
+
+.outing:is(:hover, :focus-visible) { border-color: #f0cc88; }
+.outing-copy { display: grid; gap: 4px; text-shadow: 0 1px 5px #141719; }
+.outing-copy strong { font: 700 19px/1.25 'Songti SC', SimSun, serif; }
+.outing-copy small { color: #f4e7cf; font-size: 12px; }
+.outing-arrow { flex: none; color: #ffe0a3; }
+
+@media (max-width: 380px) {
+  .outing { padding: 9px; }
+  .outing-copy strong { font-size: 17px; }
+}

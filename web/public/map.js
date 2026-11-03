@@ -72,6 +72,18 @@
       'M569 271 Q587 253 620 262 L639 276 Q615 305 586 298Z'
     ];
     for (const d of lakes) svgEl('path',{d,fill:'url(#ntj-lake)',stroke:'#a2e4db','stroke-width':1.1},root);
+    // 水面短线跟随岸线分布，不把波纹画到陆地上。
+    const ripples = svgEl('g', {
+      fill: 'none', stroke: '#c6f1e3', 'stroke-width': 1.4, 'stroke-linecap': 'round'
+    }, root);
+    svgEl('path', {
+      class: 'lake-shimmer',
+      d: 'M89 283h16 m9 12h16 m-37 13h18 M309 209h14 m1 17h18 M363 141h15 M585 276h16 m3 9h18'
+    }, ripples);
+    svgEl('path', {
+      class: 'lake-shimmer lake-shimmer-late',
+      d: 'M100 322h19 M314 233h12 M375 150h12 M592 291h13'
+    }, ripples);
     // 东西向骨干道、南北向道路及沪金高速（校园的真实分隔）。
     const roads = ['M30 120 H719','M30 259 H728','M30 406 L728 419','M102 28 V426','M258 28 V426','M577 28 V426','M700 70 V423','M30 361 L426 352','M472 120 L714 345'];
     for (const d of roads) svgEl('path',{d,fill:'none',stroke:'#71908c','stroke-width':4,'stroke-opacity':.65},root);
@@ -108,6 +120,18 @@
     // 西南运动场。
     svgEl('rect',{x:42,y:305,width:43,height:64,rx:18,fill:'#735d70',stroke:'#ab91a0','stroke-width':2},root);
     svgEl('rect',{x:50,y:313,width:27,height:48,rx:10,fill:'#365f52',stroke:'#8bb2a0','stroke-width':1},root);
+    svgEl('path', {
+      d: 'M63.5 314v46 M51 336.5h25 m-9.5 0a3 3 0 1 0-6 0a3 3 0 1 0 6 0',
+      fill: 'none', stroke: '#aad0ad', 'stroke-width': .65
+    }, root);
+    // 湖畔栈桥和校园南门用暖色突出，作为沙盘的方向参照。
+    svgEl('path', {d:'M122 314l22 8 m-19-11 21 8',stroke:'#ccad7b','stroke-width':2},root);
+    for (const { x, y } of [CAMPUS_POINTS.siyuan_gate, CAMPUS_POINTS.kaixuan_gate]) {
+      svgEl('path', {
+        d: `M${x - 17} ${y + 3}v-10h5v4h24v-4h5v10h-5v-3h-24v3Z`,
+        fill:'#cbb088',stroke:'#f2d7a2','stroke-width':.7
+      }, root);
+    }
     for (const [x,y,label] of [[183,395,'西区'],[537,106,'东区'],[250,106,'S4'],[580,449,'东川路']]) {
       svgEl('text',{x,y,fill:'#b3d0cf','font-size':11,'letter-spacing':3,'text-anchor':'middle'},root).textContent=label;
     }
@@ -207,6 +231,18 @@
     scene.appendChild(particles);
     scene.appendChild(plane);
     container.appendChild(scene);
+    if (typeof options.onSelect === 'function') {
+      const viewButton = document.createElement('button');
+      viewButton.type = 'button';
+      viewButton.className = 'map-view-button';
+      viewButton.textContent = '俯视地图';
+      viewButton.setAttribute('aria-pressed', 'false');
+      viewButton.addEventListener('click', () => {
+        const flat = scene.classList.toggle('map-flat');
+        viewButton.setAttribute('aria-pressed', String(flat));
+      });
+      container.appendChild(viewButton);
+    }
 
     const ground = svgEl('svg', {
       viewBox: `0 0 ${VIEW_W} ${VIEW_H}`,
@@ -225,6 +261,10 @@
       'stroke-dasharray': '6 7',
       'stroke-linecap': 'round',
       opacity: 0.7
+    }, ground);
+    const clearedRoute = svgEl('path', {
+      class: 'map-route-cleared', fill: 'none', stroke: '#aee5b9',
+      'stroke-width': 2.5, 'stroke-linecap': 'round', opacity: 0.85
     }, ground);
 
     const markerLayer = document.createElement('div');
@@ -270,8 +310,16 @@
 
     function update(nextRegions, selectedId) {
       const sorted = [...nextRegions].sort((a, b) => a.order - b.order);
-      const points = sorted.map((region) => `${mapPoint(region).x},${mapPoint(region).y}`).join(' ');
-      route.setAttribute('d', `M ${points.split(' ').join(' L ')}`);
+      const points = sorted.map(region => {
+        const { x, y } = mapPoint(region);
+        return `${x},${y}`;
+      });
+      route.setAttribute('d', points.length > 1 ? `M ${points.join(' L ')}` : '');
+      const finishedSegments = points.slice(1).flatMap((point, index) =>
+        sorted[index].status === 'cleared' && sorted[index + 1].status === 'cleared'
+          ? [`M ${points[index]} L ${point}`] : []
+      );
+      clearedRoute.setAttribute('d', finishedSegments.join(' '));
 
       scene.classList.toggle('has-selection', Boolean(selectedId));
 
@@ -295,7 +343,7 @@
 
         refs.float.setAttribute('aria-pressed', String(isSelected));
         refs.float.setAttribute('aria-label', `${region.name}（${region.closed ? '临时关闭' : (NTJ.REGION_STATUS_LABELS[region.status] || '')}）`);
-        refs.glyph.textContent = region.status === 'cleared' ? '✓' : (region.season_label || '?');
+        refs.glyph.textContent = region.closed ? '×' : region.status === 'cleared' ? '✓' : (region.season_label || '?');
         refs.label.textContent = region.name;
         refs.statusLabel.textContent = region.closed
           ? '临时关闭'

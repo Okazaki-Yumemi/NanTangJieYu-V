@@ -30,6 +30,7 @@
 
   function renderButton() {
     const button=$('cast-button');
+    $('practice-cast-button').disabled=Boolean(active || casting || buying || submitting);
     if(buying){button.disabled=true;button.textContent='正在升级装备…';return;}
     if(active || casting) {button.disabled=true;button.textContent=active?'鱼儿上钩了':'正在抛竿…';return;}
     if(pending) {button.disabled=submitting;button.textContent=submitting?'正在保存…':'重试保存钓获';return;}
@@ -130,12 +131,20 @@
     else active.controls.push(change);
     $('reel-button').classList.toggle('held',held);
   }
-  function startGame(challenge) {
+  function startGame(challenge, practice = false) {
     active={challenge,state:FishingGame.createGame(challenge),controls:[],held:false,frame:0,last:performance.now(),accumulator:0};
     $('fishing-overlay').classList.remove('hidden');
     $('fish-temper').textContent=challenge.difficulty>.85?'鱼劲儿很大':challenge.difficulty>.55?'鱼很灵活':'鱼影轻快';
     $('catch-zone').style.height=`${FishingGame.zoneSize(challenge)*100}%`;
-    $('fishing-message').textContent='咬钩了！';
+    const rhythm=$('reel-rhythm');
+    const rhythmFill=rhythm.querySelector('i');
+    const rhythmLabel=rhythm.querySelector('span');
+    rhythm.classList.toggle('hidden',!challenge.rhythm);
+    rhythm.classList.remove('charged');
+    rhythmFill.style.width='0%';
+    rhythmLabel.textContent='连稳 1.5 秒加速';
+    let rhythmCharged=false;
+    $('fishing-message').textContent=practice?'试钓 · 不计鱼获和冷却':'咬钩了！';
     document.querySelector('.pond-scene').scrollIntoView({ block:'center', behavior:'auto' });
     $('reel-button').focus({preventScroll:true});
     function frame(now) {
@@ -151,23 +160,47 @@
       $('catch-zone').style.top=`${state.y*100}%`;
       $('fish-shadow').style.top=`${state.fish*100}%`;
       $('catch-fill').style.height=`${state.progress*100}%`;
+      if(challenge.rhythm) {
+        const charge=state.trackingTicks/FishingGame.RHYTHM_TICKS;
+        rhythmFill.style.width=`${charge*100}%`;
+        const charged=charge===1;
+        if(charged!==rhythmCharged) {
+          rhythmCharged=charged;
+          rhythm.classList.toggle('charged',charged);
+          rhythmLabel.textContent=charged?'稳线加速 +35%':'连稳 1.5 秒加速';
+        }
+      }
       document.querySelector('.catch-meter').setAttribute('aria-valuenow',String(Math.round(state.progress*100)));
-      if(Date.now()+serverOffset>challenge.expires_at){stopGame();$('fishing-message').textContent='这次抛竿结束了。';refresh();return;}
+      if(!practice && Date.now()+serverOffset>challenge.expires_at){stopGame();$('fishing-message').textContent='这次抛竿结束了。';refresh();return;}
       if(state.status!=='playing') {
+        if(practice) {
+          stopGame();
+          $('fishing-message').textContent=state.status==='caught'?'试钓成功！':'练习鱼溜走了，再甩一竿？';
+          renderButton();if(view)renderShop();$('practice-cast-button').focus();
+          return;
+        }
         // 松手事件可能与最后一步同帧，不提交模拟结束后的无效输入。
         pending={id:challenge.id,ticks:state.tick,controls:run.controls.filter(input=>input.tick<state.tick)};
         savePending();stopGame();submit();return;
       }
       run.frame=requestAnimationFrame(frame);
     }
-    active.frame=requestAnimationFrame(frame);renderShop();renderButton();
+    active.frame=requestAnimationFrame(frame);if(view)renderShop();renderButton();
   }
+  $('practice-cast-button').addEventListener('click',()=>{
+    if(active || casting || buying || submitting)return;
+    startGame({
+      seed:Math.floor(Math.random()*999999)+1,
+      difficulty:Number($('practice-difficulty').value),
+      rhythm:true
+    },true);
+  });
   $('cast-button').addEventListener('click',async()=>{
     if(pending){submit();return;}
     if(casting || active || buying)return;
     casting=true;renderButton();
     try {
-      const result=await api('POST','/api/player/fishing/cast',{});
+      const result=await api('POST','/api/player/fishing/cast',{rhythm:true});
       serverOffset=result.server_time-Date.now();
       view.next_cast_at=result.next_cast_at;
       startGame(result.challenge);
@@ -178,12 +211,18 @@
   let pointer=null;
   reel.addEventListener('pointerdown',event=>{if(event.button!==0 || pointer!==null)return;pointer=event.pointerId;reel.setPointerCapture(pointer);setHeld(true);});
   const release=()=>{pointer=null;setHeld(false);};
-  reel.addEventListener('pointerup',release);reel.addEventListener('pointercancel',release);
+  const releasePointer=event=>{if(event.pointerId===pointer)release();};
+  reel.addEventListener('pointerup',releasePointer);
+  reel.addEventListener('pointercancel',releasePointer);
+  reel.addEventListener('lostpointercapture',releasePointer);
   reel.addEventListener('keydown',event=>{if(event.key===' '||event.key==='Enter'){event.preventDefault();setHeld(true);}});
   reel.addEventListener('keyup',event=>{if(event.key===' '||event.key==='Enter'){event.preventDefault();release();}});
   reel.addEventListener('blur',release);window.addEventListener('blur',release);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)release();});
-  $('abandon-button').addEventListener('click',()=>{stopGame();$('fishing-message').textContent='收竿了。下次再来。';refresh();});
+  $('abandon-button').addEventListener('click',()=>{
+    stopGame();$('fishing-message').textContent='收竿了。下次再来。';
+    renderButton();if(view)renderShop();refresh();
+  });
   $('fish-name-form').addEventListener('submit',async event=>{
     event.preventDefault();if(!selectedFish)return;
     const button=event.currentTarget.querySelector('button');button.disabled=true;
