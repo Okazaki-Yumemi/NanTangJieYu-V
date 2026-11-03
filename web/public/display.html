@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>大屏 · 东方南堂界遇 V</title>
     <link rel="stylesheet" href="/styles.css?v=11" />
-    <link rel="stylesheet" href="/display.css?v=9" />
     <link rel="stylesheet" href="/atmosphere.css?v=5" />
+    <link rel="stylesheet" href="/display.css?v=12" />
   </head>
   <body class="display-body">
     <header class="display-header">
+      <span class="display-edition" aria-hidden="true">界<span>V</span></span>
       <div class="display-title">
         <span class="display-eyebrow">上海交通大学东方 Project 活动</span>
         <h1>东方南堂界遇 V <small>被隐匿的交通大学</small></h1>
@@ -23,9 +24,12 @@
 
     <main class="display-grid">
       <section class="display-col left">
-        <div id="vs-panel" class="vs-panel"></div>
+        <div class="display-card faction-card">
+          <h2><span class="display-index" aria-hidden="true">02</span>阵营战况</h2>
+          <div id="vs-panel" class="vs-panel"></div>
+        </div>
         <div class="display-card grow">
-          <h2>贡献排行榜</h2>
+          <h2><span class="display-index" aria-hidden="true">03</span>贡献排行</h2>
           <div id="display-top" class="display-ranking"></div>
           <div class="rank-pages muted small"></div>
         </div>
@@ -33,11 +37,17 @@
 
       <section class="display-col center">
         <div class="display-card map-card">
-          <h2>校园异变地图 <span class="muted small">调查请用手机扫码参与</span></h2>
+          <h2><span class="display-index" aria-hidden="true">01</span>校园异变地图 <span class="map-location">闵行校区</span></h2>
           <div id="display-map"></div>
+          <div class="display-map-key" aria-label="地图图例">
+            <span><i></i>可调查</span>
+            <span><i></i>调查中</span>
+            <span><i></i>已解决</span>
+            <span><i></i>未解锁</span>
+          </div>
         </div>
         <div class="display-card pool-card">
-          <h2>终盘奖池 <span class="muted small">解决区域 → 解锁奖品</span></h2>
+          <h2><span class="display-index" aria-hidden="true">04</span>终盘奖池</h2>
           <div id="display-latest-draw" class="latest-draw hidden"></div>
           <div id="display-prizes" class="display-prizes"></div>
         </div>
@@ -45,11 +55,11 @@
 
       <section class="display-col right">
         <div class="display-card grow">
-          <h2>区域异变状态</h2>
+          <h2><span class="display-index" aria-hidden="true">05</span>区域异变状态</h2>
           <div id="display-regions" class="display-regions"></div>
         </div>
         <div class="display-card grow">
-          <h2>最新动态</h2>
+          <h2><span class="display-index" aria-hidden="true">06</span>最新动态</h2>
           <div id="display-feed" class="display-feed"></div>
         </div>
       </section>

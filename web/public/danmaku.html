@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>萤火弹幕 · 东方南堂界遇 V</title>
+  <link rel="stylesheet" href="/styles.css?v=11" />
+  <link rel="stylesheet" href="/danmaku.css?v=1" />
+</head>
+<body class="firefly-page">
+  <main class="firefly-shell">
+    <header><a href="/">← 回校园</a><h1>萤火弹幕</h1></header>
+    <div class="firefly-ledger"><span>灯火 <strong id="firefly-score">0</strong></span><span>余时 <strong id="firefly-time">30</strong></span><span>最高 <strong id="firefly-best">0</strong></span></div>
+    <div class="firefly-stage">
+      <canvas id="firefly-field" width="360" height="400" tabindex="0" aria-label="弹幕场地。用方向键或拖动移动。"></canvas>
+      <div class="firefly-curtain" id="firefly-curtain">
+        <p id="firefly-result" role="status">月下拾灯</p>
+        <button type="button" id="firefly-start">开始</button>
+      </div>
+    </div>
+    <p class="firefly-help">拖动或用方向键移动。拾起金色灯火，避开红色弹幕。撑过 30 秒。</p>
+    <button type="button" id="firefly-pause" disabled>暂停</button>
+  </main>
+  <script src="/danmaku.js?v=1"></script>
+</body>
+</html>

@@ -7,7 +7,7 @@
 .fishing-layout { display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:22px;align-items:start; }
 .fishing-main, .fishing-board { min-width:0; }
 .pond-scene { position:relative;width:100%;aspect-ratio:1.6;border:6px solid #5d4a36;box-shadow:0 0 0 2px #b99c62,0 8px #17292d;overflow:hidden;background:#527d85; }
-#pond-canvas { position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated; }
+.pond-art { position:absolute;inset:0;width:100%;height:100%;display:block; }
 .pond-angler { position:absolute;left:11%;bottom:24%;height:30%;width:auto;object-fit:contain;filter:drop-shadow(0 3px #354c44); }
 .pond-bobber { position:absolute;left:53%;top:63%;width:8px;height:13px;background:linear-gradient(#ebdbaf 50%,#b85147 50%);border:2px solid #263f4c;border-radius:50%;box-shadow:0 4px #c5d6aa66;animation:bobber 2.5s infinite; }
 .pond-sign { position:absolute;bottom:10px;left:10px;font-size:10px;color:#dfd7af;background:#344535c9;padding:4px 8px; }
@@ -107,3 +107,82 @@
 .gear-bait { width:20px;height:28px;margin:auto;background:#b98368;border:4px solid #8c654e;border-radius:8px 8px 3px 3px;rotate:20deg; }.gear-bait::after { content:'';position:absolute;left:-8px;right:-8px;top:7px;border-top:5px solid #d6a585; }
 #shop-message { min-height:18px;font-size:12px;line-height:1.6;margin:8px 0 0; }
 @media(max-width:500px) { .gear-card { grid-template-columns:28px minmax(0,1fr);gap:8px; }.gear-card button { grid-column:2;justify-self:start; }.gear-icon { scale:.8; }.tackle-shop { padding:16px 12px; } }
+
+/* Dusk on the lake: painted timber, copper fittings and a paper catch ledger. */
+.fishing-page {
+  --lake-ink: #f3e4ca;
+  --lake-muted: #b3c4c2;
+  --lake-border: #6e665c;
+  color: var(--lake-ink);
+}
+.fishing-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  min-height: 74px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #c1a58d55;
+  padding-bottom: 14px;
+}
+.fishing-header a { justify-self: start; padding: 10px 0; }
+.fishing-title { text-align: center; }
+.fishing-title p { margin: 0 0 4px; color: #d6b59b; font-size: 11px; letter-spacing: .15em; }
+.fishing-title h1 { font-size: clamp(22px, 5vw, 37px); text-align: center; }
+#fisher-name { grid-column: auto; text-align: right; overflow-wrap: anywhere; }
+.pond-scene { border-color: #60474a; box-shadow: 0 0 0 1px #b28b6e, 0 5px #151b2a; background: #2b3f55; }
+.pond-angler { left: 11%; bottom: 29%; height: 36%; }
+.pond-bobber { left: calc(53% - 4px); top: 61%; border-color: #293848; }
+.pond-sign { background: #172737db; color: #ead6ba; border-left: 2px solid #c79375; }
+.fishing-controls {
+  margin: 7px 0 20px;
+  border: 1px solid var(--lake-border);
+  border-top: 0;
+  background: #212b3a;
+}
+#fishing-message { color: var(--lake-ink); }
+.cast-button, #reel-button {
+  background: #d8aa7a;
+  color: #302b35;
+  border-color: #614b46;
+  box-shadow: inset 0 2px #f2ce9a, inset 0 -4px #a77461, 0 3px #151e2b;
+}
+.cast-button:disabled { background: #3c4853; border-color: #53616a; color: #d2dfdc; }
+.practice-cast select, #practice-cast-button { border-color: #708182; }
+.fishing-page :is(a, button, input, select):focus-visible { outline: 2px solid #e6b887; outline-offset: 3px; }
+.catch-result :is(input, button):focus-visible, .tackle-shop button:focus-visible { outline-color: #694b43; }
+.fishing-rule { color: var(--lake-muted); }
+.fishing-overlay { background: #182837e8; }
+.reel-panel {
+  border-color: #7e614d;
+  background: repeating-linear-gradient(0deg, #c79972 0 12px, #c49770 12px 13px);
+  box-shadow: inset 0 2px #ecd0a4, 0 4px #111a26;
+}
+.fish-lane { background: repeating-linear-gradient(0deg, #223d52 0 10px, #2e4a60 11px 12px); border-color: #4c4347; }
+.catch-meter { background: #51464a; border-color: #705448; }
+.catch-result, .tackle-shop {
+  color: #38333b;
+  background: #e9d9b8;
+  border: 1px solid #a58367;
+  box-shadow: inset 0 0 0 3px #a583672c;
+}
+.caught-portrait {
+  background-color: #d1ccb2;
+  background-image: radial-gradient(ellipse, #f3e6c6, transparent 72%);
+  border: 1px solid #9c8b7255;
+}
+.tackle-shop { border-top: 5px solid #a36e61; }
+.shop-heading h2, .fish-history h2, .fishing-board h2 { font-family: 'Songti SC', SimSun, serif; }
+.shop-rule, #shop-chance, .gear-card p { font-size: 12px; }
+.gear-card { border-top: 1px solid #82745566; }
+.gear-card button { min-height: 44px; }
+.history-fish { background: #273a46; border-color: #9c8b7270; }
+.fishing-board { background: #293441; border: 1px solid var(--lake-border); border-top: 4px solid #a97b66; }
+.board-tag { display: inline-block; padding: 2px 7px; margin-bottom: 10px; border: 1px solid #aa826e; color: #f2c7a4; font-size: 11px; }
+.fishing-board > p, .fishing-credits { color: var(--lake-muted); }
+#fishing-ranks li:first-child:not(.rank-empty) { background: #f2c7a40b; }
+#fishing-ranks small, #fishing-ranks strong, .fishing-lore, #caught-length { overflow-wrap: anywhere; }
+
+@media (max-width: 420px) {
+  .fishing-header { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 6px; }
+  .fishing-title p { letter-spacing: .03em; }
+  .fishing-controls { padding-inline: 8px; }
+}

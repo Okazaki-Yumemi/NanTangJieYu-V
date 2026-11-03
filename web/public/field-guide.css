@@ -1,0 +1,89 @@
+/* Player edition: a printed field guide over the night backdrop. */
+.player-body:has(.field-cover) .player-shell { max-width: 1100px; }
+
+.field-cover {
+  position: relative;
+  isolation: isolate;
+  min-height: 228px;
+  margin-bottom: 14px;
+  padding: clamp(23px, 5vw, 56px);
+  overflow: hidden;
+  color: #382e27;
+  background: #e8d9b8 url('/assets/field-cover.svg') right center / auto 100% no-repeat;
+  border: 1px solid #b39c75;
+}
+
+.field-cover::after {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 1px solid #73594655;
+  pointer-events: none;
+}
+
+.field-imprint, .field-subtitle { margin: 0; font-size: 13px; letter-spacing: .12em; }
+.field-cover h1 {
+  margin: 16px 0 6px;
+  font: 700 clamp(29px, 6vw, 62px)/1.18 'Noto Serif SC', 'Songti SC', SimSun, serif;
+  letter-spacing: .05em;
+}
+.field-cover h1 span { color: #8f4039; font-family: Georgia, serif; }
+.field-seal {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 4px;
+  border: 2px solid currentColor;
+  color: #8f4039;
+  font: 700 12px/1.15 SimSun, serif;
+  rotate: -6deg;
+}
+
+.field-cover ~ #register-view { margin-top: 26px; }
+.field-cover ~ #register-view .panel-block {
+  padding: clamp(16px, 3vw, 28px);
+  border: 1px solid #8a786458;
+  background: #201f2bea;
+}
+.field-cover ~ #register-view .block-title,
+.field-section-label,
+.field-cover ~ #home-view .section-head h2 {
+  color: #f0deba;
+  font: 700 21px/1.35 'Noto Serif SC', 'Songti SC', SimSun, serif;
+}
+.field-cover ~ #register-view .field-group input {
+  border-radius: 2px;
+  background: #151823;
+}
+.field-cover ~ #home-view { gap: 16px; }
+.field-cover ~ #home-view .home-header { padding: 12px 0; }
+.field-cover ~ #home-view > .panel-block {
+  border-color: #9b846551;
+  background: #201f2bd9;
+  border-radius: 2px;
+}
+.field-cover ~ #home-view .field-map { border-top-color: #d3b680; }
+.field-cover ~ #home-view .region-story { border-left-color: #ba925d; }
+.field-cover ~ #home-view .action-btn:not(:disabled):hover { border-color: #b99c74; }
+
+@media (min-width: 850px) {
+  .field-cover ~ #register-view {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr);
+    align-items: start;
+  }
+  .field-cover ~ #home-view {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+  .field-cover ~ #home-view > :is(.home-header, .field-map, .wide-btn, .footer-note) { grid-column: 1 / -1; }
+  .field-cover ~ #home-view > section:has(#prize-track) { grid-column: 1 / -1; }
+}
+
+@media (max-width: 600px) {
+  .field-cover {
+    min-height: 180px;
+    background-image: linear-gradient(90deg, #e8d9b8 28%, #e8d9b833), url('/assets/field-cover.svg');
+    background-size: 100% 100%, auto 100%;
+  }
+}

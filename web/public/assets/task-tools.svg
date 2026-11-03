@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="wipe" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4"><path d="M7 8h34v31H7zM24 8v31M7 24h34M30 16l6-4M31 21l6-4"/><path fill="currentColor" d="M10 31l12-5 5 9-13 6z"/></g></symbol>
+  <symbol id="leaves" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 36c2-19 13-24 30-26-1 19-11 29-30 26Zm0 0 24-20M19 27l-1-8m9 2 8 2M6 42l8-9"/></g></symbol>
+  <symbol id="trash" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4"><path d="M8 11h22v26H8zM5 10h28M12 17l4 9 7-6 3 10M38 11v27"/><path fill="currentColor" d="M34 15h8v7h-8z"/></g></symbol>
+  <symbol id="wires" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 13c16 0 9 22 24 22M12 35c14 0 10-22 24-22"/><path d="M4 10h8v6H4zm0 22h8v6H4zm32-22h8v6h-8zm0 22h8v6h-8z"/></g></symbol>
+  <symbol id="memory" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4"><path d="M8 8h12v12H8zm20 0h12v12H28zM8 28h12v12H8z"/><path fill="currentColor" d="M28 28h12v12H28z"/></g></symbol>
+  <symbol id="valve" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="24" cy="24" r="15"/><path d="M24 9v30M11 17l26 14M11 31l26-14"/><circle cx="24" cy="24" r="4" fill="currentColor"/></g></symbol>
+  <symbol id="pipes" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h22v16h16v9H18V21H5zM10 9v15m30 1v15"/></g></symbol>
+  <symbol id="tune" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 9h38v30H5zM10 24h7l4-9 6 17 5-8h6"/></g></symbol>
+  <symbol id="seal" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4"><path d="M13 6h22v36H13zM24 12v22M17 18h14M17 29h14M8 15l-3 9 3 9m32-18 3 9-3 9"/></g></symbol>
+  <symbol id="sigils" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.4"><path d="m24 6 18 18-18 18L6 24zM24 14l10 10-10 10-10-10z"/><circle cx="24" cy="24" r="3" fill="currentColor"/></g></symbol>
+</svg>

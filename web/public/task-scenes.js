@@ -331,5 +331,54 @@
     }
     render();
   }
-  NTJ.taskScenes={wipe,leaves,trash,memory,valve,pipes};
+  function sigils(board, { listen, complete, status, play, isSolved }) {
+    const side = 3;
+    const lamps = Array(side * side).fill(false);
+    function flip(index) {
+      const row = Math.floor(index / side);
+      const column = index % side;
+      lamps[index] = !lamps[index];
+      if (row > 0) lamps[index - side] = !lamps[index - side];
+      if (row < side - 1) lamps[index + side] = !lamps[index + side];
+      if (column > 0) lamps[index - 1] = !lamps[index - 1];
+      if (column < side - 1) lamps[index + 1] = !lamps[index + 1];
+    }
+    const choices = lamps.map((_, index) => index);
+    for (let i = 0; i < 3; i += 1) {
+      const [index] = choices.splice(Math.floor(Math.random() * choices.length), 1);
+      flip(index);
+    }
+    if (!lamps.some(Boolean)) flip(4);
+    const initial = [...lamps];
+    board.classList.add('sigil-scene');
+    board.innerHTML = '<div class="sigil-grid" role="group" aria-label="九盏地灯"></div><button type="button" class="sigil-reset">复原灯阵</button>';
+    const grid = board.querySelector('.sigil-grid');
+    const buttons = lamps.map((_, index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.innerHTML = '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 6 42 24 24 42 6 24Z M24 14 34 24 24 34 14 24Z"/><circle cx="24" cy="24" r="3"/></svg>';
+      button.setAttribute('aria-label', `第${Math.floor(index / side) + 1}行第${index % side + 1}列地灯`);
+      listen(button, 'click', () => {
+        if (isSolved()) return;
+        flip(index);
+        play('connect');
+        render();
+      });
+      grid.append(button);
+      return button;
+    });
+    listen(board.querySelector('.sigil-reset'), 'click', () => {
+      if (isSolved()) return;
+      initial.forEach((lit, index) => { lamps[index] = lit; });
+      render();
+    });
+    function render() {
+      buttons.forEach((button, index) => button.setAttribute('aria-pressed', String(lamps[index])));
+      const remaining = lamps.filter(Boolean).length;
+      status.textContent = `还有 ${remaining} 盏亮着`;
+      if (!remaining) complete();
+    }
+    render();
+  }
+  NTJ.taskScenes={wipe,leaves,trash,memory,valve,pipes,sigils};
 })();

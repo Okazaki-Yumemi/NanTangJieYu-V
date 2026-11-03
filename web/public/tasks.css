@@ -4,25 +4,26 @@
   max-height: calc(100dvh - 20px);
   overflow-y: auto;
   padding: 16px 20px 12px;
-  border: 3px solid #303a3d;
-  border-radius: 15px;
-  background: #c1bfae;
-  color: #303b3b;
-  box-shadow: inset 0 0 0 2px #eeecdb, 0 20px 0 -10px #151c25, 0 24px 70px #0009;
+  border: 1px solid #aa8e66;
+  border-radius: 4px;
+  background: #efe1c3;
+  color: #302b26;
+  box-shadow: 4px 5px #95794f, 7px 8px #342b24, 0 24px 65px #0009;
 }
 .task-dialog::backdrop { background: #050914c9; }
-.task-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.task-sound { border: 0; background: none; color: #485457; font-size: 11px; padding: 8px 0; }
-.task-close { width: 40px; height: 40px; border: 2px solid #526061; border-radius: 50%; background: #ece9d9; color: #364246; font-size: 27px; line-height: 1; box-shadow: 0 3px #8b9187; }
-.task-dialog h2 { margin: 0; font-size: 25px; font-weight: 800; letter-spacing: .04em; }
-.task-action { margin: 2px 0 3px; color: #5c6664; font-size: 11px; }
-#task-hint { margin: 6px 0 14px; color: #526061; font-size: 13px; line-height: 1.5; }
-.task-workbench { position: relative; border: 5px solid #4b5b5d; background: #314346; border-radius: 9px; box-shadow: 0 2px #e3e1ca, inset 0 3px 8px #0005; overflow: hidden; }
+.task-top { display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #ae9776; padding-bottom: 6px; margin-bottom: 10px; }
+.task-top span { margin-right: auto; color: #824136; font-size: 12px; font-weight: 700; letter-spacing: .14em; }
+.task-sound { min-height: 44px; border: 0; background: none; color: #56473b; font-size: 12px; padding-inline: 8px; }
+.task-close { width: 44px; height: 44px; border: 1px solid #9b8060; border-radius: 2px; background: #f5ead2; color: #563d31; font-size: 26px; line-height: 1; }
+.task-dialog h2 { margin: 0; font: 700 29px/1.2 'Songti SC', SimSun, serif; }
+.task-action { margin: 2px 0 4px; color: #765242; font-size: 12px; }
+#task-hint { margin: 8px 0 15px; color: #554d42; font-size: 14px; line-height: 1.55; }
+.task-workbench { position: relative; border: 5px solid #524e40; background: #314346; color: #f3ead6; border-radius: 3px; box-shadow: 0 2px #fff0ce, inset 0 3px 8px #0005; overflow: hidden; }
 .task-status { min-height: 20px; margin: 10px 0 0; font: 700 14px/1.5 ui-monospace, monospace; color: #4c5c58; text-align: center; }
 .task-note { margin: 3px 0 0; color: #63716b; text-align: center; font-size: 10px; }
 .task-clear { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; background: #172b2ce6; opacity: 0; pointer-events: none; z-index: 5; transition: opacity .2s; }
-.task-clear span { color: #b8d39b; font-size: 66px; line-height: 1; }
-.task-clear strong { color: #f2edda; font-size: 29px; letter-spacing: .15em; }
+.task-clear span { display:grid; place-items:center; width:72px; height:72px; border:2px solid currentColor; color:#f0c785; font-size:42px; rotate:-8deg; }
+.task-clear strong { color: #f2edda; font:700 27px/1.2 'Songti SC', SimSun, serif; letter-spacing: .1em; }
 .task-solved .task-clear { opacity: 1; }
 .task-solved .task-workbench { pointer-events: none; }
 .season-0 { --wire: #f294b4; }
@@ -57,9 +58,6 @@
 .seal-control.holding { background: #4c3443; border-color: #f6dfa4; }
 .seal-board progress { z-index: 1; width: 160px; height: 10px; margin-top: 30px; accent-color: #e1c28b; }
 .task-solved .seal-control { border-color: #8de0bf; color: #8de0bf; }
-.task-practice-list { display: grid; gap: 14px; margin-block: 28px; }
-.task-practice-list button { text-align: left; }
-.task-practice-list small { display: block; margin-top: 6px; font-size: 12px; font-weight: 400; color: var(--ink-soft); }
 @media (max-width: 380px) { .task-dialog { padding: 16px; } .wire-board { padding-inline: 12px; } }
 
 /* 实体机件与可抓取物件。 */
@@ -186,3 +184,48 @@
 .pipe-tile svg { display: block; width: 100%; height: 100%; }
 .pipe-tile path { fill: none; stroke: #cf9a5c; stroke-width: 7; }
 .pipe-tile.wet path { stroke: #7dd9c9; }
+
+/* Each station has its own materials: copper plumbing, radio bakelite and lacquer. */
+.wire-board { background: repeating-linear-gradient(90deg, #23413f 0 22px, #2d4c48 23px 24px); }
+.wire-column { background: #172a27; border: 1px solid #b49b735e; }
+.wire-socket { border-radius: 50%; }
+.leaf-scene { background: #ac9a70; }
+.filter-grille { background: repeating-linear-gradient(0deg, #61584565 0 4px, transparent 5px 16px), #c1ac83; }
+.wipe-scene { background: repeating-linear-gradient(92deg, #866142 0 25px, #79543a 27px 29px); }
+.glass-pane { border-color: #4d382c; box-shadow: 0 2px #c69b64, inset 0 2px 8px #0006; }
+.trash-scene { background: repeating-linear-gradient(135deg, #bdac7a 0 10px, #b09d6e 11px 20px); }
+.trash-lever { background: #a94839; border-color: #61352c; box-shadow: inset 0 4px #ce7560, inset 0 -5px #74362b, 0 4px #152b2b88; }
+.memory-scene { background: #514044; }
+.memory-grid button { border-radius: 50% 50% 7px 7px; background: #6f5153; box-shadow: inset 0 4px #a47772, inset 0 -7px #483039, 0 4px #332631; color: #f0dbb9; }
+.valve-scene { background: repeating-linear-gradient(0deg, #657773 0 40px, #526762 41px 43px); }
+.valve-wheel { border-color: #bc583b; background: radial-gradient(circle, #3b3932 0 19%, transparent 20%); }
+.valve-direction { color: #fff3d9; }
+.pipe-tile path { stroke: #b98051; filter: drop-shadow(0 2px #201b17); }
+.pipe-tile.wet path { stroke: #81d0b7; }
+.tune-board { background: #282d2a; }
+.tune-track { background: repeating-linear-gradient(90deg, #ffffff00 0 calc(10% - 1px), #afbb7c36 calc(10% - 1px) 10%), #15231d; border: 1px solid #9eab6859; }
+.seal-board, .sigil-scene { background: repeating-linear-gradient(90deg, #2c2432 0 31px, #3d2d3d 32px 34px); }
+.seal-door i { background: repeating-linear-gradient(0deg, #714144 0 16px, #a36c57 17px 18px); border: 4px solid #4a3133; }
+.seal-control { border: 5px double #d6b976; background: #674144; box-shadow: 0 0 0 8px #2b2228, 0 5px 0 10px #161117; }
+
+.sigil-scene { padding: 16px; text-align: center; }
+.sigil-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; width: min(100%, 244px); margin: auto; }
+.sigil-grid button { display: grid; place-items: center; aspect-ratio: 1; padding: 0; color: #c0a3a0; background: #402f38; border: 1px solid #987674; border-radius: 3px; box-shadow: inset 0 -4px #251d25; }
+.sigil-grid svg { width: 58%; fill: none; stroke: currentColor; stroke-width: 2; }
+.sigil-grid button[aria-pressed=true] { color: #663e38; background: #edbc75; box-shadow: inset 0 -4px #a96d4c; }
+.sigil-reset { min-height: 44px; padding-inline: 12px; margin-top: 9px; color: #f3ddbe; background: none; border: 0; text-decoration: underline; text-underline-offset: 3px; }
+
+.practice-shell { max-width: 760px; }
+.practice-nav { display: flex; justify-content: space-between; gap: 12px; margin: 0 0 12px; }
+.practice-nav a { display: inline-flex; align-items: center; min-height: 44px; color: #f1dcb4; }
+.practice-masthead { padding: clamp(20px, 5vw, 42px); border: 1px solid #8c7055; border-top: 5px solid #9a4a3e; color: #372d28; background: #f0e2c3; box-shadow: 3px 4px #735c42; }
+.practice-masthead h1 { margin: 5px 0 12px; font: 700 clamp(32px, 6vw, 56px)/1.12 'Songti SC', SimSun, serif; }
+.practice-masthead p { margin: 0; color: #6e4f3f; font-size: 14px; }
+.task-practice-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(132px, 100%), 1fr)); gap: 12px; margin-block: 24px; }
+.task-practice-list button { display: grid; align-content: start; gap: 5px; min-width: 0; min-height: 130px; padding: 13px; text-align: left; font-size: 16px; font-weight: 700; color: #342b24; border: 1px solid #b9a584; border-radius: 2px; background: #e1d1af; box-shadow: inset 0 0 0 3px #f5e6c755; }
+.task-practice-list button:nth-child(3n+2) { background: #c2c7a9; }
+.task-practice-list button:nth-child(3n) { background: #d7b4a0; }
+.task-practice-list button:hover { border-color: #ffddb0; box-shadow: inset 0 0 0 3px #fff1cf; }
+.task-practice-list svg { width: 36px; height: 36px; color: #754e3b; }
+.task-practice-list small { color: #4e453c; font-size: 12px; font-weight: 400; line-height: 1.5; }
+.practice-result { color: #d9c9ae; font-size: 13px; text-align: center; }

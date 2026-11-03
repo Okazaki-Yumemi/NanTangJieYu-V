@@ -1,6 +1,9 @@
-/* 大屏样式（16:9 投影优先） */
+/* 校园观测图（16:9 投影优先） */
 
 .display-body {
+  --display-paper: #efe6cf;
+  --display-rule: #b3c4ba36;
+  --display-gold: #d7bb81;
   color: #f3eddd;
   min-height: 100vh;
   display: flex;
@@ -8,7 +11,7 @@
 }
 
 /* 桌面投影：锁定一屏高度，任何内容溢出都在卡片内部消化，绝不撑破 16:9 版式 */
-@media (min-width: 1001px) {
+@media (min-width: 1101px) and (min-height: 650px) {
   .display-body {
     height: 100vh;
     overflow: hidden;
@@ -19,9 +22,29 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 28px 10px;
-  border-bottom: 1px solid rgba(243, 237, 221, 0.14);
+  justify-content: flex-start;
+  gap: 16px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--display-rule);
+  background: #111b27eb;
 }
+
+.display-header::after { content: none; }
+
+.display-edition {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 48px;
+  border: 1px solid #efac98;
+  background: #7c433f;
+  color: #fff1d8;
+  line-height: 1;
+  font-family: 'Songti SC', SimSun, serif;
+  font-size: 23px;
+}
+.display-edition span { font-size: 10px; }
 
 .display-eyebrow {
   font-size: 12px;
@@ -31,7 +54,7 @@
 
 .display-title h1 {
   margin: 0;
-  font-size: 30px;
+  font-size: clamp(24px, 2.3vw, 40px);
   letter-spacing: 0.1em;
   color: #f6e7c8;
   line-height: 1.2;
@@ -48,6 +71,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
+  margin-inline-start: auto;
 }
 
 .display-progress {
@@ -60,7 +84,7 @@
   border: 1px solid rgba(243, 237, 221, 0.35);
   background: transparent;
   color: #f3eddd;
-  border-radius: 999px;
+  border-radius: 2px;
   padding: 6px 16px;
   font-size: 13px;
 }
@@ -72,10 +96,10 @@
 .display-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(280px, 1.05fr) minmax(360px, 1.35fr) minmax(300px, 1fr);
+  grid-template-columns: minmax(220px, .76fr) minmax(0, 2.15fr) minmax(220px, .8fr);
   grid-template-rows: minmax(0, 1fr);
   gap: 16px;
-  padding: 16px 28px 22px;
+  padding: 16px 24px 20px;
   min-height: 0;
 }
 
@@ -84,17 +108,21 @@
   flex-direction: column;
   gap: 16px;
   min-height: 0;
+  min-width: 0;
 }
 
 .display-card {
-  background: rgba(253, 250, 240, 0.06);
-  border: 1px solid rgba(243, 237, 221, 0.16);
-  border-radius: 16px;
-  padding: 14px 16px;
+  background: #101c29bf;
+  border: 0;
+  border-top: 1px solid var(--display-rule);
+  border-radius: 0;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
+
+.display-card::before { content: none; }
 
 .display-card.grow {
   flex: 1;
@@ -103,15 +131,25 @@
 
 /* 右列：区域状态是主要信息，分得比动态流更多高度 */
 .display-col.right .display-card.grow:first-child {
-  flex: 2 1 0%;
+  flex: 3.5 1 0%;
 }
 
 .display-card h2 {
   margin: 0 0 10px;
-  font-size: 16px;
-  letter-spacing: 0.12em;
-  color: #e5d6ae;
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  padding-bottom: 7px;
+  border-color: var(--display-rule);
+  font-size: 17px;
+  letter-spacing: .08em;
+  color: var(--display-paper);
   font-weight: 600;
+}
+
+.display-index {
+  color: var(--display-gold);
+  font: 12px/1 ui-monospace, monospace;
 }
 
 .display-card h2 .small {
@@ -124,32 +162,31 @@
 .vs-panel {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  background: rgba(253, 250, 240, 0.06);
-  border: 1px solid rgba(243, 237, 221, 0.16);
-  border-radius: 16px;
-  padding: 18px;
+  gap: 6px;
+  background: none;
+  border: 0;
+  padding: 0;
 }
 
 .vs-row {
   display: grid;
-  grid-template-columns: 92px 1fr auto;
+  grid-template-columns: 66px minmax(0, 1fr);
   align-items: center;
-  gap: 14px;
+  gap: 3px 10px;
 }
 
 .vs-row.right {
-  grid-template-columns: auto 1fr 92px;
+  grid-template-columns: minmax(0, 1fr) 66px;
 }
 
 .vs-row.right .vs-team {
   text-align: right;
 }
 
-.vs-portrait {
+.vs-row .vs-portrait {
   display: block;
-  width: 96px;
-  height: 128px;
+  width: 66px;
+  height: 76px;
   object-fit: contain;
   object-position: center bottom;
   filter: drop-shadow(0 9px 14px rgba(0, 0, 0, 0.55));
@@ -157,9 +194,9 @@
 
 .vs-team strong {
   display: block;
-  font-size: 21px;
+  font-size: 17px;
   letter-spacing: 0.06em;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .vs-team .vs-captain {
@@ -168,9 +205,9 @@
   white-space: nowrap;
 }
 
-.vs-score {
-  font-size: 44px;
-  font-weight: 800;
+.vs-row .vs-score {
+  font-size: clamp(23px, 2vw, 42px);
+  overflow-wrap: anywhere;
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
@@ -184,8 +221,8 @@
 }
 
 .vs-bar {
-  height: 16px;
-  border-radius: 999px;
+  height: 5px;
+  border-radius: 0;
   overflow: hidden;
   display: flex;
   background: rgba(243, 237, 221, 0.12);
@@ -209,17 +246,27 @@
 .display-ranking {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: auto;
+  scrollbar-width: thin;
   flex: 1;
   justify-content: flex-start;
 }
 
 .display-ranking .board-row {
-  border-bottom: 1px dashed rgba(243, 237, 221, 0.14);
-  font-size: 16.5px;
-  padding: 12px 6px;
+  border-bottom: 1px solid var(--display-rule);
+  grid-template-columns: 22px minmax(0, 1fr) auto auto;
+  gap: 5px;
+  font-size: 14px;
+  padding: 3px 1px;
   flex: none;
 }
+
+.display-ranking .board-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.display-ranking .board-row .muted { font-size: 12px; }
 
 .display-ranking .board-row.animate-in {
   animation: rank-row-in 0.45s ease both;
@@ -241,30 +288,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   font-size: 14px;
   margin-right: 4px;
 }
 
-.rank-1 .board-rank {
-  background: linear-gradient(160deg, #ffe08a, #d4a017);
-  color: #ffe9b0;
-  box-shadow: 0 0 12px rgba(255, 224, 138, 0.7);
-}
-
-.rank-2 .board-rank {
-  background: linear-gradient(160deg, #f3f6fb, #aeb8c4);
-  color: #262c33;
-  box-shadow: 0 0 10px rgba(220, 230, 245, 0.5);
-}
-
-.rank-3 .board-rank {
-  background: linear-gradient(160deg, #f0b98a, #b0793c);
-  color: #33200a;
-  box-shadow: 0 0 10px rgba(240, 185, 138, 0.55);
-}
+.rank-medal .board-rank { border: 1px solid currentColor; border-radius: 2px; }
 
 .display-ranking .board-rank {
   color: #cdb374;
@@ -276,26 +307,67 @@
 
 /* ---------- 地图卡 ---------- */
 
-.map-card .campus-map-wrap {
-  background: rgba(10, 12, 20, 0.4);
-  border-radius: 12px;
-  max-width: 500px;
-  margin: 0 auto;
+.map-card {
+  flex: 1 1 auto;
+  border: 1px solid #9cbdba52;
+  padding: 12px;
+  background-color: #132332df;
+  background-image:
+    linear-gradient(#91b3b612 1px, transparent 1px),
+    linear-gradient(90deg, #91b3b612 1px, transparent 1px);
+  background-size: 26px 26px;
 }
 
-.map-card h2 .small {
-  margin-left: 10px;
+#display-map {
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
+
+.map-card .campus-map-wrap { width: 100%; }
+
+@media (min-width: 1101px) and (min-height: 650px) {
+  .map-card .map-scene { container-type: size; }
+  .map-card .map-plane { max-width: 205cqh; margin-inline: auto; }
+}
+
+.map-location {
+  margin-inline-start: auto;
+  font: 12px/1.5 var(--font-sans);
+  color: #bdcfc9;
+}
+
+.display-map-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--display-rule);
+  color: #d8dfd6;
+  font-size: 12px;
+}
+
+.display-map-key i {
+  display: inline-block;
+  margin-inline-end: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #7eb4e2;
+}
+.display-map-key span:nth-child(2) i { background: #70bb93; }
+.display-map-key span:nth-child(3) i { background: #f3c75b; }
+.display-map-key span:nth-child(4) i { background: #9399aa; }
 
 /* ---------- 最新抽奖播报 ---------- */
 
 .latest-draw {
   border: 1.6px solid #d9b64a;
   background: rgba(217, 182, 74, 0.16);
-  border-radius: 12px;
-  padding: 10px 14px;
-  margin-bottom: 12px;
-  font-size: 19px;
+  border-radius: 0;
+  padding: 5px 9px;
+  margin-bottom: 8px;
+  font-size: 16px;
   display: flex;
   align-items: baseline;
   gap: 10px;
@@ -315,7 +387,8 @@
 /* ---------- 奖品进度（两行四列网格；奖品超量时在卡片内滚动，不撑破 1080 版式） ---------- */
 
 .pool-card {
-  flex: 1;
+  flex: 0 1 auto;
+  max-height: 34%;
   min-height: 0;
   overflow: hidden;
 }
@@ -331,12 +404,15 @@
 }
 
 .display-prize {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  column-gap: 6px;
+  align-items: center;
   min-width: 0;
-  min-height: 110px;
+  min-height: 56px;
   border: 1px solid rgba(243, 237, 221, 0.2);
-  border-radius: 14px;
-  padding: 8px 8px;
-  text-align: center;
+  border-radius: 2px;
+  padding: 5px;
   background: rgba(253, 250, 240, 0.05);
 }
 
@@ -346,16 +422,16 @@
 }
 
 .display-prize strong {
-  display: flex;
-  min-height: 34px;
-  align-items: center;
-  justify-content: center;
+  grid-column: 2;
+  align-self: end;
   font-size: 13px;
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
 
 .display-prize .source {
+  grid-column: 2;
+  align-self: start;
   display: block;
   font-size: 11.5px;
   color: #b7ad95;
@@ -367,12 +443,14 @@
 }
 
 .display-prize img {
+  grid-column: 1;
+  grid-row: 1/3;
   display: block;
-  width: 66px;
-  height: 50px;
-  margin: 0 auto 5px;
+  width: 40px;
+  height: 38px;
+  margin: 0;
   border: 1px solid rgba(243, 237, 221, 0.12);
-  border-radius: 9px;
+  border-radius: 1px;
   padding: 4px;
   background: rgba(253, 250, 240, 0.07);
   object-fit: contain;
@@ -389,9 +467,11 @@
 }
 
 .display-region {
-  border: 1px solid rgba(243, 237, 221, 0.14);
-  border-radius: 12px;
-  padding: 7px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--display-rule);
+  border-radius: 0;
+  background: none;
+  padding: 5px 4px;
   flex: none;
 }
 
@@ -413,8 +493,12 @@
 }
 
 .display-region .anomaly-bar {
-  margin: 5px 0;
+  height: 6px;
+  margin: 4px 0;
 }
+
+.display-region.is-locked .anomaly-bar,
+.display-region.is-cleared .anomaly-bar { display: none; }
 
 .display-region .region-line {
   display: flex;
@@ -440,6 +524,8 @@
 
 .display-region .tag.status-tag {
   min-width: 58px;
+  font-size: 11px;
+  padding: 1px 5px;
   text-align: center;
 }
 
@@ -470,12 +556,36 @@
   color: #e8d494;
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 1100px), (max-height: 649px) {
   .display-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto;
   }
 
-  .display-title h1 {
-    font-size: 22px;
-  }
+  .display-col.center { grid-column: 1/-1; grid-row: 1; }
+  .map-card .map-scene { flex: none; aspect-ratio: 1.5; }
+  .pool-card { max-height: none; }
+  .display-ranking, .display-feed { max-height: 380px; }
+}
+
+@media (max-width: 620px) {
+  .display-header { flex-wrap: wrap; padding-inline: 12px; gap: 8px; }
+  .display-header-right { margin-inline-start: 0; justify-content: flex-start; }
+  .display-title small { display: block; margin: 4px 0 0; }
+  .display-grid { grid-template-columns: minmax(0, 1fr); padding-inline: 12px; }
+  .display-prizes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .map-card .map-scene { aspect-ratio: 1.12; }
+}
+
+@media (min-width: 1101px) and (max-height: 790px) {
+  .vs-row .vs-portrait { height: 62px; }
+  .vs-team .vs-captain { display: none; }
+  .vs-score small { margin-top: 2px; }
+  .display-grid, .display-col { gap: 12px; }
+  .display-regions { gap: 1px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .display-ranking .board-row.animate-in { animation: none; }
+  .vs-bar span { transition: none; }
 }

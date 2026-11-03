@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 250">
+  <defs>
+    <pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse">
+      <path d="M0 5 5 0" stroke="#655344" stroke-opacity=".19" stroke-width=".7"/>
+    </pattern>
+  </defs>
+  <circle cx="482" cy="91" r="58" fill="#b66750" opacity=".7"/>
+  <path fill="#c5bd9e" d="M72 230 177 164l58 12 89-60 78 36 72-28 146 23v103H72z"/>
+  <path fill="#aaa98b" d="M160 250l112-65 75 10 73-32 79 29 121-43v101z"/>
+  <path fill="url(#hatch)" d="M102 250l70-44 104-20 70 11 75-35 79 30 120-43v101z"/>
+  <g stroke="#594d44" stroke-linejoin="round" stroke-width="2">
+    <path fill="#95765d" d="M344 221v-89h22v89m132 0v-89h22v89m-166-68h156v17H354z"/>
+    <path fill="#554b45" d="M327 139l28-12 21-21h112l21 21 29 12-13 8H341z"/>
+    <path fill="#b19572" d="M378 146h109v28H378z"/>
+    <path fill="#64534a" d="M390 175h85v46h-10v-36h-65v36h-10z"/>
+    <path d="M402 159h62m-90-34h115m-119 78h17m93 0h17" fill="none"/>
+  </g>
+  <g fill="none" stroke="#68715a" stroke-width="2" opacity=".85">
+    <path d="M620 23q-39 22-81 11l-57-21m78 25-14 16-29 4m62-24-11-19-20-9m48 24-6 20-26 15m27-32 17-21m-55 201 15-29 24-15m-20 42 11-18 30-6m-68 30 1-20-8-17m-228 48 8-24-11-13m17 38 9-20 12-8"/>
+  </g>
+</svg>

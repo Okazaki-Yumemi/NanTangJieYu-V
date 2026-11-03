@@ -1,0 +1,15 @@
+.firefly-page { background: #161925; color: #f0e0c1; }
+.firefly-shell { width: min(100%, 510px); margin: auto; padding: 18px 14px 32px; }
+.firefly-shell header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.firefly-shell a { color: #d3bd9b; font-size: 14px; }
+.firefly-shell h1 { font: 700 29px/1.2 'Songti SC', SimSun, serif; margin: 0 0 12px; }
+.firefly-ledger { display: flex; justify-content: space-between; gap: 8px; padding: 8px 12px; background: #ede0c2; color: #48372e; font-size: 13px; }
+.firefly-ledger strong { font: 700 19px Georgia, serif; font-variant-numeric: tabular-nums; }
+.firefly-stage { position: relative; border: 1px solid #ad9071; background: #24263a; }
+#firefly-field { display: block; width: 100%; height: auto; touch-action: none; }
+.firefly-curtain { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; background: #171828a8; }
+.firefly-curtain p { margin: 0 12px 16px; font: 700 25px/1.4 'Songti SC', SimSun, serif; text-align: center; }
+.firefly-help { font-size: 14px; color: #dfcdb5; }
+.firefly-shell button { min-height: 44px; padding: 8px 22px; border: 1px solid #e6bf84; border-radius: 2px; background: #e6c89a; color: #2d2530; font-size: 16px; }
+#firefly-pause { background: transparent; color: #f0e0c1; }
+.firefly-shell :focus-visible { outline: 2px solid #ffe0a2; outline-offset: 3px; }

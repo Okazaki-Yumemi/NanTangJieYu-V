@@ -8,11 +8,18 @@
     <link rel="stylesheet" href="/styles.css?v=11" />
     <link rel="stylesheet" href="/player.css?v=10" />
     <link rel="stylesheet" href="/atmosphere.css?v=5" />
-    <link rel="stylesheet" href="/tasks.css?v=4" />
-    <link rel="stylesheet" href="/outings.css?v=1" />
+    <link rel="stylesheet" href="/tasks.css?v=5" />
+    <link rel="stylesheet" href="/outings.css?v=2" />
+    <link rel="stylesheet" href="/field-guide.css?v=1" />
   </head>
   <body class="player-body">
     <main class="player-shell">
+      <header class="field-cover">
+        <p class="field-imprint">上海交通大学东方 Project 活动</p>
+        <h1>东方南堂界遇 <span>V</span></h1>
+        <p class="field-subtitle">被隐匿的交通大学</p>
+        <span class="field-seal" aria-hidden="true">南堂<br />界遇</span>
+      </header>
       <nav class="campus-outings" aria-label="校园小游戏">
         <a class="outing outing-lake" href="/fishing.html">
           <span class="outing-copy"><strong>湖边钓鱼</strong><small>甩一竿，看看湖底藏了什么</small></span>
@@ -22,15 +29,13 @@
           <span class="outing-copy"><strong>调查练习室</strong><small>不用登录，随时练手</small></span>
           <span class="outing-arrow" aria-hidden="true">→</span>
         </a>
+        <a class="outing outing-danmaku" href="/danmaku.html">
+          <span class="outing-copy"><strong>萤火弹幕</strong><small>穿过弹幕，收集灯火</small></span>
+          <span class="outing-arrow" aria-hidden="true">→</span>
+        </a>
       </nav>
       <!-- 注册 / 登录视图 -->
       <section id="register-view" class="panel hidden">
-        <div class="brand-head">
-          <p class="brand-eyebrow">上海交通大学东方 Project 活动</p>
-          <h1 class="brand-title">东方南堂界遇 V</h1>
-          <p class="brand-subtitle">被隐匿的交通大学 / Hidden SJTU in Four Seasons</p>
-        </div>
-
         <div class="panel-block">
           <h2 class="block-title">第一步 · 加入调查队</h2>
           <div class="field-group">
@@ -81,10 +86,7 @@
       <!-- 主视图 -->
       <section id="home-view" class="hidden">
         <header class="home-header">
-          <div class="home-title-wrap">
-            <p class="brand-eyebrow">上海交通大学东方 Project 活动</p>
-            <h1 class="brand-title small">东方南堂界遇 V</h1>
-          </div>
+          <span class="field-section-label">校园调查</span>
           <div class="home-header-side">
             <span id="activity-status-chip" class="status-chip"></span>
             <a class="display-link" href="/display.html" target="_blank" rel="noopener">大屏</a>
@@ -95,7 +97,7 @@
 
         <section id="me-card" class="me-card" aria-label="个人信息"></section>
 
-        <section class="panel-block">
+        <section class="panel-block field-map">
           <div class="section-head">
             <h2 class="block-title">校园地图</h2>
             <span id="map-progress" class="muted"></span>
@@ -180,8 +182,8 @@
     <script src="/common.js?v=11"></script>
     <script src="/map.js?v=7"></script>
     <script src="/task-logic.js?v=1"></script>
-    <script src="/task-scenes.js?v=3"></script>
-    <script src="/tasks.js?v=4"></script>
+    <script src="/task-scenes.js?v=4"></script>
+    <script src="/tasks.js?v=5"></script>
     <script src="/app.js?v=12"></script>
   </body>
 </html>

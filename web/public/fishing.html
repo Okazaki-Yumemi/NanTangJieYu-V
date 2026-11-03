@@ -6,18 +6,22 @@
     <title>湖边钓鱼 · 东方南堂界遇 V</title>
     <link rel="stylesheet" href="/styles.css?v=11" />
     <link rel="stylesheet" href="/atmosphere.css?v=4" />
-    <link rel="stylesheet" href="/fishing.css?v=4" />
+    <link rel="stylesheet" href="/fishing.css?v=5" />
   </head>
-  <body>
+  <body class="fishing-page">
     <main class="fishing-shell">
-      <header class="fishing-header"><a href="/">← 回校园</a><h1>湖边钓鱼</h1><span id="fisher-name"></span></header>
+      <header class="fishing-header">
+        <a href="/">← 回校园</a>
+        <div class="fishing-title"><p>闵行校区 · 湖畔</p><h1>湖边钓鱼</h1></div>
+        <span id="fisher-name"></span>
+      </header>
       <div class="fishing-layout">
         <section class="fishing-main" aria-label="钓鱼场景">
           <div class="pond-scene">
-            <canvas id="pond-canvas" width="240" height="150" aria-label="校园湖畔的像素场景"></canvas>
+            <img class="pond-art" src="/assets/lake-evening.svg" alt="晚霞下的校园湖，木栈桥边漂着几片荷叶" />
             <img class="pond-angler" src="/assets/characters/reimu.png" alt="湖边的灵梦" />
             <div class="pond-bobber" aria-hidden="true"></div>
-            <span class="pond-sign">钓鱼请勿惊动湖底的东西</span>
+            <span class="pond-sign">湖边请轻声</span>
             <div id="fishing-overlay" class="fishing-overlay hidden">
               <div class="reel-panel">
                 <div class="fish-lane"><i id="catch-zone"></i><img id="fish-shadow" src="/assets/fish/blue.png" alt="鱼影" /></div>
@@ -62,12 +66,12 @@
           </section>
           <section class="fish-history"><h2>我的鱼篓</h2><div id="fish-history-list"><p>还没有钓到鱼。</p></div></section>
         </section>
-        <aside class="fishing-board"><h2>大鱼榜</h2><p>按每个人钓到的最长一条排。</p><ol id="fishing-ranks"></ol><p class="fishing-lore"><span id="extreme-fish-limit">湖里最大的鱼，还在长。</span></p><a class="fishing-credits" href="/assets/fish/CREDITS.txt" target="_blank" rel="noopener">像素鱼素材 · EXCITESZZ / CC0</a></aside>
+        <aside class="fishing-board"><span class="board-tag">湖边告示</span><h2>大鱼榜</h2><p>每人只记最长的一条。</p><ol id="fishing-ranks"></ol><p class="fishing-lore"><span id="extreme-fish-limit">湖里最大的鱼，还在长。</span></p><a class="fishing-credits" href="/assets/fish/CREDITS.txt" target="_blank" rel="noopener">像素鱼素材 · EXCITESZZ / CC0</a></aside>
       </div>
     </main>
     <script src="/common.js?v=11"></script>
     <script src="/fishing-amounts.js?v=1"></script>
     <script src="/fishing-game.js?v=5"></script>
-    <script src="/fishing.js?v=7"></script>
+    <script src="/fishing.js?v=8"></script>
   </body>
 </html>

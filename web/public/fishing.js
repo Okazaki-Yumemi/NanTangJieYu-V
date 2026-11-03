@@ -233,39 +233,12 @@
     finally{button.disabled=false;}
   });
 
-  // 低分辨率场景，按像素放大。鱼的控制判定独立运行在 50Hz 固定模拟中。
-  const canvas=$('pond-canvas');const ctx=canvas.getContext('2d');
-  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let pondFrame=0;let lastPaint=0;
-  function drawPond(now) {
-    if(now-lastPaint>100 || !lastPaint) {
-      lastPaint=now;
-      ctx.fillStyle='#90aaa0';ctx.fillRect(0,0,240,150);
-      ctx.fillStyle='#c3c9a2';ctx.fillRect(0,0,240,43);
-      ctx.fillStyle='#8caa87';ctx.fillRect(0,29,240,29);
-      ctx.fillStyle='#577964';
-      for(let i=0;i<14;i+=1){const x=i*20-8;ctx.fillRect(x,26+(i%3)*4,24,22);ctx.fillRect(x+4,17+(i%3)*4,15,18);}
-      ctx.fillStyle='#567d83';ctx.fillRect(0,58,240,92);
-      ctx.fillStyle='#385e68';ctx.fillRect(0,58,240,5);
-      ctx.fillStyle='#7da29d';
-      const t=reduced?0:now/900;
-      for(let i=0;i<24;i+=1){const x=(i*37+Math.floor(Math.sin(t+i)*3)+240)%240;const y=66+i*17%79;ctx.fillRect(x,y,8+i%6,1);}
-      ctx.fillStyle='#667f59';ctx.fillRect(0,82,21,68);ctx.fillRect(0,107,38,43);
-      ctx.fillStyle='#b59b6f';ctx.fillRect(17,98,50,18);ctx.fillRect(17,118,50,8);
-      ctx.fillStyle='#665941';ctx.fillRect(17,116,50,3);ctx.fillRect(24,126,4,15);ctx.fillRect(56,126,4,15);
-      ctx.strokeStyle='#dbc79a';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(51,96);ctx.lineTo(89,73);ctx.lineTo(128,94);ctx.stroke();
-      ctx.fillStyle='#c7bc85';ctx.fillRect(210,43,12,4);ctx.fillRect(214,38,4,12);
-    }
-    if(!reduced)pondFrame=requestAnimationFrame(drawPond);
-  }
-  drawPond(performance.now());
   let timer=setInterval(()=>{renderButton();},1000);
   let poll=setInterval(()=>refresh(),15000);
-  window.addEventListener('pagehide',()=>{stopGame();cancelAnimationFrame(pondFrame);clearInterval(timer);clearInterval(poll);});
+  window.addEventListener('pagehide',()=>{stopGame();clearInterval(timer);clearInterval(poll);});
   window.addEventListener('pageshow',event=>{
     if(!event.persisted)return;
     pickAngler();
-    lastPaint=0;drawPond(performance.now());
     timer=setInterval(renderButton,1000);poll=setInterval(refresh,15000);refresh();
   });
   refresh();

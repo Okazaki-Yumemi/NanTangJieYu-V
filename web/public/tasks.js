@@ -12,12 +12,13 @@
     valve: { title: '转开水阀', hint: '顺时针转动阀轮，把积水排掉。' },
     pipes: { title: '接通排水管', hint: '点按旋转管段，让水从左上流到右下。' },
     tune: { title: '对准信号', hint: '把三个光点移到标记处。' },
-    seal: { title: '封住裂隙', hint: '按住符印，直到裂隙闭合。' }
+    seal: { title: '封住裂隙', hint: '按住符印，直到裂隙闭合。' },
+    sigils: { title: '熄灭地灯', hint: '按下一盏灯，它和上下左右的灯会翻转。让九盏灯全部熄灭。' }
   };
   const POOLS = {
     investigate: ['wipe', 'wires', 'leaves', 'pipes'],
     patrol: ['leaves', 'trash'],
-    ask_reimu: ['seal'], ask_marisa: ['wires'], deep_scan: ['tune', 'memory'],
+    ask_reimu: ['seal', 'sigils'], ask_marisa: ['wires'], deep_scan: ['tune', 'memory'],
     lake_netting: ['leaves', 'valve', 'pipes'], faith_offering: ['wipe'],
     phoenix_grill: ['trash'], sword_training: ['seal'],
     tengu_dash: ['wipe'], unguarded_wander: ['leaves', 'wipe']
@@ -73,7 +74,7 @@
     dialog.setAttribute('aria-labelledby', 'task-title');
     dialog.setAttribute('aria-describedby', 'task-hint');
     dialog.innerHTML = `
-      <div class="task-top"><button type="button" class="task-sound" aria-pressed="false">声音 开</button><button type="button" class="task-close" aria-label="取消调查">×</button></div>
+      <div class="task-top"><span>调查手记</span><button type="button" class="task-sound" aria-pressed="false">声音 开</button><button type="button" class="task-close" aria-label="取消调查">×</button></div>
       <p class="task-action"></p><h2 id="task-title"></h2><p id="task-hint"></p>
       <div class="task-workbench"></div>
       <p class="task-status" role="status" aria-live="polite"></p>

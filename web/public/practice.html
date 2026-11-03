@@ -7,34 +7,34 @@
     <link rel="stylesheet" href="/styles.css?v=11" />
     <link rel="stylesheet" href="/player.css?v=10" />
     <link rel="stylesheet" href="/atmosphere.css?v=4" />
-    <link rel="stylesheet" href="/tasks.css?v=4" />
+    <link rel="stylesheet" href="/tasks.css?v=5" />
   </head>
   <body class="player-body">
-    <main class="player-shell">
-      <header class="brand-head">
-        <p class="brand-eyebrow">东方南堂界遇 V</p>
-        <h1 class="brand-title">调查任务试玩</h1>
-        <p class="brand-subtitle">无需登录，可以反复试。这里不消耗能量，也不结算奖励。</p>
+    <main class="player-shell practice-shell">
+      <nav class="practice-nav" aria-label="校园去处"><a href="/">← 回校园</a><a href="/fishing.html">去湖边 →</a></nav>
+      <header class="practice-masthead">
+        <p>南堂界遇 V · 校园调查队</p>
+        <h1>调查练习室</h1>
+        <p>器材都在桌上。挑一样练手，不需要登录。</p>
       </header>
       <div class="task-practice-list">
-        <button class="ghost-btn" type="button" data-task="wipe">擦玻璃<small>把雾气擦掉。</small></button>
-        <button class="ghost-btn" type="button" data-task="leaves">清落叶<small>拖进吸口。</small></button>
-        <button class="ghost-btn" type="button" data-task="trash">倒垃圾<small>拉下排空杆。</small></button>
-        <button class="ghost-btn" type="button" data-task="wires">接电线<small>接上四组线头。</small></button>
-        <button class="ghost-btn" type="button" data-task="memory">记闪光<small>记住顺序，再点一遍。</small></button>
-        <button class="ghost-btn" type="button" data-task="valve">转水阀<small>转开阀轮，排掉积水。</small></button>
-        <button class="ghost-btn" type="button" data-task="pipes">接水管<small>旋转管段，把水引到出口。</small></button>
-        <button class="ghost-btn" type="button" data-task="tune">对信号<small>把光点移到刻度上。</small></button>
-        <button class="ghost-btn" type="button" data-task="seal">封裂隙<small>按住符印。</small></button>
+        <button type="button" data-task="wipe">擦玻璃<small>擦掉窗上的雾。</small></button>
+        <button type="button" data-task="leaves">清落叶<small>把叶片拖进风口。</small></button>
+        <button type="button" data-task="trash">倒垃圾<small>拉下排空杆。</small></button>
+        <button type="button" data-task="wires">接电线<small>接上四组线头。</small></button>
+        <button type="button" data-task="memory">记闪光<small>记住顺序，再点一遍。</small></button>
+        <button type="button" data-task="valve">转水阀<small>转开阀轮，排掉积水。</small></button>
+        <button type="button" data-task="pipes">接水管<small>旋转管段，把水引到出口。</small></button>
+        <button type="button" data-task="tune">对信号<small>把光点移到刻度上。</small></button>
+        <button type="button" data-task="seal">封裂隙<small>按住符印。</small></button>
+        <button type="button" data-task="sigils">熄地灯<small>让九盏灯全部熄灭。</small></button>
       </div>
-      <p id="practice-result" role="status" class="helper-text center">选择一个任务开始。</p>
-      <a class="display-link center" href="/">返回活动</a>
-      <a class="display-link center" href="/fishing.html">去湖边钓鱼 →</a>
+      <p id="practice-result" role="status" class="practice-result">练习不计奖励，可以反复玩。</p>
     </main>
     <script src="/common.js?v=11"></script>
     <script src="/task-logic.js?v=1"></script>
-    <script src="/task-scenes.js?v=3"></script>
-    <script src="/tasks.js?v=4"></script>
-    <script src="/practice.js?v=1"></script>
+    <script src="/task-scenes.js?v=4"></script>
+    <script src="/tasks.js?v=5"></script>
+    <script src="/practice.js?v=2"></script>
   </body>
 </html>
