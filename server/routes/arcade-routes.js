@@ -17,7 +17,7 @@ function scoreLimit(game, mode, now) {
   if (game === 'puzzle' && puzzleLevels.has(mode)) return 99999;
   if (game === 'danmaku' && ['normal', 'expert'].includes(mode)) return 20000;
   if (game === 'dye' && mode === shanghaiDate(now)) return 99;
-  if (game === 'rhythm' && /^(four-seasons|hidden-star)-(normal|hard|expert|master|lunatic)-(original|practice)$/.test(mode)) return 10000;
+  if (game === 'rhythm' && /^(four-seasons|hidden-star)-(normal|hard|expert|master|lunatic)-(original(?:-3m)?|practice)$/.test(mode)) return 10000;
   return 0;
 }
 

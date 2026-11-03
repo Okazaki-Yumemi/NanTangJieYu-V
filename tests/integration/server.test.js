@@ -425,6 +425,12 @@ describe('HTTP integration: full event journey', () => {
     assert.deepEqual(board.json.rows.map(({ rank, score }) => ({ rank, score })), [{ rank: 1, score: 420 }]);
     const expert = await request('GET', '/api/arcade/leaderboard?game=danmaku&mode=expert');
     assert.deepEqual(expert.json.rows, []);
+    const shortChart = { game: 'rhythm', mode: 'four-seasons-hard-original-3m', score: 8765 };
+    assert.equal((await request('POST', '/api/arcade/score', { body: shortChart, headers })).status, 200);
+    const original = await request('GET', '/api/arcade/leaderboard?game=rhythm&mode=four-seasons-hard-original');
+    assert.deepEqual(original.json.rows, []);
+    const shortBoard = await request('GET', '/api/arcade/leaderboard?game=rhythm&mode=four-seasons-hard-original-3m');
+    assert.equal(shortBoard.json.rows[0].score, shortChart.score);
   });
 
   it('restart keeps the state (persistence)', async () => {

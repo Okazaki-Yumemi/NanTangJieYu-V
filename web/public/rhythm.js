@@ -32,6 +32,7 @@
     lunatic: { window: 49, perfect: 19, lead: 880, salience: 0, spacing: 105, description: '全量起音 · 连续双击' },
   };
   const delay = 2100;
+  const recordedRoundMs = 180000;
   const bestKey = 'ntj-rhythm-best';
   const bestModesKey = 'ntj-rhythm-bests-v2';
   let bestByMode = {};
@@ -56,7 +57,8 @@
   let audioCursor = 0;
 
   function modeId(song = songs[Number(chart.value)], level = difficulty.value, audioSource = source.value) {
-    return `${song.file}-${level}-${audioSource}`;
+    const board = audioSource === 'original' ? 'original-3m' : audioSource;
+    return `${song.file}-${level}-${board}`;
   }
 
   function formatTime(milliseconds) {
@@ -67,10 +69,12 @@
   function compileRecorded(song, level) {
     const settings = levels[level];
     const recording = window.NTJRhythmTracks[song.file];
+    const end = Math.min(recordedRoundMs, recording.duration);
     const phrase = song.phrases.join('');
     const notes = [];
     let last = -Infinity;
     for (const [i, [at, salience, bass]] of recording.hits.entries()) {
+      if (at + settings.window > end) break;
       if (at - last < settings.spacing || salience < settings.salience && at - last < 1400) continue;
       const section = Math.floor(at / 14000);
       const kind = bass ? 'd' : phrase[(i + section * 5) % phrase.length];
@@ -83,7 +87,7 @@
       if (chord) notes.push({ at, kind: kind === 'd' ? 'k' : 'd', chord: true });
       last = at;
     }
-    return { ...settings, notes, end: recording.duration };
+    return { ...settings, notes, end };
   }
 
   function compileChart(song, level, recorded) {
@@ -221,7 +225,24 @@
     return Math.round((90 * run.points + 1000 * run.maxCombo) / run.notes.length);
   }
 
-  function resolve(note, rating) {
+  function showJudgment(kind, rating, timing) {
+    const call = el('call');
+    const trackView = el('track');
+    const label = { perfect: '正中', good: '合拍', miss: '漏拍', empty: '空击' }[rating];
+    call.textContent = timing ? `${label} · ${timing}` : label;
+    call.dataset.rating = rating;
+    const pad = pads[kind];
+    const lane = kind === 'd' ? 'centerJudgment' : 'rimJudgment';
+    trackView.dataset[lane] = rating;
+    clearTimeout(pad.judgmentTimer);
+    pad.judgmentTimer = setTimeout(() => { delete trackView.dataset[lane]; }, 170);
+    if (rating === 'miss') return;
+    pad.dataset.judgment = rating;
+    clearTimeout(pad.release);
+    pad.release = setTimeout(() => { delete pad.dataset.judgment; }, 145);
+  }
+
+  function resolve(note, rating, timing) {
     note.done = true;
     note.node?.remove();
     run[rating] += 1;
@@ -232,18 +253,13 @@
       run.maxCombo = Math.max(run.maxCombo, run.combo);
       run.points += rating === 'perfect' ? 100 : 60;
     }
-    el('call').textContent = { perfect: '正中', good: '合拍', miss: '漏拍' }[rating];
-    el('call').dataset.rating = rating;
+    showJudgment(note.kind, rating, timing);
     renderScore();
   }
 
   function hit(kind) {
     if (phase !== 'playing') return;
     const time = clock(performance.now());
-    const pad = pads[kind];
-    pad.classList.add('active');
-    clearTimeout(pad.release);
-    pad.release = setTimeout(() => pad.classList.remove('active'), 105);
     if (audio?.state === 'running') tone(audio.currentTime, kind === 'd' ? 153 : 580, .14, .13, kind === 'd' ? 'sine' : 'triangle', kind === 'd' ? 47 : 193);
     let note;
     let distance = run.window;
@@ -258,12 +274,12 @@
     }
     if (!note) {
       run.combo = 0;
-      el('call').textContent = '空击';
-      el('call').dataset.rating = 'miss';
+      showJudgment(kind, 'empty');
       renderScore();
       return;
     }
-    resolve(note, distance <= run.perfectWindow ? 'perfect' : 'good');
+    const rating = distance <= run.perfectWindow ? 'perfect' : 'good';
+    resolve(note, rating, rating === 'good' ? (time < note.at ? '偏早' : '偏晚') : '');
   }
 
   function clock(now) {
@@ -395,7 +411,7 @@
     enableSelection(false);
     pause.disabled = false;
     start.disabled = true;
-    el('result').textContent = track ? '原曲全谱 · 正在演奏' : '短谱练习 · 合成伴奏';
+    el('result').textContent = track ? '原曲 · 3 分钟演奏' : '短谱练习 · 合成伴奏';
     if (document.hidden) { pauseGame(); return; }
     frame = requestAnimationFrame(tick);
   }
