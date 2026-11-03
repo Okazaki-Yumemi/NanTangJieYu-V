@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>四季推箱 · 东方南堂界遇 V</title>
+  <link rel="stylesheet" href="/styles.css?v=11">
+  <link rel="stylesheet" href="/puzzle.css?v=1">
+</head>
+<body class="crate-page">
+  <main class="crate-shell">
+    <header class="crate-masthead">
+      <a href="/arcade.html">← 四季游园会</a>
+      <p>游园小戏 · 推箱</p>
+      <h1>四季推箱</h1>
+    </header>
+    <section class="crate-ticket" aria-label="关卡">
+      <div class="crate-tabs" id="crate-tabs" aria-label="选择关卡"></div>
+      <div class="crate-title">
+        <h2 id="crate-title"></h2>
+        <span>步数 <strong id="crate-moves">0</strong></span>
+        <span>纪录 <strong id="crate-best">—</strong></span>
+      </div>
+    </section>
+    <div class="crate-board-frame">
+      <div id="crate-board" tabindex="0" role="img" aria-label="推箱棋盘"></div>
+    </div>
+    <div class="crate-tools">
+      <button id="crate-undo" type="button">撤销</button>
+      <button id="crate-reset" type="button">重来</button>
+      <button id="crate-next" type="button" hidden>下一关 →</button>
+    </div>
+    <div class="crate-pad" id="crate-pad" aria-label="移动方向">
+      <button type="button" data-dir="up" aria-label="向上">↑</button>
+      <button type="button" data-dir="left" aria-label="向左">←</button>
+      <button type="button" data-dir="down" aria-label="向下">↓</button>
+      <button type="button" data-dir="right" aria-label="向右">→</button>
+    </div>
+    <p id="crate-message" role="status"></p>
+    <p class="crate-help">用方向键、滑动棋盘或点按箭头移动。把木箱推到圆印上。箱子只能推，不能拉。按 Z 撤销。</p>
+  </main>
+  <script src="/puzzle.js?v=1" defer></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+.arcade-shell { width: min(100%, 1060px); margin: auto; padding: 20px 16px 48px; }
+.arcade-return { display: inline-flex; align-items: center; min-height: 44px; color: #f0d9aa; }
+.arcade-cover { position: relative; isolation: isolate; overflow: hidden; display: grid; align-items: center; min-height: 235px; margin: 8px 0 18px; padding: clamp(20px, 5vw, 58px); border: 1px solid #bb8d83; background: #31243a; }
+.arcade-cover img { position: absolute; z-index: -2; right: 0; width: 67%; height: 100%; object-fit: cover; object-position: 50% 63%; }
+.arcade-cover::after { content: ''; position: absolute; z-index: -1; inset: 0; background: linear-gradient(90deg, #31243a 23%, #31243af0 36%, transparent 80%); }
+.arcade-cover p { margin: 0; color: #f5d8ba; }
+.arcade-cover h1 { margin: 9px 0; color: #ffebcf; font: 700 clamp(32px, 7vw, 65px)/1.14 'Songti SC', SimSun, serif; letter-spacing: .06em; text-shadow: 0 2px 5px #2c1828; }
+.arcade-tickets { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.arcade-ticket { grid-column: span 2; min-width: 0; --paper: #e9c9a7; --ink: #4c3237; }
+.ticket-puzzle { --paper: #c8d1aa; --ink: #354737; }
+.ticket-bullet { --paper: #cdc8e4; --ink: #38334d; }
+.ticket-lake { --paper: #b8d2c6; --ink: #304b49; }
+.ticket-workshop { --paper: #e2cba1; --ink: #4c402c; }
+.ticket-dye { --paper: #e6bac0; --ink: #573b43; }
+.arcade-ticket a { position: relative; isolation: isolate; display: grid; align-content: start; gap: 5px; min-height: 132px; height: 100%; padding: 14px 14px 14px 52px; overflow: hidden; color: var(--ink); background: var(--paper); border: 1px solid var(--paper); text-decoration: none; }
+.arcade-ticket a:is(:hover, :focus-visible) { outline: 2px solid var(--paper); outline-offset: 3px; }
+.ticket-number { position: absolute; inset: 0 auto 0 0; display: grid; width: 40px; place-items: center; border-right: 1px dashed currentColor; font: 700 21px/1 Georgia, SimSun, serif; }
+.ticket-type { font-size: 12px; letter-spacing: .18em; }
+.arcade-ticket strong { font: 700 clamp(19px, 3vw, 27px)/1.3 'Songti SC', SimSun, serif; }
+.arcade-ticket small { font-size: 13px; }
+.ticket-record { font-size: 12px; font-weight: 700; }
+.arcade-ticket svg { position: absolute; z-index: -1; right: 10px; bottom: 7px; width: 70px; height: 70px; opacity: .16; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 650px) {
+  .arcade-cover { min-height: 185px; }
+  .arcade-tickets { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .arcade-ticket { grid-column: auto; }
+  .arcade-ticket a { padding-left: 36px; }
+  .ticket-number { width: 27px; font-size: 16px; }
+}

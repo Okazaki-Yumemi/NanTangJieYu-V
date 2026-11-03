@@ -1,0 +1,22 @@
+.dye-page { background: #252e28; color: #f2e4bf; }
+.dye-shell { width: min(100%, 510px); margin: auto; padding: 18px 16px 32px; }
+.dye-shell a { display: inline-flex; align-items: center; min-height: 44px; color: inherit; }
+.dye-shell header { border-bottom: 1px solid #b9a17c; }
+.dye-shell header p { font-size: 12px; letter-spacing: .16em; }
+.dye-shell h1 { margin: 4px 0 12px; font: 700 40px/1.2 'Songti SC', SimSun, serif; }
+.dye-shell > p { font-size: 14px; }
+.dye-board { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 2px; padding: 8px; border: 2px solid #a0845c; background: #30251f; }
+.dye-cell { aspect-ratio: 1; display: grid; place-items: center; color: #241f1d; font-size: clamp(13px, 4vw, 20px); font-weight: 700; }
+.dye-cell[data-wet] { box-shadow: inset 0 0 0 2px #fff4ca; }
+.dye-cell[data-wet]::before { content: '·'; position: absolute; transform: translate(-12px, -10px); }
+.dye-shell [data-dye="0"] { background-color: #dc9a94; }
+.dye-shell [data-dye="1"] { background-color: #a1bd8b; }
+.dye-shell [data-dye="2"] { background-color: #97b7cf; }
+.dye-shell [data-dye="3"] { background-color: #d7ae79; }
+.dye-shell [data-dye="4"] { background-color: #c5a6c7; }
+.dye-cell { background-image: repeating-linear-gradient(45deg, #241f1d0c 0 1px, transparent 1px 4px); }
+.dye-palette, .dye-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.dye-shell button { min-height: 44px; padding: 7px 10px; border: 1px solid #a0845c; border-radius: 2px; background: #e6d1ab; color: #30251f; font-size: 16px; }
+.dye-palette button { flex: 1; }
+.dye-palette button[aria-pressed="true"] { box-shadow: inset 0 0 0 2px #30251f, inset 0 0 0 4px #fff4ca; }
+.dye-actions { margin-top: 14px; }

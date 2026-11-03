@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>后户鼓乐 · 四季游园会</title>
+  <link rel="stylesheet" href="/rhythm.css?v=1" />
+</head>
+<body>
+  <main class="drum-book">
+    <a class="back" href="/arcade.html">← 四季游园会</a>
+    <header class="drum-cover"><div><p>后户之门　｜　祭乐</p><h1>后户鼓乐</h1><p>门后鼓声一起，四季便轮番登场。</p></div></header>
+    <section class="drum-console" aria-label="鼓乐场地">
+      <div class="drum-choices">
+        <label for="drum-chart">曲目</label>
+        <select id="drum-chart"><option value="0">春门引 · 92 拍</option><option value="1">四季急奏 · 126 拍</option></select>
+        <button id="drum-mute" type="button" aria-pressed="false">静音</button>
+      </div>
+      <dl class="drum-stats"><div><dt>得分</dt><dd id="drum-score">0</dd></div><div><dt>连击</dt><dd id="drum-combo">0</dd></div><div><dt>最高</dt><dd id="drum-best">0</dd></div></dl>
+      <div class="drum-track" id="drum-track" aria-hidden="true"><i class="drum-line"></i><div id="drum-notes"></div><span id="drum-call">起鼓</span></div>
+      <progress id="drum-progress" value="0" max="1" aria-label="演奏进度"></progress>
+      <div class="drum-pads">
+        <button id="drum-center" type="button" class="drum-pad center" aria-keyshortcuts="D F"><i aria-hidden="true">●</i><strong>鼓心</strong><kbd>D / F</kbd></button>
+        <button id="drum-rim" type="button" class="drum-pad rim" aria-keyshortcuts="J K"><i aria-hidden="true">◆</i><strong>鼓沿</strong><kbd>J / K</kbd></button>
+      </div>
+      <p class="drum-rule">鼓点从右往左滑。到金圈时，敲对应的鼓心或鼓沿。</p>
+      <div class="drum-actions"><button id="drum-start" type="button">开演</button><button id="drum-pause" type="button" disabled>暂停</button></div>
+      <p id="drum-result" role="status">先选一首，再起鼓。</p>
+    </section>
+  </main>
+  <script src="/rhythm.js?v=1"></script>
+</body>
+</html>

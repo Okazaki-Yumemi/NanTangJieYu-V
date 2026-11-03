@@ -1,0 +1,32 @@
+.crate-page { background: #1d2424; color: #efe4ca; }
+.crate-shell { width: min(100%, 540px); margin: auto; padding: 18px 14px 32px; }
+.crate-masthead { border-bottom: 1px solid #948265; margin-bottom: 12px; padding-bottom: 8px; }
+.crate-masthead a { color: #e7d8b6; display: inline-block; padding: 6px 0; }
+.crate-masthead p { margin: 8px 0 0; color: #d1b58c; letter-spacing: .22em; font-size: 12px; }
+.crate-masthead h1 { margin: 4px 0; font: 700 37px/1.2 'Songti SC', SimSun, serif; letter-spacing: .14em; }
+.crate-ticket { background: #ead9b6; color: #392e25; padding: 8px 10px; }
+.crate-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+.crate-shell button { min-height: 44px; padding: 4px; font: inherit; color: inherit; border: 1px solid currentColor; border-radius: 2px; background: transparent; }
+.crate-shell button:focus-visible, #crate-board:focus-visible { outline: 3px solid #ffb47b; outline-offset: 2px; }
+.crate-tabs button[aria-pressed="true"] { background: #694138; border-color: #694138; color: #fff5dd; }
+.crate-title { display: flex; gap: 9px; justify-content: space-between; align-items: baseline; margin-top: 8px; font-size: 12px; }
+.crate-title h2 { flex: 1; margin: 0; font: 700 20px/1.3 'Songti SC', SimSun, serif; }
+.crate-title strong { font: 700 19px Georgia, serif; }
+.crate-board-frame { margin: 10px 0; border: 1px solid #a98a62; padding: 7px; background: #382c25; box-shadow: inset 0 0 0 3px #251d19; }
+#crate-board { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 2px; touch-action: none; }
+.crate-cell { position: relative; aspect-ratio: 1; background: var(--floor, #c6ba91); box-shadow: inset 0 -2px #0002; }
+.crate-cell:nth-child(odd) { background: var(--floor-alt, #bcb18c); }
+.crate-cell.wall { background: var(--wall, #57705a); box-shadow: inset 0 3px #fff2, inset 0 -5px #0004; }
+.crate-cell.goal::before { content: ''; position: absolute; inset: 22%; border: 2px dashed #56372e; border-radius: 50%; background: #fff4; }
+.crate-cell.box::after { content: ''; position: absolute; inset: 11%; border: 2px solid #634634; border-radius: 5%; background: repeating-linear-gradient(45deg, transparent 0 39%, #805336 40% 49%, transparent 50% 100%), #cc9560; box-shadow: 0 2px #422a23a0, inset 0 0 0 3px #e4b275; }
+.crate-cell.box.goal::after { background-color: #dabb67; border-color: #7b502d; box-shadow: 0 2px #422a23a0, inset 0 0 0 3px #f8dd9a; }
+.crate-cell.player::after { content: '✦'; position: absolute; inset: 12%; display: grid; place-content: center; color: #fff1ca; font-size: clamp(17px, 4vw, 28px); border-radius: 50%; background: #702e3d; border: 2px solid #fff2ce; box-shadow: 0 2px #44252a99; }
+.crate-tools { display: flex; gap: 8px; }
+.crate-tools button { padding-inline: 14px; }
+#crate-next { margin-left: auto; background: #eed7aa; color: #492e25; }
+.crate-pad { display: grid; grid-template-columns: repeat(3, 50px); gap: 5px; justify-content: center; margin-top: 12px; }
+.crate-pad button { background: #374641; font-size: 20px; touch-action: manipulation; }
+.crate-pad button:first-child { grid-column: 2; }
+.crate-pad button:nth-child(2) { grid-column: 1; }
+#crate-message { margin: 8px 0 0; color: #ffdc9f; text-align: center; min-height: 1.55em; }
+.crate-help { color: #d7ccad; font-size: 13px; margin: 8px 0 0; text-align: center; }

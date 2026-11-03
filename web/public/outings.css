@@ -43,6 +43,24 @@
 .outing-copy small { color: #f4e7cf; font-size: 12px; }
 .outing-arrow { flex: none; color: #ffe0a3; }
 
+.arcade-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 19px;
+  margin-bottom: 10px;
+  color: #492d37;
+  background: #ebcaa4;
+  border: 1px solid #eddbb9;
+  text-decoration: none;
+}
+.arcade-banner > span:first-child { display: grid; gap: 2px; }
+.arcade-banner strong { font: 700 24px/1.2 'Songti SC', SimSun, serif; }
+.arcade-banner small, .arcade-banner-note { font-size: 12px; }
+.arcade-banner-note b { display: inline-block; margin-left: 5px; }
+.arcade-banner:is(:hover, :focus-visible) { background: #f5dbb7; }
+
 @media (max-width: 380px) {
   .outing { padding: 9px; }
   .outing-copy strong { font-size: 17px; }

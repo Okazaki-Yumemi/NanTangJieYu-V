@@ -11,15 +11,26 @@
   const keys = new Set();
   const arrows = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
   const player = { x: 180, y: 324 };
-  const storageKey = 'ntj-firefly-best';
+  const storageKey = 'ntj-firefly-score-v2';
+  const duration = 36;
+  const patterns = ['一符 · 花雨', '二符 · 横流', '三符 · 星环'];
+  const colors = ['#ff9eaa', '#94d9ee', '#e0a6f4'];
   let best = 0;
   try { best = Math.max(0, Number(localStorage.getItem(storageKey)) || 0); } catch { /* Storage is optional. */ }
   let phase = 'ready';
   let score = 0;
+  let lamps = 0;
+  let grazes = 0;
+  let guard = 0;
+  let invulnerableUntil = 0;
+  let chain = 0;
+  let lastLamp = -Infinity;
+  let notes = [];
   let elapsed = 0;
   let nextWave = 0;
   let wave = 0;
   let bullets = [];
+  let warning = null;
   let lantern;
   let pointer = null;
   let target = null;
@@ -27,11 +38,13 @@
   let last;
 
   function spawnLantern() {
-    lantern = { x: 35 + Math.random() * 290, y: 138 + Math.random() * 215 };
+    const half = player.x > width / 2 ? 28 : width / 2 + 30;
+    lantern = { x: half + Math.random() * 115, y: 124 + Math.random() * 232 };
   }
 
   function draw() {
-    ctx.fillStyle = '#23273b';
+    const pattern = Math.min(2, Math.floor(elapsed / 12));
+    ctx.fillStyle = ['#22263e', '#203345', '#302541'][pattern];
     ctx.fillRect(0, 0, width, height);
     ctx.fillStyle = '#ae866b';
     ctx.beginPath();
@@ -62,13 +75,40 @@
       ctx.lineTo(x + 18 + i * 2, y);
       ctx.stroke();
     }
+    if (warning) {
+      ctx.save();
+      ctx.setLineDash([3, 5]);
+      ctx.lineWidth = 1.5;
+      for (const shot of warning) {
+        ctx.strokeStyle = shot.color;
+        ctx.globalAlpha = .55;
+        ctx.beginPath();
+        ctx.moveTo(shot.x, shot.y);
+        ctx.lineTo(shot.x + shot.vx * .48, shot.y + shot.vy * .48);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
     for (const bullet of bullets) {
-      ctx.fillStyle = '#ed9b9e';
+      ctx.strokeStyle = bullet.color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(bullet.x, bullet.y);
+      ctx.lineTo(bullet.x - bullet.vx * .08, bullet.y - bullet.vy * .08);
+      ctx.stroke();
+      ctx.fillStyle = bullet.color;
       ctx.beginPath();
       ctx.arc(bullet.x, bullet.y, 5, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = '#a74f64';
+      ctx.fillStyle = '#fff1e4';
       ctx.fillRect(bullet.x - 1, bullet.y - 1, 2, 2);
+    }
+    if (guard >= 8 || elapsed < invulnerableUntil) {
+      ctx.strokeStyle = '#9ee5d6';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, 14, 0, Math.PI * 2);
+      ctx.stroke();
     }
     if (lantern) {
       ctx.fillStyle = '#ffd27f35';
@@ -87,12 +127,22 @@
     ctx.fill();
     ctx.fillStyle = '#b65a60';
     ctx.fillRect(player.x - 2, player.y - 2, 4, 4);
+    ctx.font = 'bold 12px system-ui';
+    for (const note of notes) {
+      ctx.globalAlpha = Math.max(0, 1 - (elapsed - note.at));
+      ctx.fillStyle = '#ffe8b9';
+      ctx.fillText(note.label, Math.min(note.x + 9, width - 60), note.y - (elapsed - note.at) * 26);
+    }
+    ctx.globalAlpha = 1;
   }
 
   function updateLedger() {
     byId('score').textContent = score;
-    byId('time').textContent = Math.max(0, Math.ceil(30 - elapsed));
+    byId('time').textContent = Math.max(0, Math.ceil(duration - elapsed));
     byId('best').textContent = best;
+    const pattern = patterns[Math.min(2, Math.floor(elapsed / 12))];
+    if (byId('pattern').textContent !== pattern) byId('pattern').textContent = pattern;
+    byId('guard').textContent = guard === 8 ? '护身符就绪' : `护身符 ${guard}/8`;
   }
 
   function releaseInput() {
@@ -105,29 +155,55 @@
     phase = nextPhase;
     cancelAnimationFrame(frame);
     releaseInput();
-    if (score > best) {
+    if (nextPhase === 'over' && score > best) {
       best = score;
       try { localStorage.setItem(storageKey, String(best)); } catch { /* Play works without storage. */ }
     }
     updateLedger();
     curtain.classList.remove('hidden');
     byId('result').textContent = message;
+    byId('detail').textContent = nextPhase === 'over' ? `拾灯 ${lamps} 盏 · 擦弹 ${grazes} 次` : '离开时会自动暂停';
     start.textContent = phase === 'paused' ? '继续' : '再来一次';
     pause.disabled = true;
     start.focus({ preventScroll: true });
   }
 
-  function addWave() {
-    const origin = 180 + Math.sin(wave * 1.33) * 104;
-    const count = elapsed < 9 ? 5 : 7;
-    const speed = 83 + elapsed * 1.8;
-    const drift = Math.sin(wave * 1.9) * .25;
-    for (let i = 0; i < count; i += 1) {
-      const angle = drift + (i - (count - 1) / 2) * .25;
-      bullets.push({ x: origin, y: -6, vx: Math.sin(angle) * speed, vy: Math.cos(angle) * speed });
+  function planWave() {
+    const pattern = Math.min(2, Math.floor(nextWave / 12));
+    const shots = [];
+    const launch = (x, y, angle, speed) => {
+      shots.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, color: colors[pattern] });
+    };
+    if (pattern === 0) {
+      const x = 180 + Math.sin(wave * 1.33) * 104;
+      for (let i = -2; i <= 2; i += 1) launch(x, 4, Math.PI / 2 + i * .24, 111);
+    } else if (pattern === 1) {
+      const side = wave % 2;
+      const gap = (wave * 3) % 8;
+      for (let i = 0; i < 9; i += 1) {
+        if (i === gap || i === gap + 1) continue;
+        launch(side ? width - 3 : 3, 33 + i * 43, side ? Math.PI : 0, 148);
+      }
+    } else {
+      const x = 180 + Math.sin(wave * 1.46) * 92;
+      const y = 98 + Math.cos(wave * 1.2) * 33;
+      for (let i = 0; i < 12; i += 1) launch(x, y, i * Math.PI / 6 + wave * .22, 115);
     }
+    return shots;
+  }
+
+  function updateWave() {
+    if (!warning && elapsed >= nextWave - .42) warning = planWave();
+    if (elapsed < nextWave) return;
+    bullets.push(...warning);
+    warning = null;
     wave += 1;
-    nextWave += Math.max(.5, 1.14 - elapsed * .019);
+    nextWave += elapsed < 12 ? 1.08 : elapsed < 24 ? 1.4 : 1.22;
+  }
+
+  function award(points) {
+    score += points;
+    notes.push({ x: player.x, y: player.y, label: `+${points}`, at: elapsed });
   }
 
   function movePlayer(dt) {
@@ -145,23 +221,50 @@
     const dt = Math.min(.033, (now - last) / 1000);
     last = now;
     elapsed += dt;
-    if (elapsed >= nextWave) addWave();
+    updateWave();
     movePlayer(dt);
     for (const bullet of bullets) {
       bullet.x += bullet.vx * dt;
       bullet.y += bullet.vy * dt;
     }
-    bullets = bullets.filter(({ x, y }) => x > -8 && x < width + 8 && y < height + 8);
+    bullets = bullets.filter(({ x, y }) => x > -12 && x < width + 12 && y > -12 && y < height + 12);
+    notes = notes.filter((note) => elapsed - note.at < 1);
+    let hit = false;
+    if (elapsed >= invulnerableUntil) {
+      for (const bullet of bullets) {
+        const distance = Math.hypot(player.x - bullet.x, player.y - bullet.y);
+        if (distance < 8) {
+          hit = true;
+          break;
+        }
+        if (distance < 21 && !bullet.grazed) {
+          bullet.grazed = true;
+          grazes += 1;
+          guard = Math.min(8, guard + 1);
+          award(2);
+        }
+      }
+    }
+    if (hit && guard === 8) {
+      guard = 0;
+      invulnerableUntil = elapsed + 1.1;
+      bullets = bullets.filter(({ x, y }) => Math.hypot(player.x - x, player.y - y) > 38);
+      hit = false;
+    }
     if (Math.hypot(player.x - lantern.x, player.y - lantern.y) < 15) {
-      score += 1;
+      lamps += 1;
+      chain = elapsed - lastLamp < 4 ? Math.min(4, chain + 1) : 1;
+      lastLamp = elapsed;
+      award(chain * 10);
       spawnLantern();
     }
     draw();
     updateLedger();
-    if (bullets.some(({ x, y }) => Math.hypot(player.x - x, player.y - y) < 8)) {
-      end(`撞上弹幕 · 拾得 ${score} 盏`, 'over');
-    } else if (elapsed >= 30) {
-      end(`顺利过关 · 拾得 ${score} 盏`, 'over');
+    if (hit) {
+      end(`撞上弹幕 · ${score} 分`, 'over');
+    } else if (elapsed >= duration) {
+      award(50);
+      end(`破符成功 · ${score} 分`, 'over');
     } else {
       frame = requestAnimationFrame(tick);
     }
@@ -170,6 +273,14 @@
   start.addEventListener('click', () => {
     if (phase !== 'paused') {
       score = 0;
+      lamps = 0;
+      grazes = 0;
+      guard = 0;
+      chain = 0;
+      lastLamp = -Infinity;
+      invulnerableUntil = 0;
+      warning = null;
+      notes = [];
       elapsed = 0;
       nextWave = .7;
       wave = 0;

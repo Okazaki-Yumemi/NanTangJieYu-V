@@ -1,0 +1,39 @@
+:root { color-scheme: dark; font-family: system-ui, sans-serif; background:#211d2a; color:#f0debe; }
+* { box-sizing:border-box; }
+body { margin:0; background:radial-gradient(ellipse at top, #553343, transparent 60%); min-height:100vh; }
+.drum-book { width:min(100%, 760px); margin:auto; padding:16px 14px 38px; }
+.back { display:inline-flex; min-height:44px; align-items:center; color:#ead4ae; }
+.drum-cover { min-height:152px; border:1px solid #bc9876; margin:0 0 12px; display:flex; align-items:center; background:#e9d6b8; color:#382633; position:relative; isolation:isolate; overflow:hidden; }
+.drum-cover::before { content:''; position:absolute; z-index:-1; inset:0 0 0 45%; background:linear-gradient(90deg,#e9d6b8,transparent 45%), url('/assets/event-poster.jpg') center 55% / cover; }
+.drum-cover div { padding:16px 22px; }
+.drum-cover p { margin:6px 0; font-size:13px; }
+.drum-cover h1 { margin:0; font:700 clamp(32px,7vw,52px)/1.2 'Songti SC', SimSun, serif; }
+.drum-console { padding:clamp(12px,3vw,24px); border:1px solid #ad896366; background:#2e2432; }
+.drum-choices,.drum-actions { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.drum-choices label { font-size:13px; }
+button,select { min-height:44px; padding:7px 12px; color:#f4dfbb; background:#483548; border:1px solid #a5836b; border-radius:3px; font:inherit; }
+button { cursor:pointer; touch-action:manipulation; }
+button:disabled { cursor:default; opacity:.52; }
+button:focus-visible,select:focus-visible,a:focus-visible { outline:2px solid #ffda83; outline-offset:3px; }
+#drum-mute { margin-left:auto; }
+.drum-stats { display:grid; grid-template-columns:repeat(3,1fr); padding:9px 0; margin:12px 0; background:#392d3d; border-block:1px solid #ba98764d; }
+.drum-stats div { text-align:center; }
+.drum-stats div+div { border-left:1px solid #ba98764d; }
+.drum-stats dt { font-size:12px; color:#cfbba5; }
+.drum-stats dd { margin:2px 0 0; font:700 23px Georgia, serif; font-variant-numeric:tabular-nums; }
+.drum-track { height:108px; position:relative; overflow:hidden; background:repeating-linear-gradient(90deg,#211c29 0 35px,#302639 36px 37px); border:1px solid #bd946c; }
+.drum-line { position:absolute; left:18%; top:50%; width:42px; height:42px; transform:translate(-50%,-50%); border:2px solid #ffd18c; border-radius:50%; box-shadow:0 0 0 4px #ffd18c2e; }
+.drum-note { position:absolute; top:50%; width:29px; height:29px; transform:translate(-50%,-50%); border:2px solid #f5af94; background:#ad4c49; border-radius:50%; }
+.drum-note.rim { border-radius:4px; border-color:#a0e1ca; background:#3f8277; transform:translate(-50%,-50%) rotate(45deg) scale(.83); }
+#drum-call { position:absolute; left:12px; top:7px; font-size:13px; color:#f3ce97; }
+#drum-progress { width:100%; height:10px; accent-color:#f0c582; }
+.drum-pads { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:10px; }
+.drum-pad { min-height:80px; display:grid; justify-items:center; gap:2px; box-shadow:inset 0 -5px #211d2a66; color:#fff0d4; user-select:none; -webkit-user-select:none; }
+.drum-pad.center { background:#793f45; }
+.drum-pad.rim { background:#355d59; }
+.drum-pad i { font-style:normal; }
+.drum-pad.active { box-shadow:inset 0 0 0 3px #ffd18c; }
+.drum-pad kbd { font-size:11px; color:#efdec6; }
+.drum-rule,#drum-result { line-height:1.5; font-size:14px; }
+#drum-start { background:#e6c08a; color:#3b2833; }
+#drum-result { margin-bottom:0; min-height:24px; }

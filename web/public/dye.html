@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>染布摊 · 四季游园会</title>
+  <link rel="stylesheet" href="/styles.css?v=11" />
+  <link rel="stylesheet" href="/dye.css?v=1" />
+</head>
+<body class="dye-page">
+  <main class="dye-shell">
+    <a href="/arcade.html">← 四季游园会</a>
+    <header><p>四季游园会 · 染布</p><h1>染布摊</h1></header>
+    <p>从左上角开始染。每选一种染料，已染的布会吸收相邻的同色布块。用完染料前，把整块布染成一色。</p>
+    <div id="dye-board" class="dye-board" role="img" aria-label="染布棋盘"></div>
+    <p id="dye-status" role="status"></p>
+    <div class="dye-palette" role="group" aria-label="选择染料">
+      <button type="button" data-dye="0" aria-label="选桃染">桃</button>
+      <button type="button" data-dye="1" aria-label="选竹染">竹</button>
+      <button type="button" data-dye="2" aria-label="选靛染">靛</button>
+      <button type="button" data-dye="3" aria-label="选栗染">栗</button>
+      <button type="button" data-dye="4" aria-label="选藤染">藤</button>
+    </div>
+    <div class="dye-actions"><button id="dye-retry" type="button">重染这块</button><button id="dye-new" type="button">换块布</button></div>
+  </main>
+  <script src="/dye.js?v=1"></script>
+</body>
+</html>
