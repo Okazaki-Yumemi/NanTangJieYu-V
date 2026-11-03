@@ -1,6 +1,6 @@
 .campus-outings {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 16px;
 }
@@ -27,10 +27,6 @@
   background-image: linear-gradient(90deg, #132e2a 14%, #132e2a33), url('/assets/taisei/cirno-portrait.svg');
 }
 
-.outing-workshop {
-  background-color: #493746;
-  background-image: linear-gradient(90deg, #322433 14%, #32243333), url('/assets/taisei/reimu-portrait.svg');
-}
 
 .outing-danmaku {
   background-color: #313448;
@@ -65,9 +61,4 @@
 @media (max-width: 380px) {
   .outing { padding: 9px; }
   .outing-copy strong { font-size: 17px; }
-}
-
-@media (max-width: 600px) {
-  .campus-outings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .outing-danmaku { grid-column: 1 / -1; min-height: 74px; }
 }

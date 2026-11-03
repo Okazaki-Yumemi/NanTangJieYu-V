@@ -21,6 +21,9 @@
   let best = readBest();
   let phase = 'ready';
   let score = 0;
+  let lampPoints = 0;
+  let clearPoints = 0;
+  let runId = 0;
   let lamps = 0;
   let spellLamps = 0;
   let spell = 0;
@@ -135,6 +138,7 @@
     byId('score').textContent = score;
     byId('time').textContent = Math.max(0, Math.ceil(duration - elapsed));
     byId('best').textContent = best;
+    byId('chain').textContent = `×${elapsed - lastLamp < 4 ? Math.min(chain + 1, 4) : 1}`;
     const pattern = expert ? `${patterns[spell]} · 灯火 ${Math.min(spellLamps, 2)}/2` : patterns[spell];
     if (byId('pattern').textContent !== pattern) byId('pattern').textContent = pattern;
     byId('guard').textContent = guard === 8 ? '护身符就绪' : `护身符 ${guard}/8`;
@@ -146,7 +150,29 @@
     target = null;
   }
 
-  function end(message, nextPhase) {
+  function rankingMode() {
+    return expert ? 'expert' : 'normal';
+  }
+
+  function showRanking() {
+    window.NTJArcadeScores?.mount(byId('ranking'), 'danmaku', rankingMode());
+  }
+
+  async function submitResult(cleared) {
+    if (!window.NTJArcadeScores || score === 0) return;
+    const finishedRun = runId;
+    const status = byId('ranking-status');
+    status.textContent = '正在保存成绩…';
+    const result = await window.NTJArcadeScores.submit('danmaku', {
+      mode: rankingMode(),
+      score,
+      detail: `${cleared ? '全符卡通过 · ' : ''}${lamps} 盏灯 · 擦弹 ${grazes} 次`,
+    });
+    if (finishedRun !== runId) return;
+    status.textContent = result.message || (result.improved ? '已刷新榜上纪录。' : '已保留你的榜上最佳。');
+  }
+
+  function end(message, nextPhase, cleared = false) {
     phase = nextPhase;
     cancelAnimationFrame(frame);
     releaseInput();
@@ -157,7 +183,15 @@
     updateLedger();
     curtain.classList.remove('hidden');
     byId('result').textContent = message;
-    byId('detail').textContent = nextPhase === 'over' ? `拾灯 ${lamps} 盏 · 擦弹 ${grazes} 次` : '离开时会自动暂停';
+    const finished = nextPhase === 'over';
+    byId('detail').textContent = finished ? `${score} 分 · 拾灯 ${lamps} 盏 · 擦弹 ${grazes} 次` : '离开时会自动暂停';
+    byId('breakdown').classList.toggle('hidden', !finished);
+    if (finished) {
+      byId('lamp-points').textContent = lampPoints;
+      byId('graze-points').textContent = grazes * 2;
+      byId('clear-points').textContent = clearPoints;
+      void submitResult(cleared);
+    }
     start.textContent = phase === 'paused' ? '继续' : '再来一次';
     pause.disabled = true;
     mode.disabled = nextPhase === 'paused';
@@ -260,25 +294,30 @@
       spellLamps += 1;
       chain = elapsed - lastLamp < 4 ? Math.min(4, chain + 1) : 1;
       lastLamp = elapsed;
+      lampPoints += chain * 10;
       award(chain * 10);
       spawnLantern();
     }
     const boundary = elapsed >= (spell + 1) * 12;
     const missedQuota = expert && boundary && spellLamps < 2;
     if (boundary && !missedQuota && spell < 2) {
-      if (expert) award(30);
+      if (expert) {
+        clearPoints += 30;
+        award(30);
+      }
       spell += 1;
       spellLamps = 0;
     }
     draw();
     updateLedger();
     if (hit) {
-      end(`撞上弹幕 · ${score} 分`, 'over');
+      end('撞上弹幕', 'over');
     } else if (missedQuota) {
-      end(`${patterns[spell]}未破 · 需要拾起两盏灯`, 'over');
+      end(`${patterns[spell]}未破，少了灯火`, 'over');
     } else if (elapsed >= duration) {
+      clearPoints += 50;
       award(50);
-      end(`破符成功 · ${score} 分`, 'over');
+      end('三道符卡全部通过', 'over', true);
     } else {
       frame = requestAnimationFrame(tick);
     }
@@ -286,7 +325,10 @@
 
   start.addEventListener('click', () => {
     if (phase !== 'paused') {
+      runId += 1;
+      byId('ranking-status').textContent = '';
       score = 0;
+      lampPoints = clearPoints = 0;
       lamps = 0;
       spellLamps = 0;
       spell = 0;
@@ -314,6 +356,9 @@
   });
 
   mode.addEventListener('change', () => {
+    runId += 1;
+    byId('ranking-status').textContent = '';
+    byId('breakdown').classList.add('hidden');
     expert = mode.value === 'expert';
     best = readBest();
     phase = 'ready';
@@ -328,6 +373,7 @@
     start.textContent = '开始';
     updateLedger();
     draw();
+    showRanking();
   });
 
   function pauseGame() {
@@ -375,5 +421,6 @@
 
   draw();
   updateLedger();
+  showRanking();
   sprite.addEventListener('load', () => { if (phase !== 'playing') draw(); });
 })();

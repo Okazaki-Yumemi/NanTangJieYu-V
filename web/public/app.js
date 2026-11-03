@@ -726,11 +726,11 @@
     } else {
       elements.resultCharacterBox.classList.add('hidden');
     }
-    elements.resultTitle.textContent = actionResult.contribution_gain > 0 ? '调查有收获！' : '略有遗憾……';
+    elements.resultTitle.textContent = actionResult.region_just_cleared ? '这一带的异变已平息' : '调查记录';
     elements.resultText.textContent = actionResult.text;
-    elements.resultContribution.textContent = `贡献 +${formatNumber(actionResult.contribution_gain)}`;
-    elements.resultAnomaly.textContent = `异变 -${formatNumber(actionResult.anomaly_reduction)}`;
-    elements.resultEnergy.textContent = `能量 ${actionResult.energy_after}`;
+    elements.resultContribution.textContent = actionResult.contribution_gain ? `+${formatNumber(actionResult.contribution_gain)}` : '0';
+    elements.resultAnomaly.textContent = actionResult.anomaly_reduction ? `−${formatNumber(actionResult.anomaly_reduction)}` : '0';
+    elements.resultEnergy.textContent = `${actionResult.energy_before} → ${actionResult.energy_after}`;
     elements.resultModal.classList.remove('hidden');
   }
 

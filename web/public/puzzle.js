@@ -28,6 +28,7 @@
   const message = byId('message');
   const undo = byId('undo');
   const next = byId('next');
+  const scoreNote = byId('score-note');
   const storageKey = 'ntj-puzzle-bests-v1';
   const bests = {};
   try {
@@ -46,6 +47,19 @@
   let history;
   let cells;
   let won;
+  let resultVersion = 0;
+
+  async function submitClear(level, moves) {
+    if (moves >= 100000 || !window.NTJArcadeScores) return;
+    const version = ++resultVersion;
+    scoreNote.hidden = false;
+    scoreNote.textContent = '正在登记步数…';
+    const result = await window.NTJArcadeScores.submit('puzzle', { mode: level.id, score: 100000 - moves });
+    if (version !== resultVersion) return;
+    scoreNote.textContent = result.ok
+      ? (result.improved ? '刷新了这关的在线纪录。' : '榜上已保留你的最佳步数。')
+      : (result.message || '这次成绩未能登记。');
+  }
 
   function isPlaced(position, box) {
     return goals.get(position) === box;
@@ -74,6 +88,8 @@
   }
 
   function loadLevel(index) {
+    resultVersion += 1;
+    scoreNote.hidden = true;
     levelIndex = index;
     const level = levels[index];
     cols = level.rows[0].length;
@@ -103,6 +119,7 @@
     byId('rule').textContent = level.marked ? '有字的箱子必须推到同字圆印。推错了可以撤销。' : '把木箱推到任意圆印。箱子只能推，不能拉。';
     [...tabs.children].forEach((tab, i) => tab.setAttribute('aria-pressed', i === index));
     render();
+    window.NTJArcadeScores?.mount(byId('leaderboard'), 'puzzle', level.id);
   }
 
   function move(direction) {
@@ -128,6 +145,7 @@
         bests[id] = history.length;
         try { localStorage.setItem(storageKey, JSON.stringify(bests)); } catch { /* Keep the in-memory result. */ }
       }
+      submitClear(levels[levelIndex], history.length);
     }
     render();
   }
@@ -135,6 +153,8 @@
   function undoMove() {
     const previous = history.pop();
     if (!previous) return;
+    resultVersion += 1;
+    scoreNote.hidden = true;
     player = previous.player;
     if (previous.from !== null) {
       boxes.delete(previous.to);

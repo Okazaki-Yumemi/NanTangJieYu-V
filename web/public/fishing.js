@@ -16,12 +16,12 @@
   let pending=null;
   let submitting=false;
   let buying=false;
-  const anglers=[['cirno','琪露诺'],['reimu','博丽灵梦']];
+  const anglers=[['reimu','博丽灵梦'],['marisa','雾雨魔理沙'],['aya','射命丸文'],['chen','橙'],['cirno','琪露诺'],['eirin','八意永琳'],['kaguya','蓬莱山辉夜'],['kanako','八坂神奈子'],['koishi','古明地恋'],['meiling','红美铃'],['mokou','藤原妹红'],['momiji','犬走椛'],['nitori','河城荷取'],['patchouli','帕秋莉'],['sanae','东风谷早苗'],['satori','古明地觉'],['suwako','洩矢诹访子'],['tewi','因幡帝'],['youmu','魂魄妖梦'],['yukari','八云紫'],['yuyuko','西行寺幽幽子']];
   function pickAngler() {
     let previous='';try{previous=sessionStorage.getItem('ntj-last-angler') || '';}catch{}
     const pool=anglers.filter(([id])=>id!==previous);
     const [id,name]=pool[Math.floor(Math.random()*pool.length)];
-    const image=document.querySelector('.pond-angler');image.src=`/assets/taisei/${id}-portrait.svg`;image.alt=name;
+    const image=document.querySelector('.pond-angler');image.src=`/assets/characters/${id}.png`;image.alt=`湖边的${name}`;
     $('pond-angler-name').textContent=name;
     try{sessionStorage.setItem('ntj-last-angler',id);}catch{}
   }
@@ -43,9 +43,16 @@
     button.textContent=remaining?`下次抛竿 ${clock(remaining)}`:'抛竿';
   }
 
-  function renderRanks(rows) {
-    $('fishing-ranks').innerHTML=rows.length?rows.map(row=>`<li><span>${row.rank}</span><img src="${sprite(row)}" alt="" /><div><span class="rank-name">${esc(row.custom_name || row.name)}</span><small>${esc(row.display_name)} · ${esc(row.name)}</small><strong>${length(row.length_cm)}</strong></div></li>`).join(''):'<li class="rank-empty">还没有人上榜。第一竿会是谁？</li>';
+  function renderRanks() {
+    const total = $('fishing-rank-mode').value === 'total';
+    const rows = (total ? view?.total_rows : view?.rows) || [];
+    $('fishing-rank-rule').textContent = total ? '按全部正式鱼获的总长度排。升级渔具不扣累计长度。' : '每人只记最长的一条正式鱼获。';
+    $('fishing-ranks').innerHTML = rows.map(row => {
+      if (total) return `<li class="rank-total"><span>${row.rank}</span><div><span class="rank-name">${esc(row.display_name)}</span><small>钓获 ${row.catches} 条</small><strong>${length(row.total_cm)}</strong></div></li>`;
+      return `<li><span>${row.rank}</span><img src="${sprite(row)}" alt="" /><div><span class="rank-name">${esc(row.custom_name || row.name)}</span><small>${esc(row.display_name)} · ${esc(row.name)}</small><strong>${length(row.length_cm)}</strong></div></li>`;
+    }).join('') || '<li class="rank-empty">还没有人上榜。</li>';
   }
+  $('fishing-rank-mode').addEventListener('change', renderRanks);
   function showCatch(fish) {
     selectedFish=fish;
     $('catch-result').classList.remove('hidden');
@@ -97,7 +104,7 @@
         ? `不消耗能量 · 每 ${view.cooldown_interval_sec} 秒一竿。从抛竿开始计时。`
         : '不消耗能量 · 试玩期间无冷却，可以连续抛竿。';
       $('fishing-login').classList.toggle('hidden',view.logged_in);
-      renderRanks(view.rows);renderHistory();renderShop();renderButton();
+      renderRanks();renderHistory();renderShop();renderButton();
       if(!selectedFish && view.last_catch)showCatch(view.last_catch);
     } catch(error){$('fishing-message').textContent=error.message || '鱼情暂时没查到，请稍后重试。';}
   }

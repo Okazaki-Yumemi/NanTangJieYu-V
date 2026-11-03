@@ -9,8 +9,8 @@
     <link rel="stylesheet" href="/player.css?v=10" />
     <link rel="stylesheet" href="/atmosphere.css?v=5" />
     <link rel="stylesheet" href="/tasks.css?v=5" />
-    <link rel="stylesheet" href="/outings.css?v=4" />
-    <link rel="stylesheet" href="/field-guide.css?v=2" />
+    <link rel="stylesheet" href="/outings.css?v=5" />
+    <link rel="stylesheet" href="/field-guide.css?v=3" />
   </head>
   <body class="player-body">
     <main class="player-shell">
@@ -32,10 +32,6 @@
       <nav class="campus-outings" aria-label="校园小游戏">
         <a class="outing outing-lake" href="/fishing.html">
           <span class="outing-copy"><strong>湖边钓鱼</strong><small>甩一竿，看看湖底藏了什么</small></span>
-          <span class="outing-arrow" aria-hidden="true">→</span>
-        </a>
-        <a class="outing outing-workshop" href="/practice.html">
-          <span class="outing-copy"><strong>调查练习室</strong><small>不用登录，随时练手</small></span>
           <span class="outing-arrow" aria-hidden="true">→</span>
         </a>
         <a class="outing outing-danmaku" href="/danmaku.html">
@@ -171,9 +167,9 @@
         <h3 id="result-title"></h3>
         <p id="result-text" class="result-text"></p>
         <div class="result-stats">
-          <span id="result-contribution" class="stat-chip stat-up"></span>
-          <span id="result-anomaly" class="stat-chip stat-down"></span>
-          <span id="result-energy" class="stat-chip"></span>
+          <div><small>阵营贡献</small><strong id="result-contribution"></strong></div>
+          <div><small>异变削减</small><strong id="result-anomaly"></strong></div>
+          <div><small>调查能量</small><strong id="result-energy"></strong></div>
         </div>
       </div>
     </div>
@@ -194,6 +190,6 @@
     <script src="/task-logic.js?v=1"></script>
     <script src="/task-scenes.js?v=4"></script>
     <script src="/tasks.js?v=5"></script>
-    <script src="/app.js?v=12"></script>
+    <script src="/app.js?v=13"></script>
   </body>
 </html>

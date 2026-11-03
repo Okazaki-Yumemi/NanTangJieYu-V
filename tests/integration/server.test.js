@@ -409,6 +409,22 @@ describe('HTTP integration: full event journey', () => {
     assert.equal(fishingState.json.total_cm,350);
     assert.equal(fishingState.json.wallet_cm,150);
     assert.equal(fishingState.json.gear.rod,1);
+    assert.equal(fishingState.json.total_rows[0].total_cm,350);
+  });
+
+  it('arcade leaderboards require login to submit and retain the best score per mode', async () => {
+    const body = { game: 'danmaku', mode: 'normal', score: 310 };
+    const headers = { Cookie: playerACookie };
+    assert.equal((await request('POST', '/api/arcade/score', { body })).status, 401);
+    assert.equal((await request('POST', '/api/arcade/score', { body: { ...body, mode: '__proto__' }, headers })).status, 400);
+    assert.equal((await request('POST', '/api/arcade/score', { body: { ...body, score: 20001 }, headers })).status, 400);
+    assert.equal((await request('POST', '/api/arcade/score', { body, headers })).json.improved, true);
+    assert.equal((await request('POST', '/api/arcade/score', { body: { ...body, score: 240 }, headers })).json.best, 310);
+    assert.equal((await request('POST', '/api/arcade/score', { body: { ...body, score: 420 }, headers })).json.improved, true);
+    const board = await request('GET', '/api/arcade/leaderboard?game=danmaku&mode=normal');
+    assert.deepEqual(board.json.rows.map(({ rank, score }) => ({ rank, score })), [{ rank: 1, score: 420 }]);
+    const expert = await request('GET', '/api/arcade/leaderboard?game=danmaku&mode=expert');
+    assert.deepEqual(expert.json.rows, []);
   });
 
   it('restart keeps the state (persistence)', async () => {

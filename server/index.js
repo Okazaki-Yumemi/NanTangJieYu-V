@@ -20,6 +20,7 @@ const playerRoutes = require('./routes/player-routes');
 const adminRoutes = require('./routes/admin-routes');
 const publicRoutes = require('./routes/public-routes');
 const fishingRoutes = require('./routes/fishing-routes');
+const arcadeRoutes = require('./routes/arcade-routes');
 
 function createApp(overrides = {}) {
   const config = overrides.config || createConfig({ env: overrides.env });
@@ -47,6 +48,7 @@ function createApp(overrides = {}) {
   publicRoutes.registerRoutes(router, appCtx);
   playerRoutes.registerRoutes(router, appCtx);
   fishingRoutes.registerRoutes(router, appCtx);
+  arcadeRoutes.registerRoutes(router, appCtx);
   adminRoutes.registerRoutes(router, appCtx);
 
   async function requestHandler(req, res) {

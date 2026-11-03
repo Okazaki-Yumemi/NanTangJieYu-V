@@ -65,3 +65,16 @@
 .dye-sequence span { display: grid; place-items: center; width: 23px; height: 23px; color: #30251f; font-size: 12px; }
 .dye-palette button small { display: block; font-size: 11px; line-height: 1; margin-top: 3px; }
 @media (prefers-reduced-motion: reduce) { .dye-cell[data-fresh] { animation: none; } }
+.dye-rank {
+  margin: 1.5rem 0;
+  padding: 1rem 0;
+  border-block: 1px solid color-mix(in srgb, #e5c699 38%, transparent);
+}
+.dye-rank h2 {
+  margin: 0 0 .3rem;
+  color: #e5c699;
+  font-family: Georgia, "Songti SC", SimSun, serif;
+  font-size: 1.35rem;
+}
+.dye-rank > p { margin: 0 0 .85rem; font-size: .9rem; }
+#dye-score-note { margin: .25rem 0 .7rem; color: #e5c699; font-size: .875rem; }

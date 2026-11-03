@@ -134,10 +134,9 @@
 .pond-float::after { content: ''; position: absolute; inset: 8px -5px -3px; border-bottom: 1px solid #b4d5c380; border-radius: 50%; }
 @keyframes lake-float { 50% { transform: translateY(2px); } }
 @media (prefers-reduced-motion: reduce) { .pond-float { animation: none; } }
-.pond-caption { position: absolute; right: clamp(9px, 2vw, 22px); bottom: clamp(9px, 2vw, 22px); display: grid; gap: 2px; padding: 5px 9px 0; border-left: 1px solid #b8dce6; background: #182532dd; }
+.pond-caption { position: absolute; right: clamp(9px, 2vw, 22px); bottom: clamp(9px, 2vw, 22px); display: grid; gap: 2px; padding: 5px 9px; border-left: 1px solid #b8dce6; background: #182532dd; }
 .pond-caption span { color: #b8dce6; font-size: 11px; letter-spacing: .14em; }
 .pond-caption strong { color: #fff1dc; font: 700 clamp(14px, 2.2vw, 20px)/1.2 'Songti SC', SimSun, serif; }
-.pond-caption a { display: inline-flex; align-items: center; min-height: 34px; color: #f8dcc1; font-size: 11px; }
 .pond-scene:has(.fishing-overlay:not(.hidden)) .pond-caption { visibility: hidden; }
 .fishing-controls {
   margin: 7px 0 20px;
@@ -197,3 +196,6 @@
   .fishing-title p { letter-spacing: .03em; }
   .fishing-controls { padding-inline: 8px; }
 }
+.fishing-rank-picker { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.fishing-rank-picker select { min-height: 44px; padding: 6px 9px; color: #f5e6cd; background: #263642; border: 1px solid #8b897e; font: inherit; }
+#fishing-ranks li.rank-total { grid-template-columns: 23px minmax(0, 1fr); }

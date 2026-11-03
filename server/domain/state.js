@@ -54,6 +54,7 @@ function buildInitialState(seeds, nowSec) {
     request_locks: {},
     lottery: { draws: [] },
     fishing: { players: {} },
+    arcade_scores: {},
     admin_logs: [],
     system_events: []
   };
@@ -93,6 +94,7 @@ function normalizeState(state, seeds) {
   }
   if (!state.fishing || typeof state.fishing !== 'object' || Array.isArray(state.fishing)) state.fishing = { players: {} };
   if (!state.fishing.players || typeof state.fishing.players !== 'object' || Array.isArray(state.fishing.players)) state.fishing.players = {};
+  if (!state.arcade_scores || typeof state.arcade_scores !== 'object' || Array.isArray(state.arcade_scores)) state.arcade_scores = {};
 
   // --- 活动 ---
   state.activity = { ...initial.activity, ...state.activity };

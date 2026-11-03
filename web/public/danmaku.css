@@ -23,3 +23,7 @@
 .firefly-shell :focus-visible { outline: 2px solid #ffe0a2; outline-offset: 3px; }
 .firefly-mode { display:flex; align-items:center; gap:10px; margin:10px 0; color:#f0e0c1; }
 .firefly-mode select { min-height:44px; padding:6px 12px; background:#282238; color:#f0e0c1; border:1px solid #a68b77; font:inherit; }
+.firefly-ledger > span { display: grid; gap: 1px; }
+.firefly-breakdown { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(240px, 85vw); margin: 0 0 16px; padding: 8px 0; text-align: center; background: #242b2e; border-block: 1px solid #b196715f; }
+.firefly-breakdown dt { color: #c3c9b1; font-size: 12px; }
+.firefly-breakdown dd { margin: 0; color: #f3d6a5; font: 700 20px Georgia, serif; }

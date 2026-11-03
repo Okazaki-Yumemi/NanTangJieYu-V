@@ -5,6 +5,7 @@
   const colors = ['桃', '竹', '靛', '栗', '藤'];
   const board = document.getElementById('dye-board');
   const status = document.getElementById('dye-status');
+  const scoreNote = document.getElementById('dye-score-note');
   const mode = document.getElementById('dye-mode');
   const rules = document.getElementById('dye-rules');
   const sequence = document.getElementById('dye-sequence');
@@ -48,6 +49,19 @@
   let dailyDate;
   let practiceIndex = -1;
   let previousWet;
+  let resultVersion = 0;
+
+  async function submitDaily() {
+    if (!window.NTJArcadeScores) return;
+    const version = ++resultVersion;
+    scoreNote.hidden = false;
+    scoreNote.textContent = '正在登记今日成绩…';
+    const result = await window.NTJArcadeScores.submit('dye', { mode: dailyDate, score: 100 - history.length });
+    if (version !== resultVersion) return;
+    scoreNote.textContent = result.ok
+      ? (result.improved ? '今日成绩已上榜。' : '榜上已有你的今日成绩。')
+      : (result.message || '这次成绩未能登记。');
+  }
 
   function connected(values) {
     const wet = new Set([0]);
@@ -94,7 +108,7 @@
         try { localStorage.setItem(dailyKey, dailyDate); }
         catch { /* Private browsing can prevent storage. */ }
       }
-      status.textContent = `染好了！用了 ${history.length} 次染料。`;
+      status.textContent = `整块布染好了，共用 ${history.length} 勺染料。`;
     } else {
       status.textContent = left ? `余 ${left} 次 · 已染 ${wet.size}/${cloth.length} 格` : '染料用完了，试试换一条路线。';
     }
@@ -120,6 +134,8 @@
   }
 
   function retry() {
+    resultVersion += 1;
+    scoreNote.hidden = true;
     cloth = original.slice();
     history = [];
     previousWet = null;
@@ -147,6 +163,7 @@
     supplies = colors.map((_, index) => [...recipe].filter((color) => recolor(color) === index).length);
     limit = recipe.length + (isDaily() ? 0 : 2);
     retry();
+    window.NTJArcadeScores?.mount(document.getElementById('dye-leaderboard'), 'dye', dailyDate);
   }
 
   palette.forEach((button, color) => button.addEventListener('click', () => {
@@ -155,6 +172,7 @@
     history.push({ cloth: cloth.slice(), color });
     for (const i of wet) cloth[i] = color;
     render();
+    if (isDaily() && connected(cloth).size === cloth.length) submitDaily();
   }));
   document.getElementById('dye-retry').addEventListener('click', retry);
   newButton.addEventListener('click', newCloth);

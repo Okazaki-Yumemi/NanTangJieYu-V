@@ -74,3 +74,16 @@
   .crate-title { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 8px; }
   .crate-title h2 { grid-column: 1 / -1; }
 }
+.crate-rank {
+  margin: 1.5rem 0;
+  padding: 1rem 0;
+  border-block: 1px solid color-mix(in srgb, #d6be90 38%, transparent);
+}
+.crate-rank h2 {
+  margin: 0 0 .3rem;
+  color: #d6be90;
+  font-family: Georgia, "Songti SC", SimSun, serif;
+  font-size: 1.35rem;
+}
+.crate-rank > p { margin: 0 0 .85rem; font-size: .9rem; }
+#crate-score-note { margin: .25rem 0 .7rem; color: #d6be90; font-size: .875rem; }

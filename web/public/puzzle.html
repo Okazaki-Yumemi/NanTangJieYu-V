@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>四季推箱 · 东方南堂界遇 V</title>
   <link rel="stylesheet" href="/styles.css?v=11">
-  <link rel="stylesheet" href="/puzzle.css?v=2">
+  <link rel="stylesheet" href="/puzzle.css?v=3">
 </head>
 <body class="crate-page">
   <main class="crate-shell">
@@ -18,9 +18,9 @@
       <div class="crate-tabs" id="crate-tabs" aria-label="选择关卡"></div>
       <div class="crate-title">
         <h2 id="crate-title"></h2>
-        <span>步数 <strong id="crate-moves">0</strong></span>
-        <span>纪录 <strong id="crate-best">—</strong></span>
-        <span>最短 <strong id="crate-par">—</strong></span>
+        <span>本局 <strong id="crate-moves">0</strong></span>
+        <span>本机最佳 <strong id="crate-best">—</strong></span>
+        <span>最短解 <strong id="crate-par">—</strong></span>
       </div>
     </section>
     <div class="crate-board-frame">
@@ -38,10 +38,16 @@
       <button type="button" data-dir="right" aria-label="向右">→</button>
     </div>
     <p id="crate-message" role="status"></p>
+    <p id="crate-score-note" class="crate-help" role="status" hidden></p>
     <p class="crate-help" id="crate-rule"></p>
     <p class="crate-help">方向键、滑动棋盘或点按箭头移动。按 Z 撤销。</p>
+    <section class="crate-rank" aria-label="关卡步数榜">
+      <div id="crate-leaderboard"></div>
+      <p>每关单独排名，步数越少越靠前。</p>
+    </section>
     <a class="crate-credit" href="/art-credits.html">灵梦立绘署名</a>
   </main>
-  <script src="/puzzle.js?v=2" defer></script>
+  <script src="/arcade-scores.js" defer></script>
+  <script src="/puzzle.js?v=3" defer></script>
 </body>
 </html>

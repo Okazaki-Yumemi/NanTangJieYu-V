@@ -64,3 +64,8 @@ button:focus-visible,select:focus-visible,a:focus-visible { outline:2px solid #f
   .drum-track { height: 108px; }
   .drum-pad { min-height: 94px; touch-action: none; }
 }
+.drum-audio { flex-wrap: wrap; }
+#drum-source { flex: 0 0 auto; }
+#drum-volume { flex: 1 1 66px; min-width: 42px; height: 44px; accent-color: #edc38e; }
+#drum-volume-value { min-width: 3.4ch; font-variant-numeric: tabular-nums; }
+.drum-ranking { margin-top: 16px; }

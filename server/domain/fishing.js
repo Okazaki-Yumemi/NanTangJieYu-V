@@ -69,6 +69,17 @@ function leaderboard(state) {
     .sort((a,b) => amounts.compare(b.length_cm,a.length_cm) || a.caught_at - b.caught_at || a.user_id.localeCompare(b.user_id))
     .slice(0,30).map((row,index) => ({ ...row, rank:index+1 }));
 }
+function totalLeaderboard(state) {
+  return Object.entries(state.fishing?.players || {})
+    .filter(([id, value]) => value.best && state.users[id] && !state.users[id].banned)
+    .map(([id, value]) => ({
+      id, display_name: state.users[id].display_name, catches: value.catches || 0,
+      total_cm: economy(value).total_cm
+    }))
+    .sort((a, b) => amounts.compare(b.total_cm, a.total_cm) || a.id.localeCompare(b.id))
+    .slice(0, 30)
+    .map(({ id, ...row }, index) => ({ ...row, rank: index + 1 }));
+}
 function view(state, user, now = Date.now()) {
   const item = user ? record(state,user.id) : null;
   const funds=economy(item || {});
@@ -81,7 +92,7 @@ function view(state, user, now = Date.now()) {
     cooldown_enabled: COOLDOWN_MS > 0,
     cooldown_interval_sec: COOLDOWN_MS/1000,
     server_time: now, best: item?.best || null, last_catch: item?.last_catch || null,
-    catches: item?.catches || 0, rows: leaderboard(state),
+    catches: item?.catches || 0, rows: leaderboard(state), total_rows: totalLeaderboard(state),
     naming_min_cm: NAMING_MIN_CM, history: item?.history || [],
     ...funds, shop:shopView(funds.gear),big_fish_chance:bigFishChance(funds.gear,jackpot),jackpot_test_mode:jackpot,
     extreme_limit_cm:extremeLimit(state)

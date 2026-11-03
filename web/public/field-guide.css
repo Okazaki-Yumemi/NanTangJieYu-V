@@ -94,3 +94,7 @@
   .field-poster img { object-position: 47% 65%; }
   .field-poster::after { background: linear-gradient(90deg, #e8d9b8, transparent 42%); }
 }
+#result-modal .result-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; padding: 1px; background: #ae967358; }
+#result-modal .result-stats > div { display: grid; gap: 4px; padding: 10px 6px; text-align: center; background: #252332; }
+#result-modal .result-stats small { color: #d5c2a8; font-size: 11px; }
+#result-modal .result-stats strong { font: 700 clamp(15px, 4vw, 24px)/1.2 Georgia, serif; color: #f4deb5; overflow-wrap: anywhere; }

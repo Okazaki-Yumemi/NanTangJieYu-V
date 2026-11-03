@@ -4,6 +4,8 @@
   const el = (name) => document.getElementById(`drum-${name}`);
   const chart = el('chart');
   const difficulty = el('level');
+  const source = el('source');
+  const volumeControl = el('volume');
   const start = el('start');
   const pause = el('pause');
   const mute = el('mute');
@@ -14,29 +16,36 @@
     {
       file: 'four-seasons', bpm: 92,
       phrases: ['ddkdkddk', 'kkdkkddk', 'ddkkdkkd', 'dkdkddkk', 'kdkddkdk', 'dddkddkk', 'kkdkddkk', 'dkdkkddk'],
-      accents: [6, 14, 24, 33, 42, 49, 56],
       bars: ['d...d.k.', 'd.k.d...', 'd.d.k.k.', 'd...k...', 'd.k.d.k.', 'd.d.k...', 'k.k.d.d.', 'd.k.d...'],
-      onsets: [1610,1960,2500,2850,3190,3550,3910,4270,4620,4990,5340,5690,6210,6570,7100,7450,7810,8170,8610,9050,9500,9940,10300,10650,11270,11630,12070,12430,12780,13310,13850,14200,14730,15270,15620,15980,16330,16690,17040,17400,17750,18110,18460,18990,19530,19880,20410,20950,21300,21660,22190,22630,23080,23430,23790,24140,24680],
     },
     {
       file: 'hidden-star', bpm: 126,
       phrases: ['dkdkkddd', 'kddkdkdk', 'ddkkdkdd', 'kkddkdkd', 'dkddkddk', 'kkdkdddk', 'dkdkkddk'],
-      accents: [5, 10, 18, 26, 32, 37, 45, 53],
       bars: ['d.k.ddk.', 'k.d.kkd.', 'dkkdd.k.', 'dkd.k.d.', 'dkdkd.k.', 'kddkk.d.', 'ddk.kddk', 'dkdkddk.'],
-      onsets: [1360,1780,2140,2700,3210,3570,4110,4640,5000,5560,6070,6420,6970,7320,7850,8390,8750,9280,9820,10350,10710,11240,11780,12140,12500,12860,13220,13570,14730,15360,15710,16070,16430,16790,17140,17680,18210,18570,18930,19290,19640,20000,20360,20690,21070,21430,21780,22140,22680,23030,23390,23730,24110,24640],
     },
   ];
   const levels = {
-    normal: { window: 155, perfect: 68, lead: 1650, description: '单点 · 宽判定' },
-    hard: { window: 108, perfect: 43, lead: 1330, description: '切分与双敲 · ±108ms' },
-    expert: { window: 75, perfect: 29, lead: 1060, description: '密集交替与双敲 · ±75ms' },
+    normal: { window: 155, perfect: 68, lead: 1650, salience: 3, spacing: 420, description: '主拍 · 单击' },
+    hard: { window: 108, perfect: 43, lead: 1330, salience: 2, spacing: 270, description: '切分 · 单击' },
+    expert: { window: 75, perfect: 29, lead: 1060, salience: 1, spacing: 190, description: '交替 · 双击' },
+    master: { window: 63, perfect: 25, lead: 970, salience: 0, spacing: 148, description: '密集连打 · 双击' },
+    lunatic: { window: 49, perfect: 19, lead: 880, salience: 0, spacing: 105, description: '全量起音 · 连续双击' },
   };
   const delay = 2100;
   const bestKey = 'ntj-rhythm-best';
-  let best = 0;
-  try { best = Math.min(10000, Math.max(0, parseInt(localStorage.getItem(bestKey), 10) || 0)); } catch { /* Optional storage. */ }
+  const bestModesKey = 'ntj-rhythm-bests-v2';
+  let bestByMode = {};
+  let volume = 0.35;
+  try {
+    bestByMode = JSON.parse(localStorage.getItem(bestModesKey)) || {};
+    const stored = localStorage.getItem('ntj-rhythm-volume');
+    if (stored !== null && Number.isFinite(Number(stored))) volume = Math.max(0, Math.min(1, Number(stored)));
+  } catch { /* Optional storage. */ }
   let audio;
+  let master;
   let track;
+  let loadingTrack;
+  const routedTracks = new WeakMap();
   let muted = false;
   let voices = new Set();
   let run;
@@ -46,46 +55,90 @@
   let position = 0;
   let audioCursor = 0;
 
+  function modeId(song = songs[Number(chart.value)], level = difficulty.value, audioSource = source.value) {
+    return `${song.file}-${level}-${audioSource}`;
+  }
+
+  function formatTime(milliseconds) {
+    const seconds = Math.floor(milliseconds / 1000);
+    return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+  }
+
+  function compileRecorded(song, level) {
+    const settings = levels[level];
+    const recording = window.NTJRhythmTracks[song.file];
+    const phrase = song.phrases.join('');
+    const notes = [];
+    let last = -Infinity;
+    for (const [i, [at, salience, bass]] of recording.hits.entries()) {
+      if (at - last < settings.spacing || salience < settings.salience && at - last < 1400) continue;
+      const section = Math.floor(at / 14000);
+      const kind = bass ? 'd' : phrase[(i + section * 5) % phrase.length];
+      const chord = salience === 3 && (
+        level === 'expert' && i % 13 === 0 ||
+        level === 'master' && i % 6 === 0 ||
+        level === 'lunatic' && (bass || i % 3 === 0)
+      );
+      notes.push({ at, kind, chord });
+      if (chord) notes.push({ at, kind: kind === 'd' ? 'k' : 'd', chord: true });
+      last = at;
+    }
+    return { ...settings, notes, end: recording.duration };
+  }
+
   function compileChart(song, level, recorded) {
+    if (recorded) return compileRecorded(song, level);
     const beat = 60000 / song.bpm;
     const pattern = song.bars.join('');
-    const base = recorded
-      ? song.onsets.map((at, i) => ({ at, kind: song.phrases.join('')[i] }))
-      : Array.from(pattern, (kind, i) => ({ kind, at: delay + i * beat / 2 })).filter(({ kind }) => kind !== '.');
+    const base = Array.from(pattern, (kind, i) => ({ kind, at: delay + i * beat / 2 })).filter(({ kind }) => kind !== '.');
     const notes = [];
     for (const [i, note] of base.entries()) {
-      const accent = recorded ? song.accents.includes(i) : i % 8 === 6;
+      const accent = i % 8 === 6;
       if (level === 'normal' && i % 2 !== 0 && !accent) continue;
-      const chord = level === 'expert' && accent || level === 'hard' && accent && i % 3 !== 0;
+      const chord = ['expert', 'master', 'lunatic'].includes(level) && (accent || level === 'lunatic' && i % 3 === 0);
       notes.push({ ...note, chord });
       if (chord) notes.push({ at: note.at, kind: note.kind === 'd' ? 'k' : 'd', chord: true });
       const next = base[i + 1];
-      if (level !== 'expert' || !next || ![1, 2, 3, 6].includes(i % 8)) continue;
+      if (!['expert', 'master', 'lunatic'].includes(level) || !next || level === 'expert' && ![1, 2, 3, 6].includes(i % 8)) continue;
       const gap = next.at - note.at;
       // The recorded phrases follow the audible onset grid. Fill selected gaps with
       // drum answers on that grid, leaving the ends of phrases open to breathe.
-      const fillable = recorded ? gap >= 320 && gap <= 580 : gap >= 225 && gap <= beat * 1.51;
+      const fillable = gap >= 225 && gap <= beat * 1.51;
       if (fillable) {
-        const subdivisions = recorded && gap >= 470 ? 3 : 2;
+        const subdivisions = level === 'lunatic' && gap >= 340 ? 3 : 2;
         for (let part = 1; part < subdivisions; part += 1) {
           const kind = part % 2 ? (note.kind === 'd' ? 'k' : 'd') : note.kind;
           notes.push({ at: note.at + Math.round(gap * part / subdivisions), kind });
         }
       }
     }
-    return { notes, beat, beats: pattern.length / 2, end: recorded ? 25500 : delay + pattern.length * beat / 2, ...levels[level] };
+    return { notes, beat, beats: pattern.length / 2, end: delay + pattern.length * beat / 2, ...levels[level] };
   }
 
   function showChartInfo() {
     const song = songs[Number(chart.value)];
     const level = difficulty.value;
-    const { notes, description } = compileChart(song, level, true);
-    el('chart-info').textContent = `${notes.length} 击 · ${description}`;
+    const { notes, description, end } = compileChart(song, level, source.value === 'original');
+    el('chart-info').textContent = `${formatTime(end)} · ${notes.length} 击 · ${description}`;
+    el('best').textContent = bestByMode[modeId()] || 0;
+    window.NTJArcadeScores?.mount(el('leaderboard'), 'rhythm', modeId());
+  }
+
+  function onSelectionChange() {
+    run = null;
+    el('progress').value = 0;
+    start.textContent = '开演';
+    el('call').textContent = '起鼓';
+    delete el('call').dataset.rating;
+    el('result').textContent = '选好曲目，按开演。';
+    showChartInfo();
+    renderScore();
   }
 
   function enableSelection(enabled) {
     chart.disabled = !enabled;
     difficulty.disabled = !enabled;
+    source.disabled = !enabled;
   }
 
   function enableAudio() {
@@ -94,8 +147,33 @@
       const Audio = window.AudioContext || window.webkitAudioContext;
       if (!Audio) return;
       audio ||= new Audio();
+      if (!master) {
+        master = audio.createGain();
+        master.connect(audio.destination);
+      }
+      master.gain.value = volume;
       audio.resume().catch(() => {});
     } catch { /* The visual cues work without audio. */ }
+  }
+
+  function setTrackVolume(media) {
+    if (audio && master && !routedTracks.has(media)) {
+      try {
+        const input = audio.createMediaElementSource(media);
+        input.connect(master);
+        routedTracks.set(media, input);
+      } catch { /* Older browsers can still use the media volume property. */ }
+    }
+    media.muted = muted;
+    media.volume = routedTracks.has(media) ? 1 : volume;
+  }
+
+  function stopTrack(media) {
+    if (!media) return;
+    media.pause();
+    routedTracks.get(media)?.disconnect();
+    media.removeAttribute('src');
+    media.load();
   }
 
   function tone(at, pitch, duration, volume, type = 'sine', endPitch = pitch) {
@@ -108,7 +186,7 @@
     gain.gain.setValueAtTime(.001, at);
     gain.gain.exponentialRampToValueAtTime(volume, at + .007);
     gain.gain.exponentialRampToValueAtTime(.001, at + duration);
-    oscillator.connect(gain).connect(audio.destination);
+    oscillator.connect(gain).connect(master);
     voices.add(oscillator);
     oscillator.onended = () => { voices.delete(oscillator); oscillator.disconnect(); gain.disconnect(); };
     oscillator.start(at);
@@ -134,9 +212,13 @@
   }
 
   function renderScore() {
-    el('score').textContent = run ? Math.round(100 * run.points / run.notes.length) : 0;
+    el('score').textContent = run ? pointsForRun() : 0;
     el('combo').textContent = run?.combo || 0;
-    el('best').textContent = best;
+    el('best').textContent = bestByMode[modeId()] || 0;
+  }
+
+  function pointsForRun() {
+    return Math.round((90 * run.points + 1000 * run.maxCombo) / run.notes.length);
   }
 
   function resolve(note, rating) {
@@ -165,7 +247,9 @@
     if (audio?.state === 'running') tone(audio.currentTime, kind === 'd' ? 153 : 580, .14, .13, kind === 'd' ? 'sine' : 'triangle', kind === 'd' ? 47 : 193);
     let note;
     let distance = run.window;
-    for (const entry of run.notes) {
+    for (let index = run.firstPending; index < run.notes.length; index += 1) {
+      const entry = run.notes[index];
+      if (entry.at > time + run.window) break;
       const gap = Math.abs(entry.at - time);
       if (!entry.done && entry.kind === kind && gap <= distance) {
         note = entry;
@@ -188,8 +272,12 @@
 
   function tick(now) {
     if (phase !== 'playing') return;
+    if (track?.ended && track.currentTime >= run.end / 1000 - .75) {
+      finish();
+      return;
+    }
     if (track?.error || track?.ended) {
-      track.pause();
+      stopTrack(track);
       track = null;
       stopAudio();
       phase = 'finished';
@@ -202,7 +290,9 @@
     }
     position = clock(now);
     if (!track) queueMusic(position);
-    for (const note of run.notes) {
+    for (let index = run.firstPending; index < run.notes.length; index += 1) {
+      const note = run.notes[index];
+      if (note.at > position + run.lead) break;
       if (note.done) continue;
       const distance = note.at - position;
       if (distance < -run.window) {
@@ -216,46 +306,58 @@
         note.node.style.left = `${18 + distance / run.lead * 86}%`;
       }
     }
+    while (run.notes[run.firstPending]?.done) run.firstPending += 1;
     el('progress').value = Math.min(1, position / run.end);
     if (position < run.end) frame = requestAnimationFrame(tick);
     else finish();
   }
 
   function finish() {
+    while (run.firstPending < run.notes.length) {
+      const note = run.notes[run.firstPending++];
+      if (!note.done) resolve(note, 'miss');
+    }
     phase = 'finished';
     stopAudio();
-    track?.pause();
+    stopTrack(track);
     track = null;
     enableSelection(true);
     pause.disabled = true;
     start.disabled = false;
     start.textContent = '再敲一曲';
-    const score = Math.round(100 * run.points / run.notes.length);
-    if (score > best) {
-      best = score;
-      try { localStorage.setItem(bestKey, String(best)); } catch { /* Optional storage. */ }
+    const score = pointsForRun();
+    if (score > (bestByMode[run.mode] || 0)) {
+      bestByMode[run.mode] = score;
+      try {
+        localStorage.setItem(bestModesKey, JSON.stringify(bestByMode));
+        const previous = Number(localStorage.getItem(bestKey)) || 0;
+        if (score > previous) localStorage.setItem(bestKey, String(score));
+      } catch { /* Optional storage. */ }
     }
     const rank = score >= 9500 ? 'S' : score >= 8000 ? 'A' : score >= 6000 ? 'B' : 'C';
-    el('result').textContent = `${rank} 评定 · 正中 ${run.perfect} · 合拍 ${run.good} · 漏拍 ${run.miss} · 最长 ${run.maxCombo} 连击`;
+    const accuracy = (run.points / run.notes.length).toFixed(1);
+    el('result').textContent = `${rank} 评定 · 准确率 ${accuracy}% · 正中 ${run.perfect} · 合拍 ${run.good} · 漏拍 ${run.miss} · 最长 ${run.maxCombo} 连击`;
+    if (score > 0) window.NTJArcadeScores?.submit('rhythm', { mode: run.mode, score });
     renderScore();
   }
 
   async function startTrack(file) {
     const media = new Audio(`/assets/local-rhythm/${file}.mp3`);
-    media.muted = muted;
+    loadingTrack = media;
+    setTrackVolume(media);
     let timeout;
     try {
       await Promise.race([
         media.play(),
         new Promise((_, reject) => { timeout = setTimeout(() => reject(new Error('Audio unavailable')), 3500); }),
       ]);
+      setTrackVolume(media);
       return media;
     } catch {
-      media.pause();
-      media.removeAttribute('src');
-      media.load();
+      stopTrack(media);
       return null;
     } finally {
+      loadingTrack = null;
       clearTimeout(timeout);
     }
   }
@@ -269,10 +371,11 @@
     enableAudio();
     if (!resume) {
       const song = songs[Number(chart.value)];
-      track = await startTrack(song.file);
+      track = source.value === 'original' ? await startTrack(song.file) : null;
+      if (!track) source.value = 'practice';
       const { perfect: perfectWindow, ...compiled } = compileChart(song, difficulty.value, Boolean(track));
-      run = { ...compiled, perfectWindow, points: 0, combo: 0, maxCombo: 0, perfect: 0, good: 0, miss: 0 };
-      el('chart-info').textContent = `${run.notes.length} 击 · ${run.description}`;
+      run = { ...compiled, perfectWindow, mode: modeId(), firstPending: 0, points: 0, combo: 0, maxCombo: 0, perfect: 0, good: 0, miss: 0 };
+      showChartInfo();
       position = 0;
       audioCursor = 0;
       notesLayer.replaceChildren();
@@ -292,7 +395,7 @@
     enableSelection(false);
     pause.disabled = false;
     start.disabled = true;
-    el('result').textContent = track ? '本地曲目 · 前奏节选' : '练习音轨 · 合成伴奏';
+    el('result').textContent = track ? '原曲全谱 · 正在演奏' : '短谱练习 · 合成伴奏';
     if (document.hidden) { pauseGame(); return; }
     frame = requestAnimationFrame(tick);
   }
@@ -313,11 +416,20 @@
 
   mute.addEventListener('click', () => {
     muted = !muted;
-    if (track) track.muted = muted;
     mute.textContent = muted ? '开声' : '静音';
     mute.setAttribute('aria-pressed', String(muted));
     if (muted) stopAudio();
     else enableAudio();
+    if (track || loadingTrack) setTrackVolume(track || loadingTrack);
+  });
+  volumeControl.value = Math.round(volume * 100);
+  el('volume-value').textContent = `${volumeControl.value}%`;
+  volumeControl.addEventListener('input', () => {
+    volume = Number(volumeControl.value) / 100;
+    el('volume-value').textContent = `${volumeControl.value}%`;
+    if (master) master.gain.value = volume;
+    if (track || loadingTrack) setTrackVolume(track || loadingTrack);
+    try { localStorage.setItem('ntj-rhythm-volume', String(volume)); } catch { /* Optional storage. */ }
   });
   for (const [kind, pad] of Object.entries(pads)) {
     pad.addEventListener('pointerdown', (event) => { if (event.button === 0) hit(kind); });
@@ -333,8 +445,9 @@
   });
   start.addEventListener('click', begin);
   pause.addEventListener('click', pauseGame);
-  chart.addEventListener('change', showChartInfo);
-  difficulty.addEventListener('change', showChartInfo);
+  chart.addEventListener('change', onSelectionChange);
+  difficulty.addEventListener('change', onSelectionChange);
+  source.addEventListener('change', onSelectionChange);
   document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
   showChartInfo();
   renderScore();
