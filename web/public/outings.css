@@ -16,25 +16,25 @@
   border-radius: 5px;
   color: #fff1d5;
   text-decoration: none;
-  background-position: right center;
+  background-position: right 9%;
   background-repeat: no-repeat;
-  background-size: auto, auto 100%;
+  background-size: auto, auto 225%;
   transition: border-color 150ms ease;
 }
 
 .outing-lake {
   background-color: #203e3a;
-  background-image: linear-gradient(90deg, #132e2a 8%, #132e2a22), url('/assets/outing-lake.svg');
+  background-image: linear-gradient(90deg, #132e2a 14%, #132e2a33), url('/assets/taisei/cirno-portrait.svg');
 }
 
 .outing-workshop {
   background-color: #493746;
-  background-image: linear-gradient(90deg, #322433 8%, #32243322), url('/assets/outing-workshop.svg');
+  background-image: linear-gradient(90deg, #322433 14%, #32243333), url('/assets/taisei/reimu-portrait.svg');
 }
 
 .outing-danmaku {
   background-color: #313448;
-  background-image: linear-gradient(90deg, #23243a 8%, #23243a22), url('/assets/outing-danmaku.svg');
+  background-image: linear-gradient(90deg, #23243a 14%, #23243a33), url('/assets/taisei/wriggle-portrait.svg');
 }
 
 .outing:is(:hover, :focus-visible) { border-color: #f0cc88; }
@@ -42,6 +42,7 @@
 .outing-copy strong { font: 700 19px/1.25 'Songti SC', SimSun, serif; }
 .outing-copy small { color: #f4e7cf; font-size: 12px; }
 .outing-arrow { flex: none; color: #ffe0a3; }
+.outing-credits { display: block; margin: -8px 0 12px; color: #c5b6aa; font-size: 11px; text-align: right; }
 
 .arcade-banner {
   display: flex;

@@ -10,8 +10,16 @@
   const pads = { d: el('center'), k: el('rim') };
   const keyToDrum = { d: 'd', f: 'd', j: 'k', k: 'k' };
   const songs = [
-    { bpm: 92, window: 190, bars: ['d...d.k.', 'd.k.d...', 'd.d.k.k.', 'd...k...', 'd.k.d.k.', 'd.d.k...', 'k.k.d.d.', 'd.k.d...'] },
-    { bpm: 126, window: 150, bars: ['d.k.ddk.', 'k.d.kkd.', 'dkkdd.k.', 'dkd.k.d.', 'dkdkd.k.', 'kddkk.d.', 'ddk.kddk', 'dkdkddk.'] },
+    {
+      file: 'four-seasons', bpm: 92, window: 180,
+      bars: ['d...d.k.', 'd.k.d...', 'd.d.k.k.', 'd...k...', 'd.k.d.k.', 'd.d.k...', 'k.k.d.d.', 'd.k.d...'],
+      onsets: [1610,1960,2500,2850,3190,3550,3910,4270,4620,4990,5340,5690,6210,6570,7100,7450,7810,8170,8610,9050,9500,9940,10300,10650,11270,11630,12070,12430,12780,13310,13850,14200,14730,15270,15620,15980,16330,16690,17040,17400,17750,18110,18460,18990,19530,19880,20410,20950,21300,21660,22190,22630,23080,23430,23790,24140,24680],
+    },
+    {
+      file: 'hidden-star', bpm: 126, window: 150,
+      bars: ['d.k.ddk.', 'k.d.kkd.', 'dkkdd.k.', 'dkd.k.d.', 'dkdkd.k.', 'kddkk.d.', 'ddk.kddk', 'dkdkddk.'],
+      onsets: [1360,1780,2140,2700,3210,3570,4110,4640,5000,5560,6070,6420,6970,7320,7850,8390,8750,9280,9820,10350,10710,11240,11780,12140,12500,12860,13220,13570,14730,15360,15710,16070,16430,16790,17140,17680,18210,18570,18930,19290,19640,20000,20360,20690,21070,21430,21780,22140,22680,23030,23390,23730,24110,24640],
+    },
   ];
   const lead = 1650;
   const delay = 2100;
@@ -19,6 +27,7 @@
   let best = 0;
   try { best = Math.min(10000, Math.max(0, parseInt(localStorage.getItem(bestKey), 10) || 0)); } catch { /* Optional storage. */ }
   let audio;
+  let track;
   let muted = false;
   let voices = new Set();
   let run;
@@ -96,7 +105,7 @@
 
   function hit(kind) {
     if (phase !== 'playing') return;
-    const time = performance.now() - origin;
+    const time = clock(performance.now());
     const pad = pads[kind];
     pad.classList.add('active');
     clearTimeout(pad.release);
@@ -120,10 +129,26 @@
     resolve(note, distance <= run.window * .48 ? 'perfect' : 'good');
   }
 
+  function clock(now) {
+    return track ? track.currentTime * 1000 : now - origin;
+  }
+
   function tick(now) {
     if (phase !== 'playing') return;
-    position = now - origin;
-    queueMusic(position);
+    if (track?.error || track?.ended) {
+      track.pause();
+      track = null;
+      stopAudio();
+      phase = 'finished';
+      chart.disabled = false;
+      pause.disabled = true;
+      start.disabled = false;
+      start.textContent = '重新开演';
+      el('result').textContent = '本地音轨播放中断。';
+      return;
+    }
+    position = clock(now);
+    if (!track) queueMusic(position);
     for (const note of run.notes) {
       if (note.done) continue;
       const distance = note.at - position;
@@ -146,6 +171,8 @@
   function finish() {
     phase = 'finished';
     stopAudio();
+    track?.pause();
+    track = null;
     chart.disabled = false;
     pause.disabled = true;
     start.disabled = false;
@@ -160,34 +187,73 @@
     renderScore();
   }
 
-  function begin() {
+  async function startTrack(file) {
+    const media = new Audio(`/assets/local-rhythm/${file}.mp3`);
+    media.muted = muted;
+    let timeout;
+    try {
+      await Promise.race([
+        media.play(),
+        new Promise((_, reject) => { timeout = setTimeout(() => reject(new Error('Audio unavailable')), 3500); }),
+      ]);
+      return media;
+    } catch {
+      media.pause();
+      media.removeAttribute('src');
+      media.load();
+      return null;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  async function begin() {
+    const resume = phase === 'paused';
+    phase = 'loading';
+    chart.disabled = true;
+    start.disabled = true;
+    el('result').textContent = '正在准备音轨…';
     enableAudio();
-    if (phase !== 'paused') {
+    if (!resume) {
       const song = songs[Number(chart.value)];
+      track = await startTrack(song.file);
       const beat = 60000 / song.bpm;
       const pattern = song.bars.join('');
-      const notes = Array.from(pattern, (kind, index) => ({ kind, at: delay + index * beat / 2 })).filter(({ kind }) => kind !== '.');
-      run = { notes, beat, beats: pattern.length / 2, window: song.window, end: delay + pattern.length * beat / 2, points: 0, combo: 0, maxCombo: 0, perfect: 0, good: 0, miss: 0 };
+      const notes = track
+        ? song.onsets.map((at, i) => ({ at, kind: 'ddkdkddk'[i % 8] }))
+        : Array.from(pattern, (kind, i) => ({ kind, at: delay + i * beat / 2 })).filter(({ kind }) => kind !== '.');
+      const end = track ? 25500 : delay + pattern.length * beat / 2;
+      run = { notes, beat, beats: pattern.length / 2, window: song.window, end, points: 0, combo: 0, maxCombo: 0, perfect: 0, good: 0, miss: 0 };
       position = 0;
       audioCursor = 0;
       notesLayer.replaceChildren();
       el('call').textContent = '预备';
       renderScore();
+    } else if (track) {
+      try { await track.play(); } catch {
+        phase = 'paused';
+        start.disabled = false;
+        el('result').textContent = '音轨未能继续播放，再按一次试试。';
+        return;
+      }
     }
     phase = 'playing';
     origin = performance.now() - position;
     chart.disabled = true;
     pause.disabled = false;
     start.disabled = true;
-    el('result').textContent = '演奏中';
+    el('result').textContent = track ? '本地曲目 · 前奏节选' : '练习音轨 · 合成伴奏';
+    if (document.hidden) { pauseGame(); return; }
     frame = requestAnimationFrame(tick);
   }
 
   function pauseGame() {
     if (phase !== 'playing') return;
+    position = clock(performance.now());
     phase = 'paused';
     cancelAnimationFrame(frame);
     stopAudio();
+    track?.pause();
     audioCursor = Math.max(0, Math.ceil((position - delay) / run.beat));
     pause.disabled = true;
     start.disabled = false;
@@ -197,6 +263,7 @@
 
   mute.addEventListener('click', () => {
     muted = !muted;
+    if (track) track.muted = muted;
     mute.textContent = muted ? '开声' : '静音';
     mute.setAttribute('aria-pressed', String(muted));
     if (muted) stopAudio();

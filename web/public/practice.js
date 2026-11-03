@@ -1,13 +1,6 @@
 'use strict';
 
 for (const button of document.querySelectorAll('.task-practice-list [data-task]')) {
-  const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  const symbol = document.createElementNS('http://www.w3.org/2000/svg', 'use');
-  icon.setAttribute('viewBox', '0 0 48 48');
-  icon.setAttribute('aria-hidden', 'true');
-  symbol.setAttribute('href', `/assets/task-tools.svg#${button.dataset.task}`);
-  icon.append(symbol);
-  button.prepend(icon);
   button.addEventListener('click', async () => {
     const result = document.getElementById('practice-result');
     try {

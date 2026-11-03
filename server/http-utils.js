@@ -101,7 +101,44 @@ function resolvePublicFilePath(publicDir, routePath) {
   return filePath;
 }
 
-function serveStatic(res, pathname, { publicDir, adminEntryPath }) {
+function serveLocalRhythm(req, res, filePath, size) {
+  const address = req?.socket.remoteAddress;
+  const host = req?.headers.host || '';
+  if (!['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(address) ||
+      !/^(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(host) ||
+      !['GET', 'HEAD'].includes(req.method)) {
+    return sendText(res, 404, 'Not Found');
+  }
+  const headers = { 'Content-Type': 'audio/mpeg', 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-store' };
+  let start = 0;
+  let end = size - 1;
+  let status = 200;
+  if (req.headers.range) {
+    const match = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range);
+    if (match?.[1]) {
+      start = Number(match[1]);
+      if (match[2]) end = Math.min(end, Number(match[2]));
+    } else if (match?.[2]) {
+      start = Math.max(0, size - Number(match[2]));
+    } else {
+      start = size;
+    }
+    if (start >= size || end < start) {
+      res.writeHead(416, { ...headers, 'Content-Range': `bytes */${size}` });
+      return res.end();
+    }
+    status = 206;
+    headers['Content-Range'] = `bytes ${start}-${end}/${size}`;
+  }
+  res.writeHead(status, { ...headers, 'Content-Length': end - start + 1 });
+  if (req.method === 'HEAD' || !size) return res.end();
+  const stream = fs.createReadStream(filePath, { start, end });
+  stream.on('error', (error) => res.destroy(error));
+  res.on('close', () => stream.destroy());
+  stream.pipe(res);
+}
+
+function serveStatic(res, pathname, { publicDir, adminEntryPath, request }) {
   let routePath = pathname === '/' ? '/index.html' : pathname;
   const isAdminEntry = Boolean(adminEntryPath) && routePath === adminEntryPath;
   if (isAdminEntry) {
@@ -130,6 +167,14 @@ function serveStatic(res, pathname, { publicDir, adminEntryPath }) {
     res.writeHead(404);
     res.end('Not Found');
     return;
+  }
+
+  const relative = path.relative(publicDir, filePath).split(path.sep).join('/').toLowerCase();
+  if (relative.startsWith('assets/local-rhythm/')) {
+    if (!/^assets\/local-rhythm\/(four-seasons|hidden-star)\.mp3$/.test(relative)) {
+      return sendText(res, 404, 'Not Found');
+    }
+    return serveLocalRhythm(request, res, filePath, stat.size);
   }
 
   const ext = path.extname(filePath).toLowerCase();

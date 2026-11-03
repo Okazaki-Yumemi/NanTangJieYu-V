@@ -72,7 +72,8 @@ function createApp(overrides = {}) {
     if (!pathname.startsWith('/api/')) {
       serveStatic(res, pathname, {
         publicDir: config.publicDir,
-        adminEntryPath: config.admin.entryPath
+        adminEntryPath: config.admin.entryPath,
+        request: req
       });
       return;
     }

@@ -1,8 +1,13 @@
-.firefly-page { background: radial-gradient(ellipse at 50% 0, #3f304c, transparent 70%), #161925; color: #f0e0c1; }
-.firefly-shell { width: min(100%, 510px); margin: auto; padding: 18px 14px 32px; }
-.firefly-shell header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.firefly-shell a { color: #d3bd9b; font-size: 14px; }
-.firefly-shell h1 { font: 700 29px/1.2 'Songti SC', SimSun, serif; margin: 0 0 12px; }
+.firefly-page { background: #101a19; color: #f2ebd5; }
+.firefly-shell { width: min(100%, 510px); margin: auto; padding: 12px 14px 32px; }
+.firefly-nav { display: flex; justify-content: space-between; align-items: center; min-height: 44px; }
+.firefly-shell a { color: #c9d5bc; font-size: 14px; }
+.firefly-cover { position: relative; isolation: isolate; overflow: hidden; display: grid; align-items: end; min-height: clamp(118px, 27vw, 166px); margin: 0 0 12px; padding: 14px; border-block: 1px solid #9caf8261; background: #263a34; }
+.firefly-cover img { position: absolute; z-index: -2; right: 0; top: 0; width: 58%; height: 100%; object-fit: cover; object-position: center 30%; }
+.firefly-cover::after { content: ''; position: absolute; z-index: -1; inset: 0; background: linear-gradient(90deg, #263a34 34%, #263a34a8 52%, transparent 90%); }
+.firefly-cover span { color: #b7cba9; font-size: 11px; letter-spacing: .14em; }
+.firefly-cover h1 { font: 700 clamp(32px, 8vw, 44px)/1.1 'Songti SC', SimSun, serif; margin: 5px 0; }
+.firefly-cover p { margin: 0; font-size: 13px; }
 .firefly-ledger { display: flex; justify-content: space-between; gap: 8px; padding: 8px 12px; background: #ede0c2; color: #48372e; font-size: 13px; }
 .firefly-ledger strong { font: 700 19px Georgia, serif; font-variant-numeric: tabular-nums; }
 .firefly-strip { display: flex; justify-content: space-between; gap: 8px; padding: 5px 12px; background: #342943; color: #f3d6a5; font-size: 13px; border-inline: 1px solid #ad9071; }

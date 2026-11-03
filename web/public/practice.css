@@ -1,0 +1,28 @@
+.practice-shell .practice-masthead {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  align-items: center;
+  min-height: clamp(215px, 38vw, 300px);
+  border: 1px solid #8b514f;
+  border-top: 3px solid #e27772;
+  background: #221c2b;
+  box-shadow: none;
+  color: #fff3eb;
+}
+.practice-masthead img { position: absolute; z-index: -2; inset: 0 0 0 auto; width: 56%; height: 100%; object-fit: cover; object-position: 50% 10%; }
+.practice-masthead::after { content: ''; position: absolute; z-index: -1; inset: 0; background: linear-gradient(90deg, #221c2b 36%, #221c2b80 69%, transparent); }
+.practice-masthead .practice-title { max-width: 62%; }
+.practice-masthead .practice-title p { color: #edc4c8; }
+.practice-title a { display: inline-flex; align-items: center; min-height: 44px; color: #ffe0ca; font-size: 12px; }
+.practice-shell .task-practice-list { counter-reset: practice-task; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; border: 1px solid #755263; background: #755263; }
+.practice-shell .task-practice-list button { counter-increment: practice-task; position: relative; min-height: 88px; padding: 14px 12px 14px 48px; border: 0; border-radius: 0; box-shadow: none; background: #282330; color: #ffefeb; }
+.practice-shell .task-practice-list button::before { content: counter(practice-task, decimal-leading-zero); position: absolute; left: 12px; top: 16px; color: #e5a5ad; font: 700 15px/1 Georgia, serif; }
+.practice-shell .task-practice-list button:is(:hover, :focus-visible) { z-index: 1; background: #413044; outline: 2px solid #e6aeb9; outline-offset: -2px; }
+.practice-shell .task-practice-list small { color: #dcc3cd; }
+@media (max-width: 400px) {
+  .practice-masthead img { width: 63%; }
+  .practice-shell .task-practice-list button { padding-left: 37px; }
+  .practice-shell .task-practice-list button::before { left: 9px; }
+}

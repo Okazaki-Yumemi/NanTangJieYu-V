@@ -4,13 +4,14 @@ body { margin:0; background:radial-gradient(ellipse at top, #553343, transparent
 .drum-book { width:min(100%, 760px); margin:auto; padding:16px 14px 38px; }
 .back { display:inline-flex; min-height:44px; align-items:center; color:#ead4ae; }
 .drum-cover { min-height:152px; border:1px solid #bc9876; margin:0 0 12px; display:flex; align-items:center; background:#e9d6b8; color:#382633; position:relative; isolation:isolate; overflow:hidden; }
-.drum-cover::before { content:''; position:absolute; z-index:-1; inset:0 0 0 45%; background:linear-gradient(90deg,#e9d6b8,transparent 45%), url('/assets/event-poster.jpg') center 55% / cover; }
+.drum-cover::before { content:''; position:absolute; z-index:-1; inset:0 0 0 43%; background:linear-gradient(90deg,#e9d6b8,transparent 53%), url('/assets/event-poster.jpg') center 64% / cover; }
 .drum-cover div { padding:16px 22px; }
 .drum-cover p { margin:6px 0; font-size:13px; }
 .drum-cover h1 { margin:0; font:700 clamp(32px,7vw,52px)/1.2 'Songti SC', SimSun, serif; }
 .drum-console { padding:clamp(12px,3vw,24px); border:1px solid #ad896366; background:#2e2432; }
 .drum-choices,.drum-actions { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
 .drum-choices label { font-size:13px; }
+#drum-chart { flex: 1; min-width: 0; }
 button,select { min-height:44px; padding:7px 12px; color:#f4dfbb; background:#483548; border:1px solid #a5836b; border-radius:3px; font:inherit; }
 button { cursor:pointer; touch-action:manipulation; }
 button:disabled { cursor:default; opacity:.52; }
@@ -37,3 +38,16 @@ button:focus-visible,select:focus-visible,a:focus-visible { outline:2px solid #f
 .drum-rule,#drum-result { line-height:1.5; font-size:14px; }
 #drum-start { background:#e6c08a; color:#3b2833; }
 #drum-result { margin-bottom:0; min-height:24px; }
+@media (max-width: 540px) {
+  .drum-book { padding-top: 3px; }
+  .drum-cover { min-height: 105px; margin-bottom: 8px; }
+  .drum-cover div { padding: 9px 12px; }
+  .drum-cover div p:last-child { display: none; }
+  .drum-console { padding: 10px; }
+  .drum-choices { gap: 5px; }
+  #drum-chart { font-size: 13px; padding-inline: 4px; }
+  #drum-mute { padding-inline: 8px; }
+  .drum-stats { margin: 8px 0; }
+  .drum-track { height: 80px; }
+  .drum-pad { min-height: 94px; touch-action: none; }
+}

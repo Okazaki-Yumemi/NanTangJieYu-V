@@ -16,12 +16,13 @@
   let pending=null;
   let submitting=false;
   let buying=false;
-  const anglers=[['reimu','博丽灵梦'],['marisa','雾雨魔理沙'],['aya','射命丸文'],['chen','橙'],['cirno','琪露诺'],['eirin','八意永琳'],['kaguya','蓬莱山辉夜'],['kanako','八坂神奈子'],['koishi','古明地恋'],['meiling','红美铃'],['mokou','藤原妹红'],['momiji','犬走椛'],['nitori','河城荷取'],['patchouli','帕秋莉'],['sanae','东风谷早苗'],['satori','古明地觉'],['suwako','洩矢诹访子'],['tewi','因幡帝'],['youmu','魂魄妖梦'],['yukari','八云紫'],['yuyuko','西行寺幽幽子']];
+  const anglers=[['cirno','琪露诺'],['reimu','博丽灵梦']];
   function pickAngler() {
     let previous='';try{previous=sessionStorage.getItem('ntj-last-angler') || '';}catch{}
     const pool=anglers.filter(([id])=>id!==previous);
     const [id,name]=pool[Math.floor(Math.random()*pool.length)];
-    const image=document.querySelector('.pond-angler');image.src=`/assets/characters/${id}.png`;image.alt=`湖边的${name}`;
+    const image=document.querySelector('.pond-angler');image.src=`/assets/taisei/${id}-portrait.svg`;image.alt=name;
+    $('pond-angler-name').textContent=name;
     try{sessionStorage.setItem('ntj-last-angler',id);}catch{}
   }
   pickAngler();

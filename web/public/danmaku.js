@@ -44,35 +44,14 @@
 
   function draw() {
     const pattern = Math.min(2, Math.floor(elapsed / 12));
-    ctx.fillStyle = ['#22263e', '#203345', '#302541'][pattern];
+    ctx.fillStyle = ['#162824', '#192533', '#2a2031'][pattern];
     ctx.fillRect(0, 0, width, height);
-    ctx.fillStyle = '#ae866b';
-    ctx.beginPath();
-    ctx.arc(180, 58, 31, 0, Math.PI * 2);
-    ctx.fill();
-    for (let i = 0; i < 30; i += 1) {
-      ctx.fillStyle = i % 3 ? '#59617a' : '#af9a86';
-      ctx.fillRect((i * 73 + 21) % width, (i * 43 + 12) % height, 2, 2);
-    }
-    ctx.fillStyle = '#2e374a';
-    ctx.beginPath();
-    ctx.moveTo(0, 147);
-    ctx.lineTo(45, 113);
-    ctx.lineTo(109, 150);
-    ctx.lineTo(177, 106);
-    ctx.lineTo(231, 148);
-    ctx.lineTo(311, 112);
-    ctx.lineTo(width, 141);
-    ctx.lineTo(width, height);
-    ctx.lineTo(0, height);
-    ctx.fill();
-    ctx.strokeStyle = '#394657';
-    for (let i = 0; i < 12; i += 1) {
-      const x = (i * 67) % width;
-      const y = 171 + i * 17;
+    ctx.strokeStyle = '#bcc8b438';
+    ctx.strokeRect(10, 10, width - 20, height - 20);
+    ctx.strokeStyle = '#bcc8b420';
+    for (const radius of [68, 106, 145]) {
       ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + 18 + i * 2, y);
+      ctx.arc(width / 2, height / 2, radius, 0, Math.PI * 2);
       ctx.stroke();
     }
     if (warning) {
