@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 300" preserveAspectRatio="none">
+  <defs>
+    <linearGradient id="lacquer" x2="1" y2="1">
+      <stop stop-color="#622c55"/>
+      <stop offset=".38" stop-color="#37182f"/>
+      <stop offset=".72" stop-color="#30152b"/>
+      <stop offset="1" stop-color="#501f3b"/>
+    </linearGradient>
+    <linearGradient id="metal" x2="0" y2="1">
+      <stop stop-color="#9b5c43"/>
+      <stop offset=".16" stop-color="#fae2a2"/>
+      <stop offset=".33" stop-color="#ba784e"/>
+      <stop offset=".55" stop-color="#e8c37a"/>
+      <stop offset=".76" stop-color="#915138"/>
+      <stop offset="1" stop-color="#d9ac6d"/>
+    </linearGradient>
+    <linearGradient id="inlay" x1="0" x2="1" y1="1" y2="0">
+      <stop stop-color="#9f5e46"/>
+      <stop offset=".48" stop-color="#ffe6a7"/>
+      <stop offset="1" stop-color="#c68b56"/>
+    </linearGradient>
+    <radialGradient id="glaze">
+      <stop stop-color="#9c536d" stop-opacity=".48"/>
+      <stop offset=".64" stop-color="#591d47" stop-opacity=".06"/>
+      <stop offset="1" stop-color="#160d1d" stop-opacity=".55"/>
+    </radialGradient>
+    <radialGradient id="seal" cy=".34" r=".71">
+      <stop stop-color="#89434f"/>
+      <stop offset=".63" stop-color="#5c2940"/>
+      <stop offset="1" stop-color="#321427"/>
+    </radialGradient>
+    <pattern id="silk" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M24 0c0 13.25 10.75 24 24 24-13.25 0-24 10.75-24 24C24 34.75 13.25 24 0 24 13.25 24 24 13.25 24 0Z" fill="none" stroke="#db9c77" stroke-width=".65" opacity=".25"/>
+      <path d="M0 0c13.25 0 24 10.75 24 24C10.75 24 0 13.25 0 0Zm48 0c0 13.25-10.75 24-24 24C24 10.75 34.75 0 48 0Zm0 48c-13.25 0-24-10.75-24-24 13.25 0 24 10.75 24 24ZM0 48c0-13.25 10.75-24 24-24C24 37.25 13.25 48 0 48Z" fill="#cc8486" fill-opacity=".055" stroke="#a96a7f" stroke-width=".6" opacity=".55"/>
+      <circle cx="24" cy="24" r="1.35" fill="#f9c683" opacity=".38"/>
+    </pattern>
+    <pattern id="rails" width="12" height="12" patternUnits="userSpaceOnUse">
+      <path d="M0 6 6 0l6 6-6 6Zm3 0 3-3 3 3-3 3Z" fill="none" stroke="#f2d48c" stroke-width=".65" opacity=".52"/>
+    </pattern>
+    <g id="corner" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M0 67V0h67C42 5 37 13 34 20 31 30 26 35 17 37 8 40 4 53 0 67Z" fill="#431c31" stroke="#7f492f" stroke-width="3.5"/>
+      <path d="M1 65V1h64C45 6 36 11 32 20c-4 8-7 13-15 16C8 39 4 52 1 65Z" stroke="url(#metal)" stroke-width="1.25"/>
+      <path d="M6 47V6h41C34 11 29 18 28 25c-1 3-4 5-8 5-6 1-10 5-14 17Z" stroke="#eec484" stroke-width=".85" opacity=".67"/>
+      <path d="M9 31c1-13 7-18 19-20-2 9-8 15-19 20Zm4-17 9 8m-8 3 9-9" fill="#ad7753" fill-opacity=".32" stroke="#e1b277" stroke-width=".85"/>
+      <circle cx="10" cy="10" r="2.25" fill="#ffe2a3" stroke="none"/>
+    </g>
+    <g id="sakura" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round">
+      <path id="petal" d="M0 0c-6-4-7-9-3.6-12.7l3.6 2 3.6-2C7-9 6-4 0 0Z"/>
+      <use href="#petal" transform="rotate(72)"/>
+      <use href="#petal" transform="rotate(144)"/>
+      <use href="#petal" transform="rotate(216)"/>
+      <use href="#petal" transform="rotate(288)"/>
+      <circle r="2" fill="currentColor" stroke="none"/>
+    </g>
+    <g id="bamboo" fill="currentColor">
+      <path d="M-11 11 10-10l1 1-21 21Zm7-6C-9 0-9-6-6-11-5-4-1-4-4 5Zm8-8C5-10 10-13 15-12 12-7 8-4 4-3Zm-6 6C5 3 9 2 14-2 12 4 5 7-2 3Zm-3 6C-8 7-12 5-13 0c-1 5 1 10 8 9Z"/>
+    </g>
+    <g id="maple" fill="currentColor">
+      <path d="m0-14 2.8 7.3 4.3-3.8-1 6.5 6.6-1.4-2.3 4.2 3.1 1.6-7 3.8.5 3-6.4-1-.1 5.3h-1l-.1-5.3-6.4 1 .5-3-7-3.8 3.1-1.6-2.3-4.2 6.6 1.4-1-6.5 4.3 3.8Z"/>
+    </g>
+    <g id="snow" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round">
+      <path id="snow-tip" d="M0 0V-13m-3.5 4.5L0-5l3.5-3.5"/>
+      <use href="#snow-tip" transform="rotate(60)"/>
+      <use href="#snow-tip" transform="rotate(120)"/>
+      <use href="#snow-tip" transform="rotate(180)"/>
+      <use href="#snow-tip" transform="rotate(240)"/>
+      <use href="#snow-tip" transform="rotate(300)"/>
+    </g>
+    <g id="stud">
+      <circle r="2.2" fill="#714331"/>
+      <circle cy="-.45" r="1.45" fill="#eac188"/>
+      <circle cx="-.35" cy="-.9" r=".56" fill="#ffecb9"/>
+    </g>
+  </defs>
+  <path d="M0 0h360v300H0Z" fill="#1d0d1d"/>
+  <path d="M5 5h350v290H5Z" fill="url(#lacquer)" stroke="#32152a" stroke-width="4"/>
+  <path d="M7 7h346v286H7Z" fill="none" stroke="url(#metal)" stroke-width="2.5"/>
+  <path d="M12 12h336v276H12Z" fill="url(#rails)" stroke="#d8a970" stroke-width=".8"/>
+  <path d="M22 22h316v256H22Z" fill="url(#lacquer)" stroke="#1e101c" stroke-width="3"/>
+  <path d="M22 22h316v256H22Z" fill="url(#silk)" stroke="url(#metal)" stroke-width="1.7"/>
+  <path d="M25 25h310v250H25Z" fill="url(#glaze)" stroke="#c18666" stroke-width=".6"/>
+  <path d="M35 61V35h26m238 0h26v26m0 178v26h-26m-238 0H35v-26" fill="none" stroke="#edb783" stroke-width=".8" opacity=".65"/>
+
+  <use href="#corner" x="23" y="23"/>
+  <use href="#corner" transform="translate(337 23) scale(-1 1)"/>
+  <use href="#corner" transform="translate(23 277) scale(1 -1)"/>
+  <use href="#corner" transform="translate(337 277) scale(-1 -1)"/>
+  <path d="M121 35h38l8-8 13 6 13-6 8 8h38m-118 230h38l8 8 13-6 13 6 8-8h38M32 98v37l-6 15 6 15v37m296-104v37l6 15-6 15v37" fill="none" stroke="#edb783" stroke-width=".75" opacity=".68"/>
+  <g fill="none" stroke="#c58d68" stroke-width="1" opacity=".52">
+    <path d="M58 150h27l14-14 14 14-14 14-14-14m162 0 14-14 14 14-14 14-14-14m28 0h27"/>
+    <path d="M180 45v17l13 12-13 12-13-12 13-12m0 152 13 12-13 12-13-12 13-12m0 24v17"/>
+  </g>
+  <g color="#f1c78c" opacity=".53">
+    <use href="#sakura" transform="translate(79 74) scale(.76)"/>
+    <use href="#bamboo" transform="translate(281 74) scale(.76)"/>
+    <use href="#maple" transform="translate(281 226) scale(.76)"/>
+    <use href="#snow" transform="translate(79 226) scale(.76)"/>
+  </g>
+  <path d="M180 84c8 15 17 22 33 20-1 16 7 26 24 32-14 9-18 20-12 36-16 1-23 9-26 25-15-4-26 0-35 14-9-14-19-18-35-14-3-16-10-24-26-25 6-16 2-27-12-36 17-6 25-16 24-32 16 2 25-5 33-20 10 10 22 12 32 0Z" transform="translate(16 -1)" fill="#ad7353" opacity=".25"/>
+  <path d="m180 83 16 17 23 1 7 22 21 11-8 22 8 22-21 11-7 22-23 1-16 17-16-17-23-1-7-22-21-11 8-22-8-22 21-11 7-22 23-1Z" transform="translate(0 -6)" fill="#442138" stroke="url(#inlay)" stroke-width="1.1"/>
+  <circle cx="180" cy="150" r="54" fill="#321525" stroke="url(#metal)" stroke-width="3.5"/>
+  <circle cx="180" cy="150" r="49.3" fill="url(#seal)" stroke="#f4d495" stroke-width=".8"/>
+  <circle cx="180" cy="150" r="45.5" fill="none" stroke="#c38a63" stroke-width="1" stroke-dasharray="1 2.4"/>
+  <path d="M180 107c0 24 19 43 43 43-24 0-43 19-43 43 0-24-19-43-43-43 24 0 43-19 43-43Z" fill="none" stroke="url(#inlay)" stroke-width="1" opacity=".67"/>
+  <g color="#f6d9a1">
+    <use href="#sakura" transform="translate(180 123) scale(.63)"/>
+    <use href="#bamboo" transform="translate(207 150) scale(.63)"/>
+    <use href="#maple" transform="translate(180 177) scale(.63)"/>
+    <use href="#snow" transform="translate(153 150) scale(.63)"/>
+  </g>
+  <path d="m180 138 4 8 8 4-8 4-4 8-4-8-8-4 8-4Z" fill="url(#inlay)" stroke="#ffe4aa" stroke-width=".6"/>
+  <circle cx="180" cy="150" r="2.2" fill="#693849"/>
+  <g>
+    <use href="#stud" x="16" y="16"/><use href="#stud" x="344" y="16"/>
+    <use href="#stud" x="16" y="284"/><use href="#stud" x="344" y="284"/>
+    <use href="#stud" x="180" y="16"/><use href="#stud" x="180" y="284"/>
+    <use href="#stud" x="16" y="150"/><use href="#stud" x="344" y="150"/>
+  </g>
+</svg>

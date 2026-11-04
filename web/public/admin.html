@@ -6,7 +6,7 @@
     <title>管理后台 · 东方南堂界遇 V</title>
     <link rel="stylesheet" href="/styles.css?v=11" />
     <link rel="stylesheet" href="/admin.css?v=15" />
-    <link rel="stylesheet" href="/lottery-stage.css?v=1" />
+    <link rel="stylesheet" href="/lottery-stage.css?v=2" />
   </head>
   <body class="admin-body">
     <!-- 登录门 -->
@@ -66,13 +66,37 @@
             <div><p>本轮奖品</p><h2 class="draw-show-prize-name" id="draw-show-title"></h2></div>
           </div>
           <div class="draw-show-chamber">
+            <div class="draw-show-halo" aria-hidden="true">
+              <svg viewBox="0 0 520 520" fill="none" stroke="currentColor">
+                <circle cx="260" cy="260" r="247" stroke-width="2" stroke-dasharray="2 10" />
+                <circle cx="260" cy="260" r="230" />
+                <circle cx="260" cy="260" r="218" stroke-width="3" stroke-dasharray="36 10 4 10" />
+                <circle cx="260" cy="260" r="180" />
+                <path d="M260 24L496 260 260 496 24 260Z M260 50L470 260 260 470 50 260Z" />
+                <path d="M260 26V104M260 416v78M26 260h78m312 0h78" stroke-width="2" />
+              </svg>
+            </div>
             <div class="draw-show-window" aria-hidden="true"><div class="draw-show-reel"></div></div>
             <div class="draw-show-marker" aria-hidden="true"></div>
-            <section class="draw-show-winner" hidden>
+            <section class="draw-show-winner" aria-hidden="true" hidden>
+              <span class="draw-show-ticket-foil" aria-hidden="true"></span>
               <p>恭喜中奖</p>
               <strong class="draw-show-winner-name"></strong>
               <span class="draw-show-winner-team"></span>
             </section>
+            <div class="draw-show-doors" aria-hidden="true">
+              <div class="draw-show-door is-left"></div>
+              <div class="draw-show-door is-right"></div>
+              <div class="draw-show-seal">
+                <svg viewBox="0 0 104 104" fill="none" stroke="currentColor" stroke-width="1.4">
+                  <circle cx="52" cy="52" r="47" />
+                  <circle cx="52" cy="52" r="40" stroke-dasharray="1 4" />
+                  <path d="M52 12L92 52 52 92 12 52Z M52 23L81 52 52 81 23 52Z" />
+                  <path d="M52 52Q31 43 52 29Q73 43 52 52Q61 31 75 52Q61 73 52 52Q73 61 52 75Q31 61 52 52Q43 73 29 52Q43 31 52 52Z" fill="currentColor" fill-opacity=".22" />
+                  <circle cx="52" cy="52" r="4" fill="currentColor" />
+                </svg>
+              </div>
+            </div>
           </div>
           <div class="draw-show-phase" role="status">
             <span class="draw-show-phase-text"></span>
@@ -85,7 +109,7 @@
     <div id="toast-container"></div>
 
     <script src="/common.js?v=11"></script>
-    <script src="/lottery-stage.js?v=1"></script>
+    <script src="/lottery-stage.js?v=2"></script>
     <script src="/admin.js?v=16"></script>
   </body>
 </html>
