@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>管理后台 · 东方南堂界遇 V</title>
     <link rel="stylesheet" href="/styles.css?v=11" />
-    <link rel="stylesheet" href="/admin.css?v=14" />
+    <link rel="stylesheet" href="/admin.css?v=15" />
+    <link rel="stylesheet" href="/lottery-stage.css?v=1" />
   </head>
   <body class="admin-body">
     <!-- 登录门 -->
@@ -51,9 +52,40 @@
       <section id="tab-logs" class="tab-panel hidden"></section>
     </main>
 
+    <dialog class="draw-show" id="draw-show" aria-labelledby="draw-show-title">
+      <div class="draw-show-frame">
+        <div class="draw-show-flare" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="draw-show-sparks" aria-hidden="true"></div>
+        <header class="draw-show-header">
+          <div class="draw-show-brand"><b>东方南堂界遇 V</b><span>终盘抽奖</span></div>
+          <button class="draw-show-close" type="button" autofocus>返回抽奖台</button>
+        </header>
+        <div class="draw-show-content">
+          <div class="draw-show-prize">
+            <span class="draw-show-prize-art" aria-hidden="true"><img alt="" hidden /><i>✦</i></span>
+            <div><p>本轮奖品</p><h2 class="draw-show-prize-name" id="draw-show-title"></h2></div>
+          </div>
+          <div class="draw-show-chamber">
+            <div class="draw-show-window" aria-hidden="true"><div class="draw-show-reel"></div></div>
+            <div class="draw-show-marker" aria-hidden="true"></div>
+            <section class="draw-show-winner" hidden>
+              <p>恭喜中奖</p>
+              <strong class="draw-show-winner-name"></strong>
+              <span class="draw-show-winner-team"></span>
+            </section>
+          </div>
+          <div class="draw-show-phase" role="status">
+            <span class="draw-show-phase-text"></span>
+            <span class="draw-show-announcement"></span>
+          </div>
+        </div>
+        <footer class="draw-show-footer"><button class="draw-show-skip" type="button" hidden>直接揭晓</button></footer>
+      </div>
+    </dialog>
     <div id="toast-container"></div>
 
     <script src="/common.js?v=11"></script>
-    <script src="/admin.js?v=15"></script>
+    <script src="/lottery-stage.js?v=1"></script>
+    <script src="/admin.js?v=16"></script>
   </body>
 </html>

@@ -15,9 +15,7 @@
   const lotteryState = {
     isDrawing: false,
     pendingPrizeName: '',
-    pendingPrizeId: '',
-    winner: null,
-    animationId: 0
+    pendingPrizeId: ''
   };
 
   const elements = {
@@ -710,25 +708,6 @@
 
   // ---------- 抽奖 ----------
 
-  const LOTTERY_ITEM_WIDTH_FALLBACK = 184;
-  const LOTTERY_ANIMATION_MS = 6000;
-  const LOTTERY_SPECIAL_EVENT_RATE = 0.1;
-  const LOTTERY_BRAKE_DURATION_MS = 4000;
-  const LOTTERY_REEL_EASE = 'cubic-bezier(0.1, 0.82, 0.16, 1)';
-  const LOTTERY_REEL_SLIDE_EASE = 'cubic-bezier(0.24, 0.88, 0.38, 1)';
-  const LOTTERY_REEL_BRAKE_EASE = 'linear';
-
-  function pickLotteryAnimationEvent() {
-    const roll = Math.random();
-    if (roll < LOTTERY_SPECIAL_EVENT_RATE) {
-      return 'slide';
-    }
-    if (roll < LOTTERY_SPECIAL_EVENT_RATE * 2) {
-      return 'brake';
-    }
-    return '';
-  }
-
   function lotterySourceOptions(selected) {
     return [
       `<option value="base" ${selected === 'base' ? 'selected' : ''}>基础奖池</option>`,
@@ -750,29 +729,32 @@
       candidates.push({
         displayName: row.display_name,
         team: team ? team.short_name : teamName(row.team),
-        teamId: row.team,
-        portrait: team ? team.portrait_url : '',
-        color: team ? team.color : '#ffd166',
-        colorSoft: team ? team.color_soft : '#fff4d1',
-        weight: row.weight
+        color: team?.color
       });
     }
     return candidates;
   }
 
-  function lotteryRollItem(candidate, { winner = false, revealed = winner } = {}) {
-    const portrait = candidate.portrait
-      ? `<img src="${escapeHtml(candidate.portrait)}" alt="" loading="lazy" />`
-      : '<span aria-hidden="true">✦</span>';
-    const isWinner = winner && revealed;
-    return `
-      <div class="lottery-reel-item${isWinner ? ' is-winner' : ''}" style="--lottery-team-color: ${escapeHtml(candidate.color || '#ffd166')}; --lottery-team-soft: ${escapeHtml(candidate.colorSoft || '#fff4d1')};"${winner ? ' data-lottery-winner-card' : ''} ${isWinner ? '' : 'aria-hidden="true"'}>
-        <span class="lottery-reel-badge"><i></i><span class="lottery-reel-badge-label">${isWinner ? 'WINNER DROP' : 'PLAYER DROP'}</span></span>
-        <span class="lottery-reel-avatar">${portrait}</span>
-        <strong class="lottery-reel-name">${escapeHtml(candidate.displayName)}</strong>
-        <span class="lottery-reel-meta"><b>${escapeHtml(candidate.team || '调查队')}</b><small>${candidate.weight ? `权重 ${escapeHtml(candidate.weight)}` : '候选玩家'}</small></span>
-      </div>
-    `;
+  function lotteryWinnerCard(draw) {
+    return {
+      prizeName: draw.prize_name,
+      displayName: draw.winner_display_name,
+      team: teamName(draw.winner_team),
+      color: admin.teams.find(team => team.id === draw.winner_team)?.color
+    };
+  }
+
+  function openLotteryStage(prize) {
+    try {
+      return NTJ.drawShow?.open(prize);
+    } catch (error) {
+      console.warn('抽奖舞台无法打开', error);
+      return false;
+    }
+  }
+
+  function latestLotteryDraw() {
+    return admin.draws.find(draw => draw.status !== 'void');
   }
 
   function renderLotteryQuickPicks() {
@@ -809,24 +791,10 @@
   }
 
   function renderLotteryConsole() {
-    const winner = lotteryState.winner;
     const isDrawing = lotteryState.isDrawing;
-    const status = isDrawing ? '滚动抽取中' : (winner ? '结果已锁定' : '等待抽取');
+    const winner = isDrawing ? null : latestLotteryDraw();
+    const status = isDrawing ? '抽取中' : (winner ? '结果已揭晓' : '等待抽取');
     const statusClass = isDrawing ? 'is-drawing' : (winner ? 'is-winner' : 'is-ready');
-    const winnerTeam = winner
-      ? (admin.teams || []).find((team) => team.id === winner.winner_team)
-      : null;
-    const initialCandidate = winner
-      ? {
-        displayName: winner.winner_display_name,
-        team: teamName(winner.winner_team),
-        teamId: winner.winner_team,
-        portrait: winnerTeam ? winnerTeam.portrait_url : '',
-        color: winnerTeam ? winnerTeam.color : '#ffd166',
-        colorSoft: winnerTeam ? winnerTeam.color_soft : '#fff4d1',
-        weight: winner.weight_snapshot
-      }
-      : { displayName: isDrawing ? '准备滚动…' : '等待选择奖品', team: '现场抽奖台', weight: 0 };
 
     return `
       <div class="admin-card lottery-console ${statusClass}" data-lottery-console>
@@ -834,24 +802,16 @@
           <div>
             <h2>抽奖台</h2>
             <p class="helper-text">${isDrawing
-              ? `正在从「${escapeHtml(lotteryState.pendingPrizeName || '当前奖品')}」的候选玩家中滚动抽取。`
-              : '可直接点击上方快速选择，或在下方奖池表操作；候选昵称会滚动减速并停在服务端已确定的结果。'}</p>
+              ? `正在抽取「${escapeHtml(lotteryState.pendingPrizeName)}」。`
+              : '选择奖品并确认后，即可在抽奖舞台揭晓结果。'}</p>
           </div>
-          <span class="lottery-status ${statusClass}"><i></i>${status}</span>
+          <div class="btn-row">
+            <span class="lottery-status ${statusClass}"><i></i>${status}</span>
+            ${winner && NTJ.drawShow ? '<button class="action-btn" type="button" data-lottery-replay>再看结果</button>' : ''}
+          </div>
         </div>
 
         ${renderLotteryQuickPicks()}
-
-        <div class="lottery-stage" data-lottery-stage aria-live="polite" aria-busy="${isDrawing ? 'true' : 'false'}">
-          <span class="lottery-stage-label">${escapeHtml(lotteryState.pendingPrizeName || (winner ? winner.prize_name : '抽奖结果'))}</span>
-          <div class="lottery-reel-window" data-lottery-reel-window>
-            <div class="lottery-reel${isDrawing ? '' : ' is-idle'}" data-lottery-reel>
-              ${lotteryRollItem(initialCandidate, { winner: Boolean(winner) })}
-            </div>
-          </div>
-          <span class="lottery-pointer lottery-pointer-top" aria-hidden="true"></span>
-          <span class="lottery-pointer lottery-pointer-bottom" aria-hidden="true"></span>
-        </div>
 
         ${winner ? `
           <div class="lottery-result-panel">
@@ -860,7 +820,7 @@
             <div><span>本次权重</span><strong>${escapeHtml(winner.weight_snapshot)}</strong></div>
             <div><span>奖品</span><strong>${escapeHtml(winner.prize_name)}</strong></div>
           </div>
-        ` : '<p class="lottery-console-note">中央指针停靠在中奖玩家；中奖结果、权重快照和记录仍以服务端返回为准。</p>'}
+        ` : ''}
       </div>
     `;
   }
@@ -1099,6 +1059,15 @@
       });
     }
 
+    panel.querySelector('[data-lottery-replay]')?.addEventListener('click', async () => {
+      const draw = latestLotteryDraw();
+      if (!draw) return;
+      const prize = admin.prizes.find(item => item.id === draw.prize_id);
+      if (openLotteryStage({ name: draw.prize_name, image: prize?.image })) {
+        await NTJ.drawShow.play(lotteryWinnerCard(draw));
+      }
+    });
+
     for (const button of panel.querySelectorAll('[data-draw]')) {
       button.addEventListener('click', async () => {
         if (lotteryState.isDrawing) {
@@ -1109,33 +1078,40 @@
           message: '将按当前权重随机产生一名获奖者，结果立即生效。',
           confirmLabel: '执行抽奖'
         });
-        if (!confirmed) {
+        if (!confirmed || lotteryState.isDrawing || !button.isConnected) {
           return;
         }
-        const animationId = ++lotteryState.animationId;
+        const prizeId = button.dataset.draw;
+        const prize = admin.prizes.find(item => item.id === prizeId);
+        const prizeName = prize?.name || button.dataset.prizeName || '当前奖品';
+        const candidates = lotteryRollCandidates();
         lotteryState.isDrawing = true;
-        lotteryState.pendingPrizeName = button.dataset.prizeName || '当前奖品';
-        lotteryState.pendingPrizeId = button.dataset.draw || '';
-        lotteryState.winner = null;
+        lotteryState.pendingPrizeName = prizeName;
+        lotteryState.pendingPrizeId = prizeId;
+        const showOpened = openLotteryStage({ name: prizeName, image: prize?.image });
         renderLottery();
 
         try {
-          const res = await post('/api/admin/lottery/draw', { prize_id: button.dataset.draw });
-          if (!res || animationId !== lotteryState.animationId) {
-            return;
+          const res = await api('POST', '/api/admin/lottery/draw', { prize_id: prizeId });
+          admin = res.admin;
+          renderHeader();
+          if (showOpened) {
+            try {
+              await NTJ.drawShow.play(lotteryWinnerCard(res.draw), candidates);
+            } catch (error) {
+              console.warn('抽奖舞台动画未完成', error);
+            }
           }
-          await runLotteryAnimation(res.draw, animationId);
-          lotteryState.winner = res.draw;
-          toast(`${res.message}（权重 ${res.draw.weight_snapshot} / 总 ${res.draw.total_weight_snapshot}）`, 'success');
+          if (!NTJ.drawShow?.isOpen()) toast(res.message, 'success');
         } catch (error) {
-          toast(error.message || '抽奖失败', 'error');
+          const message = error.message || '抽奖失败';
+          if (NTJ.drawShow?.isOpen()) NTJ.drawShow.fail(message);
+          else toast(message, 'error');
         } finally {
-          if (animationId === lotteryState.animationId) {
-            lotteryState.isDrawing = false;
-            lotteryState.pendingPrizeName = '';
-            lotteryState.pendingPrizeId = '';
-            renderLottery();
-          }
+          lotteryState.isDrawing = false;
+          lotteryState.pendingPrizeName = '';
+          lotteryState.pendingPrizeId = '';
+          renderTab();
         }
       });
     }
@@ -1174,120 +1150,6 @@
         }
       });
     }
-  }
-
-  function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  function nextFrame() {
-    return new Promise((resolve) => requestAnimationFrame(resolve));
-  }
-
-  async function runLotteryAnimation(draw, animationId) {
-    const panel = elements.panels.lottery;
-    const stage = panel.querySelector('[data-lottery-stage]');
-    const reel = panel.querySelector('[data-lottery-reel]');
-    const reelWindow = panel.querySelector('[data-lottery-reel-window]');
-    if (!stage || !reel || !reelWindow || !draw) {
-      return;
-    }
-
-    const winnerTeam = (admin.teams || []).find((team) => team.id === draw.winner_team);
-    const winner = {
-      displayName: draw.winner_display_name,
-      team: teamName(draw.winner_team),
-      teamId: draw.winner_team,
-      portrait: winnerTeam ? winnerTeam.portrait_url : '',
-      color: winnerTeam ? winnerTeam.color : '#ffd166',
-      colorSoft: winnerTeam ? winnerTeam.color_soft : '#fff4d1',
-      weight: draw.weight_snapshot
-    };
-    const candidates = lotteryRollCandidates();
-    if (!candidates.some((candidate) => candidate.displayName === winner.displayName)) {
-      candidates.push(winner);
-    }
-    const safeCandidates = candidates.length ? candidates : [winner];
-    const rounds = Math.max(36, Math.min(72, safeCandidates.length * 4));
-    const trailingCards = 5;
-    const startIndex = Math.floor(Math.random() * safeCandidates.length);
-    const rollingItems = Array.from(
-      { length: rounds },
-      (_, index) => safeCandidates[(startIndex + index) % safeCandidates.length]
-    );
-    const winnerIndex = rollingItems.length;
-    const trailingItems = Array.from(
-      { length: trailingCards },
-      (_, index) => safeCandidates[(startIndex + rounds + index) % safeCandidates.length]
-    );
-    const items = [...rollingItems, winner, ...trailingItems];
-    reel.innerHTML = items.map((candidate, index) => lotteryRollItem(candidate, {
-      winner: index === winnerIndex,
-      revealed: false
-    })).join('');
-    reel.style.setProperty('--lottery-shift', '0px');
-    reel.classList.remove('is-rolling', 'is-settled');
-    stage.classList.remove('is-winner');
-    reel.getBoundingClientRect();
-
-    const item = reel.querySelector('.lottery-reel-item');
-    const itemWidth = item ? item.getBoundingClientRect().width : LOTTERY_ITEM_WIDTH_FALLBACK;
-    const windowWidth = reelWindow.getBoundingClientRect().width || itemWidth;
-    const centerOffset = Math.max(0, (windowWidth - itemWidth) / 2);
-    const targetShift = Math.max(0, winnerIndex * itemWidth - centerOffset);
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const animationEvent = reduceMotion ? '' : pickLotteryAnimationEvent();
-
-    const animationIsActive = () => animationId === lotteryState.animationId && reel.isConnected;
-    let isFirstPhase = true;
-    const moveReelTo = async (shift, duration, easing) => {
-      reel.style.setProperty('--lottery-duration', `${duration}ms`);
-      reel.style.setProperty('--lottery-ease', easing);
-      await nextFrame();
-      if (!animationIsActive()) {
-        return false;
-      }
-      if (isFirstPhase) {
-        reel.classList.add('is-rolling');
-        isFirstPhase = false;
-      }
-      reel.style.setProperty('--lottery-shift', `-${shift}px`);
-      await sleep(duration + 70);
-      return animationIsActive();
-    };
-
-    const duration = reduceMotion ? 80 : LOTTERY_ANIMATION_MS;
-    let completed = false;
-    if (animationEvent === 'slide') {
-      const beforeWinnerShift = Math.max(0, targetShift - itemWidth);
-      completed = await moveReelTo(beforeWinnerShift, duration - 650, LOTTERY_REEL_EASE);
-      if (completed) {
-        await sleep(120);
-        completed = animationIsActive();
-      }
-      if (completed) {
-        completed = await moveReelTo(targetShift, 380, LOTTERY_REEL_SLIDE_EASE);
-      }
-    } else if (animationEvent === 'brake') {
-      completed = await moveReelTo(targetShift, LOTTERY_BRAKE_DURATION_MS, LOTTERY_REEL_BRAKE_EASE);
-    } else {
-      completed = await moveReelTo(targetShift, duration, LOTTERY_REEL_EASE);
-    }
-    if (!completed) {
-      return;
-    }
-    reel.classList.remove('is-rolling');
-    reel.classList.add('is-settled');
-    const winnerCard = reel.querySelector('[data-lottery-winner-card]');
-    if (winnerCard) {
-      winnerCard.classList.add('is-winner');
-      winnerCard.removeAttribute('aria-hidden');
-      const badgeLabel = winnerCard.querySelector('.lottery-reel-badge-label');
-      if (badgeLabel) {
-        badgeLabel.textContent = 'WINNER DROP';
-      }
-    }
-    stage.classList.add('is-winner');
   }
 
   // ---------- 日志 ----------
@@ -1370,6 +1232,12 @@
     if (button) {
       switchTab(button.dataset.tab);
     }
+  });
+
+  document.getElementById('draw-show').addEventListener('close', () => {
+    if (activeTab !== 'lottery' || document.activeElement !== document.body) return;
+    const target = elements.panels.lottery.querySelector('[data-lottery-replay], [data-draw]:not(:disabled)');
+    (target || elements.tabs.querySelector('[data-tab="lottery"]')).focus();
   });
 
   function showError(message) {
