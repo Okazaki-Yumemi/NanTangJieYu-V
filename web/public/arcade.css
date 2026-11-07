@@ -41,6 +41,22 @@
 .ticket-lake { --surface: #233940; --art: url('/assets/taisei/cirno-portrait.svg'); }
 .ticket-workshop { --surface: #402a32; --art: url('/assets/taisei/reimu-portrait.svg'); }
 .ticket-dye { --crop: 22%; }
+.ticket-tuxun {
+  --paper: #d4cbad;
+  --surface: #303c3a;
+  --art: url('/assets/taisei/reimu-portrait.svg');
+}
+.ticket-external {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 3px 7px;
+  border: 1px solid #d4cbad70;
+  color: #f2e3c7;
+  background: #24312ed9;
+  font-size: 11px;
+  line-height: 1.4;
+}
 .arcade-credit { margin-top: 20px; font-size: 13px; }
 .arcade-credit a, .art-credits a { color: #dbc3aa; }
 @media (max-width: 650px) {
