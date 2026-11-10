@@ -9,6 +9,8 @@
   const metres = cm => FishingAmounts.format(cm,true);
   const clock = sec => `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
   let view=null;
+  let rankings = null;
+  let rankingRequest = 0;
   let serverOffset=0;
   let active=null;
   let casting=false;
@@ -45,14 +47,28 @@
 
   function renderRanks() {
     const total = $('fishing-rank-mode').value === 'total';
-    const rows = (total ? view?.total_rows : view?.rows) || [];
+    const rows = (total ? rankings?.total_rows : rankings?.rows) || [];
     $('fishing-rank-rule').textContent = total ? '按全部正式鱼获的总长度排。升级渔具不扣累计长度。' : '每人只记最长的一条正式鱼获。';
     $('fishing-ranks').innerHTML = rows.map(row => {
       if (total) return `<li class="rank-total"><span>${row.rank}</span><div><span class="rank-name">${esc(row.display_name)}</span><small>钓获 ${row.catches} 条</small><strong>${length(row.total_cm)}</strong></div></li>`;
       return `<li><span>${row.rank}</span><img src="${sprite(row)}" alt="" /><div><span class="rank-name">${esc(row.custom_name || row.name)}</span><small>${esc(row.display_name)} · ${esc(row.name)}</small><strong>${length(row.length_cm)}</strong></div></li>`;
-    }).join('') || '<li class="rank-empty">还没有人上榜。</li>';
+    }).join('') || `<li class="rank-empty">${rankings ? '还没有人上榜。' : '暂时无法读取排行榜。'}</li>`;
   }
   $('fishing-rank-mode').addEventListener('change', renderRanks);
+  function updateRanks(data, request) {
+    if (request !== rankingRequest) return;
+    rankings = data;
+    renderRanks();
+    if (data) $('extreme-fish-limit').textContent=`极端鱼当前上限：${length(data.extreme_limit_cm)}。随榜首纪录翻倍，没有光年封顶。`;
+  }
+  async function refreshRanks() {
+    const request = ++rankingRequest;
+    try {
+      updateRanks(await api('GET', '/api/fishing/leaderboard'), request);
+    } catch {
+      updateRanks(null, request);
+    }
+  }
   function showCatch(fish) {
     selectedFish=fish;
     $('catch-result').classList.remove('hidden');
@@ -94,19 +110,23 @@
     });
   }
   async function refresh() {
-    if(active || casting || submitting || buying)return;
+    if(active || casting || submitting || buying)return refreshRanks();
+    const request = ++rankingRequest;
     try {
       view=await api('GET','/api/player/fishing/state');
       serverOffset=view.server_time-Date.now();
       $('fisher-name').textContent=view.display_name;
-      $('extreme-fish-limit').textContent=`极端鱼当前上限：${length(view.extreme_limit_cm)}。随榜首纪录翻倍，没有光年封顶。`;
+      updateRanks(view, request);
       $('fishing-rule').textContent=view.cooldown_enabled
         ? `不消耗能量 · 每 ${view.cooldown_interval_sec} 秒一竿。从抛竿开始计时。`
         : '不消耗能量 · 试玩期间无冷却，可以连续抛竿。';
       $('fishing-login').classList.toggle('hidden',view.logged_in);
-      renderRanks();renderHistory();renderShop();renderButton();
+      renderHistory();renderShop();renderButton();
       if(!selectedFish && view.last_catch)showCatch(view.last_catch);
-    } catch(error){$('fishing-message').textContent=error.message || '鱼情暂时没查到，请稍后重试。';}
+    } catch(error){
+      updateRanks(null, request);
+      $('fishing-message').textContent=error.message || '鱼情暂时没查到，请稍后重试。';
+    }
   }
   function savePending() {try{if(pending)sessionStorage.setItem(pendingKey,JSON.stringify(pending));else sessionStorage.removeItem(pendingKey);}catch{}}
   async function submit() {
@@ -226,7 +246,10 @@
   reel.addEventListener('keydown',event=>{if(event.key===' '||event.key==='Enter'){event.preventDefault();setHeld(true);}});
   reel.addEventListener('keyup',event=>{if(event.key===' '||event.key==='Enter'){event.preventDefault();release();}});
   reel.addEventListener('blur',release);window.addEventListener('blur',release);
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)release();});
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden)release();
+    else refresh();
+  });
   $('abandon-button').addEventListener('click',()=>{
     stopGame();$('fishing-message').textContent='收竿了。下次再来。';
     renderButton();if(view)renderShop();refresh();
@@ -242,12 +265,13 @@
   });
 
   let timer=setInterval(()=>{renderButton();},1000);
-  let poll=setInterval(()=>refresh(),15000);
+  const pollRanks=()=>{if(!document.hidden)refresh();};
+  let poll=setInterval(pollRanks,15000);
   window.addEventListener('pagehide',()=>{stopGame();clearInterval(timer);clearInterval(poll);});
   window.addEventListener('pageshow',event=>{
     if(!event.persisted)return;
     pickAngler();
-    timer=setInterval(renderButton,1000);poll=setInterval(refresh,15000);refresh();
+    timer=setInterval(renderButton,1000);poll=setInterval(pollRanks,15000);refresh();
   });
   refresh();
 })();

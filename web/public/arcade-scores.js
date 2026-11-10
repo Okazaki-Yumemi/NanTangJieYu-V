@@ -2,18 +2,19 @@
   'use strict';
 
   const views = new Map();
+  let poll = null;
   const sheet = document.createElement('link');
   sheet.rel = 'stylesheet';
   sheet.href = '/arcade-scores.css?v=1';
   document.head.append(sheet);
 
-  async function request(path, body) {
+  async function request(path, body, signal) {
     const options = body ? {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     } : { cache: 'no-store' };
-    const response = await fetch(path, options);
+    const response = await fetch(path, { ...options, signal });
     const payload = await response.json();
     return { ...payload, ok: response.ok };
   }
@@ -31,9 +32,41 @@
     return `${new Intl.NumberFormat('zh-CN').format(score)} 分`;
   }
 
+  async function load(container, view) {
+    view.controller?.abort();
+    const controller = new AbortController();
+    view.controller = controller;
+    const isCurrent = () => views.get(container) === view && view.controller === controller;
+    try {
+      const query = new URLSearchParams({ game: view.game, mode: view.mode });
+      const result = await request(`/api/arcade/leaderboard?${query}`, undefined, controller.signal);
+      if (!isCurrent()) return;
+      view.list.replaceChildren();
+      if (!result.ok) {
+        view.status.textContent = result.message || '暂时无法读取排行榜。';
+        return;
+      }
+      view.status.textContent = result.rows.length ? '' : '这张榜还没有成绩。';
+      const fragment = document.createDocumentFragment();
+      for (const row of result.rows) {
+        const item = node('li');
+        const rank = node('span', String(row.rank), 'arcade-score-rank');
+        rank.setAttribute('aria-hidden', 'true');
+        item.append(rank, node('span', row.display_name), node('strong', formatScore(view.game, row.score)));
+        fragment.append(item);
+      }
+      view.list.append(fragment);
+    } catch {
+      if (!isCurrent() || controller.signal.aborted) return;
+      view.list.replaceChildren();
+      view.status.textContent = '暂时无法读取排行榜。';
+    }
+  }
+
   async function mount(target, game, mode) {
     const container = typeof target === 'string' ? document.querySelector(target) : target;
     if (!container) return;
+    views.get(container)?.controller?.abort();
     const view = { game, mode };
     views.set(container, view);
     const title = node('h2', '在线排行');
@@ -46,35 +79,16 @@
     status.setAttribute('role', 'status');
     container.classList.add('arcade-scoreboard');
     container.replaceChildren(title, rule, status, list);
-
-    try {
-      const query = new URLSearchParams({ game, mode });
-      const result = await request(`/api/arcade/leaderboard?${query}`);
-      if (views.get(container) !== view) return;
-      if (!result.ok) {
-        status.textContent = result.message || '暂时无法读取排行榜。';
-        return;
-      }
-      status.textContent = result.rows.length ? '' : '这张榜还没有成绩。';
-      for (const row of result.rows) {
-        const item = node('li');
-        const rank = node('span', String(row.rank), 'arcade-score-rank');
-        rank.setAttribute('aria-hidden', 'true');
-        item.append(rank, node('span', row.display_name), node('strong', formatScore(game, row.score)));
-        list.append(item);
-      }
-    } catch {
-      if (views.get(container) === view) status.textContent = '暂时无法读取排行榜。';
-    }
+    view.list = list;
+    view.status = status;
+    await load(container, view);
   }
 
   async function submit(game, { mode, score }) {
     try {
       const result = await request('/api/arcade/score', { game, mode, score });
-      if (result.ok && result.improved) {
-        for (const [container, view] of views) {
-          if (view.game === game && view.mode === mode) void mount(container, game, mode);
-        }
+      for (const [container, view] of views) {
+        if (view.game === game && view.mode === mode) void load(container, view);
       }
       return result;
     } catch {
@@ -82,5 +96,32 @@
     }
   }
 
+  function refreshViews() {
+    if (document.hidden) return;
+    for (const [container, view] of views) {
+      if (!container.isConnected) {
+        view.controller?.abort();
+        views.delete(container);
+      } else {
+        void load(container, view);
+      }
+    }
+  }
+
+  function startPolling() {
+    if (poll === null) poll = setInterval(refreshViews, 15000);
+  }
+
+  document.addEventListener('visibilitychange', refreshViews);
+  window.addEventListener('pageshow', event => {
+    startPolling();
+    if (event.persisted) refreshViews();
+  });
+  window.addEventListener('pagehide', () => {
+    clearInterval(poll);
+    poll = null;
+    for (const view of views.values()) view.controller?.abort();
+  });
+  startPolling();
   window.NTJArcadeScores = { mount, submit };
 })();

@@ -9,12 +9,15 @@ const { sendPersistenceError } = require('./player-routes');
 function registerRoutes(router, appCtx) {
   const { store } = appCtx;
   router.get('/api/player/fishing/state', async (req,res) => {
+    res.setHeader('Cache-Control', 'no-store');
     const state=store.getLatest();
     const user=players.getSessionUser(state,getCookie(req,SESSION_COOKIE));
     sendJson(res,200,fishing.view(state,user));
   });
   router.get('/api/fishing/leaderboard', async (req,res) => {
-    sendJson(res,200,{rows:fishing.leaderboard(store.getLatest())});
+    res.setHeader('Cache-Control', 'no-store');
+    const publicView = fishing.view(store.getLatest(), null);
+    sendJson(res,200,{rows:publicView.rows,total_rows:publicView.total_rows,extreme_limit_cm:publicView.extreme_limit_cm});
   });
   for (const [path,action] of [['cast',fishing.cast],['finish',fishing.finish],['name',fishing.nameFish],['upgrade',fishing.upgrade]]) {
     router.post(`/api/player/fishing/${path}`,async(req,res)=>{

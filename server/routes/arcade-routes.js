@@ -31,6 +31,7 @@ function leaderboard(state, key) {
 
 function registerRoutes(router, { store }) {
   router.get('/api/arcade/leaderboard', (req, res, { query }) => {
+    res.setHeader('Cache-Control', 'no-store');
     const game = query.get('game');
     const mode = query.get('mode');
     if (!scoreLimit(game, mode, Date.now())) {
