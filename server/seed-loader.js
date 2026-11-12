@@ -20,6 +20,7 @@ const REQUIRED_SEED_FILES = [
   'prizes.json',
   'lottery.json',
   'titles.json',
+  'public-test-codes.json',
   'sensitive-words.json'
 ];
 
@@ -54,6 +55,20 @@ function loadSeeds(seedsDir) {
 function validateSeeds(seeds) {
   const problems = [];
   const { activity, teams, regions, interactions, prizes, lottery, titles, sensitiveWords } = seeds;
+
+  if (!Array.isArray(seeds.publicTestCodes)) {
+    problems.push('public-test-codes.json 必须是字符串数组');
+  } else {
+    const seen = new Set();
+    for (const code of seeds.publicTestCodes) {
+      if (typeof code !== 'string' || !/^\d{4}$/.test(code)) {
+        problems.push('public-test-codes.json 中的注册码必须是四位数字字符串（保留前导零）');
+      } else if (seen.has(code)) {
+        problems.push(`public-test-codes.json 注册码重复: ${code}`);
+      }
+      seen.add(code);
+    }
+  }
 
   if (!activity || typeof activity !== 'object') {
     problems.push('activity.json 必须是对象');

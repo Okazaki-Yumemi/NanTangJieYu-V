@@ -9,6 +9,7 @@
  */
 
 const { newId } = require('../auth');
+const { buildPublicTestCodes } = require('./codes');
 const fx = require('./fx');
 
 function buildInitialState(seeds, nowSec) {
@@ -47,7 +48,7 @@ function buildInitialState(seeds, nowSec) {
         }
       ])
     ),
-    codes: {},
+    codes: buildPublicTestCodes(seeds.publicTestCodes, now),
     users: {},
     sessions: {},
     admin_sessions: {},
@@ -87,6 +88,10 @@ function normalizeState(state, seeds) {
     if (!Array.isArray(state[key])) {
       state[key] = [];
     }
+  }
+  // 旧数据补齐公测码；保留已绑定、禁用及管理员另行生成的码。
+  for (const [code, entry] of Object.entries(initial.codes)) {
+    if (!Object.hasOwn(state.codes, code)) state.codes[code] = entry;
   }
   if (!state.lottery || typeof state.lottery !== 'object') {
     state.lottery = { draws: [] };

@@ -213,6 +213,10 @@ ADMIN_ENTRY_PATH=/my-secret-admin.html
 
 ## 常用运维命令
 
+本次小型公测预置 **50 个普通注册码：`0001`～`0050`**，完整清单见 [`shared/seeds/public-test-codes.json`](shared/seeds/public-test-codes.json)。更新代码并重启服务后会自动导入，新数据目录与已有数据目录都适用，无需运行生成命令。每码仅能注册一个账号；重启不会重置已使用或已禁用的码，也不会覆盖已有玩家数据。
+
+这份清单是公开的公测配置。公测结束后，可在管理后台禁用剩余公测码，并将该 JSON 改为 `[]` 停止补入；单独清空清单不会删除已经导入的码。
+
 ```bash
 # 生成 300 个普通注册码并导出 CSV
 node scripts/generate-codes.js --count 300 --type ordinary --note "现场第一批"

@@ -122,7 +122,7 @@ describe('HTTP integration: full event journey', () => {
     codeB = gen.json.codes[1];
     assert.match(codeA, /^[2-9A-Z]{4}-[2-9A-Z]{4}-[2-9A-Z]{4}$/);
 
-    const list = await request('GET', '/api/admin/codes?query=&limit=10', { headers: { Cookie: adminCookie } });
+    const list = await request('GET', `/api/admin/codes?batch_id=${encodeURIComponent(gen.json.batch_id)}&limit=10`, { headers: { Cookie: adminCookie } });
     assert.equal(list.status, 200);
     assert.equal(list.json.total, 5);
 

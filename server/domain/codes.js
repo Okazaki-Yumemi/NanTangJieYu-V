@@ -28,6 +28,20 @@ function isUsable(codeEntry) {
   );
 }
 
+function buildPublicTestCodes(codeValues = [], nowSec) {
+  return Object.fromEntries(codeValues.map((code) => [code, {
+    code,
+    type: CODE_TYPES.ORDINARY,
+    status: CODE_STATUS.UNUSED,
+    disabled: false,
+    batch_id: 'public-test-20261112',
+    note: '小型公开测试',
+    bound_user_id: '',
+    bound_at: 0,
+    created_at: nowSec
+  }]));
+}
+
 /**
  * 批量生成注册码。返回本次新增的码列表。
  */
@@ -186,6 +200,7 @@ module.exports = {
   normalizeCode,
   findCode,
   isUsable,
+  buildPublicTestCodes,
   generateCodes,
   bindCode,
   setCodeDisabled,
