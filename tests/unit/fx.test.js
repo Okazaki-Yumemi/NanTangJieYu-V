@@ -71,20 +71,22 @@ test('replayed open and close cannot spend or credit twice; reused identifiers r
   assert.equal(fx.trade(state, state.users.a, 'open', body).repeated, true);
   assert.equal(JSON.stringify(state.fx.players.a), after);
   assert.equal(fx.trade(state, state.users.a, 'open', { ...body, margin: 200000 }).error, 'CONFLICT');
-  const close = { request_id: 'close_idempotent', expected_revision: 2, position_id: state.fx.players.a.positions[0].id };
+  const close = { request_id: 'close_idempotent', expected_revision: 2, quote_seq: 1, position_id: state.fx.players.a.positions[0].id };
   assert.equal(fx.trade(state, state.users.a, 'close', close).ok, true);
   const cash = state.fx.players.a.cash;
   assert.equal(fx.trade(state, state.users.a, 'close', close).repeated, true);
   assert.equal(state.fx.players.a.cash, cash);
 });
 
-test('recent quotes allow network delay but always fill at latest price; expired and future quotes fail', () => {
+test('quotes must match the displayed tick; delayed and future orders are rejected without spending', () => {
   const { state, act } = setup(); act('a', 'join');
   state.fx.market.seq = 4; state.fx.market.price = 105;
   const base = { side: 'long', margin: 10000, leverage: 1 };
   assert.equal(act('a', 'open', { ...base, quote_seq: 1 }).error, 'STALE_QUOTE');
   assert.equal(act('a', 'open', { ...base, quote_seq: 5 }).error, 'STALE_QUOTE');
-  assert.equal(act('a', 'open', { ...base, quote_seq: 2 }).ok, true);
+  assert.equal(act('a', 'open', { ...base, quote_seq: 2 }).error, 'STALE_QUOTE');
+  assert.equal(state.fx.players.a.cash, 1000000);
+  assert.equal(act('a', 'open', { ...base, quote_seq: 4 }).ok, true);
   assert.equal(state.fx.players.a.positions[0].entry_price, fx.quotes(state.fx.market).ask);
 });
 
@@ -126,7 +128,7 @@ test('position cap and bounded settlement and request logs', () => {
   const { state, act } = setup(); act('a', 'join');
   for (let i = 0; i < 12; i++) assert.equal(act('a', 'open', { side: 'short', margin: 10000, leverage: 1 }).ok, true);
   assert.ok(act('a', 'open', { side: 'short', margin: 10000, leverage: 1 }).error);
-  assert.ok(act('a', 'work').error);
+  assert.equal(act('a', 'work').ok, true);
   for (const position of [...state.fx.players.a.positions]) act('a', 'close', { position_id: position.id });
   for (let i = 0; i < 25; i++) {
     act('a', 'open', { side: 'long', margin: 10000, leverage: 1 });
@@ -137,34 +139,33 @@ test('position cap and bounded settlement and request logs', () => {
   assert.ok(act('a', 'restart').error);
 });
 
-test('interest-free 3000 loan is only for broke players and cannot inflate net worth or repeat before repayment', () => {
+test('interest-free 5000 loan is only for broke players and cannot inflate net worth or repeat before repayment', () => {
   const { state, act } = setup(); act('a', 'join');
   assert.ok(act('a', 'borrow').error);
   state.fx.players.a.cash = 0;
   assert.equal(act('a', 'borrow', { amount: 99999999 }).ok, true);
-  assert.equal(state.fx.players.a.cash, 300000);
-  assert.equal(state.fx.players.a.debt, 300000);
+  assert.equal(state.fx.players.a.cash, 500000);
+  assert.equal(state.fx.players.a.debt, 500000);
   assert.equal(fx.view(state, state.users.a).account.equity, 0);
   state.fx.players.a.cash = 50;
   assert.ok(act('a', 'borrow').error);
   assert.equal(act('a', 'repay').ok, true);
   assert.equal(state.fx.players.a.cash, 0);
-  assert.equal(state.fx.players.a.debt, 299950);
+  assert.equal(state.fx.players.a.debt, 499950);
   assert.ok(act('a', 'repay').error);
-  state.fx.players.a.cash = 300000;
+  state.fx.players.a.cash = 500000;
   assert.equal(act('a', 'repay').ok, true);
   assert.equal(state.fx.players.a.debt, 0);
   assert.equal(state.fx.players.a.cash, 50);
   assert.equal(act('a', 'borrow').ok, true);
 });
 
-test('work requires poverty, runs for 15 real minutes across reloads, pays 1500 once, and allows loans while working', () => {
+test('default work runs for 15 real minutes across reloads, pays 1500 once, and allows loans while working', () => {
   const { state, act } = setup(); act('a', 'join');
-  assert.ok(act('a', 'work').error);
   state.fx.players.a.cash = 0;
   const start = 20000;
   assert.equal(act('a', 'work', { ready_at: 0, duration: 0, salary: 999999999 }, start).ok, true);
-  assert.deepEqual(state.fx.players.a.job, { started_at: start, ready_at: start + 900000 });
+  assert.deepEqual(state.fx.players.a.job, { started_at: start, ready_at: start + 900000, pay: 150000 });
   assert.ok(act('a', 'work').error);
   assert.ok(act('a', 'claim-work', {}, start + 899999).error);
   assert.equal(state.fx.players.a.cash, 0);
@@ -173,12 +174,12 @@ test('work requires poverty, runs for 15 real minutes across reloads, pays 1500 
   assert.deepEqual(reloaded.fx.players.a.job, state.fx.players.a.job);
   const body = { request_id: 'claim_work_once', expected_revision: reloaded.fx.players.a.revision };
   assert.equal(fx.trade(reloaded, reloaded.users.a, 'claim-work', body, start + 900000).ok, true);
-  assert.equal(reloaded.fx.players.a.cash, 450000);
-  assert.equal(reloaded.fx.players.a.debt, 300000);
+  assert.equal(reloaded.fx.players.a.cash, 650000);
+  assert.equal(reloaded.fx.players.a.debt, 500000);
   assert.equal(fx.view(reloaded, reloaded.users.a).account.equity, 150000);
   assert.equal(reloaded.fx.players.a.job, null);
   assert.equal(fx.trade(reloaded, reloaded.users.a, 'claim-work', body, start + 900001).repeated, true);
-  assert.equal(reloaded.fx.players.a.cash, 450000);
+  assert.equal(reloaded.fx.players.a.cash, 650000);
   assert.ok(fx.trade(reloaded, reloaded.users.a, 'claim-work', { ...body, request_id: 'claim_work_twice', expected_revision: reloaded.fx.players.a.revision }, start + 900002).error);
 });
 
@@ -186,7 +187,7 @@ test('positions prevent rescue even when available cash is zero, and old account
   const { state, act } = setup(); act('a', 'join');
   act('a', 'open', { side: 'short', margin: 10000, leverage: 1 });
   state.fx.players.a.cash = 0;
-  assert.ok(act('a', 'work').error); assert.ok(act('a', 'borrow').error);
+  assert.equal(act('a', 'work').ok, true); assert.ok(act('a', 'borrow').error);
   delete state.fx.players.a.debt; delete state.fx.players.a.job;
   fx.normalize(state);
   assert.equal(state.fx.players.a.debt, 0); assert.equal(state.fx.players.a.job, null);

@@ -11,6 +11,7 @@
 const { newId } = require('../auth');
 const { buildPublicTestCodes } = require('./codes');
 const fx = require('./fx');
+const PRE_HALF_ANOMALY = { siyuan_gate: 200000, siyuan_lake: 290000, kaixuan_gate: 360000, diancao: 420000, hanze_lake: 460000, admin_building: 520000 };
 
 function buildInitialState(seeds, nowSec) {
   const now = nowSec ?? Math.floor(Date.now() / 1000);
@@ -38,6 +39,7 @@ function buildInitialState(seeds, nowSec) {
         region.id,
         {
           anomaly_remaining: region.max_anomaly,
+          anomaly_balance_version: 1,
           cleared: false,
           cleared_at: 0,
           forced_unlock: false,
@@ -123,6 +125,10 @@ function normalizeState(state, seeds) {
     const runtime = state.regions[region.id] || {};
     const maxAnomaly = Math.floor(region.max_anomaly);
     let remaining = Number.isFinite(runtime.anomaly_remaining) ? Math.floor(runtime.anomaly_remaining) : maxAnomaly;
+    // 仅迁移此次公测减半配置；保留完成比例与原贡献，重复启动不再次减半。
+    if (!runtime.anomaly_balance_version && Number.isFinite(runtime.anomaly_remaining) && PRE_HALF_ANOMALY[region.id] === maxAnomaly * 2) {
+      remaining = Math.ceil(remaining / 2);
+    }
     remaining = Math.min(maxAnomaly, Math.max(0, remaining));
     if (runtime.cleared) {
       remaining = 0;
@@ -130,6 +136,7 @@ function normalizeState(state, seeds) {
     const initiallyUnlocked = Array.isArray(region.unlock_after) && region.unlock_after.length === 0;
     state.regions[region.id] = {
       anomaly_remaining: remaining,
+      anomaly_balance_version: 1,
       cleared: Boolean(runtime.cleared),
       cleared_at: Number.isFinite(runtime.cleared_at) ? runtime.cleared_at : 0,
       forced_unlock: Boolean(runtime.forced_unlock),

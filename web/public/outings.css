@@ -33,6 +33,14 @@
   background-image: linear-gradient(90deg, #23243a 14%, #23243a33), url('/assets/taisei/wriggle-portrait.svg');
 }
 
+.outing-fx {
+  background-color: #283c3a;
+  background-image: linear-gradient(90deg, #243431e8, #24343133), url('/assets/outing-fx.svg');
+  background-size: cover;
+  background-position: center;
+}
+.outing-fx .outing-copy strong { font-size: clamp(15px, 3.6vw, 19px); }
+
 .outing:is(:hover, :focus-visible) { border-color: #f0cc88; }
 .outing-copy { display: grid; gap: 4px; text-shadow: 0 1px 5px #141719; }
 .outing-copy strong { font: 700 19px/1.25 'Songti SC', SimSun, serif; }

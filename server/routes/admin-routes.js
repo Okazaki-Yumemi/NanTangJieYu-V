@@ -12,6 +12,7 @@ const codesModule = require('../domain/codes');
 const contributions = require('../domain/contributions');
 const lottery = require('../domain/lottery');
 const adminLog = require('../domain/admin-log');
+const fxAdmin = require('../domain/fx-admin');
 const weights = require('../domain/weights');
 const views = require('../views');
 const {
@@ -104,6 +105,22 @@ function flushPlayerLedger(appCtx, entries) {
 
 function registerRoutes(router, appCtx) {
   const { seeds, store, config } = appCtx;
+
+  for (const action of ['credit', 'event']) {
+    router.post(`/api/admin/fx/${action}`, async (req, res) => {
+      let body;
+      try { body = await collectBody(req); }
+      catch { return sendJson(res, 400, { error: 'BAD_REQUEST', message: '请求格式错误。' }); }
+      try {
+        const result = await adminTransact(appCtx, req, state => fxAdmin.operate(state, action, body));
+        if (result.error) return sendJson(res, result.error === 'FORBIDDEN' ? 403 : 400, result);
+        sendJson(res, 200, { ...result, admin: views.buildAdminState(store.getLatest(), seeds) });
+      } catch (error) {
+        console.error('[admin] FX 操作失败:', error);
+        sendJson(res, 503, { error: 'INTERNAL_ERROR', message: '操作结果待确认，请用原操作编号重试。' });
+      }
+    });
+  }
 
   router.post('/api/admin/login', async (req, res) => {
     let body;

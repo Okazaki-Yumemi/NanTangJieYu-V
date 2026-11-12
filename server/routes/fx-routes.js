@@ -27,7 +27,7 @@ function registerRoutes(router, { store }) {
     } catch (error) { sendPersistenceError(res, error); }
   });
 
-  for (const action of ['join', 'open', 'close', 'borrow', 'repay', 'work', 'claim-work']) {
+  for (const action of ['join', 'open', 'close', 'borrow', 'borrow-credit', 'repay', 'work', 'claim-work', 'set-title']) {
     router.post(`/api/fx/${action}`, async (req, res) => {
       res.setHeader('Cache-Control', 'no-store');
       let body;

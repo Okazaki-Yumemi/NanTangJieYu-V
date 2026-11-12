@@ -13,7 +13,7 @@
       "x": 186,
       "y": 502
     },
-    "max_anomaly": 200000,
+    "max_anomaly": 100000,
     "unlock_after": [],
     "prize_ids": [
       "prize_siyuan_gate"
@@ -33,7 +33,7 @@
       "x": 112,
       "y": 430
     },
-    "max_anomaly": 290000,
+    "max_anomaly": 145000,
     "unlock_after": [
       "siyuan_gate"
     ],
@@ -55,7 +55,7 @@
       "x": 306,
       "y": 480
     },
-    "max_anomaly": 360000,
+    "max_anomaly": 180000,
     "unlock_after": [
       "siyuan_lake"
     ],
@@ -77,7 +77,7 @@
       "x": 272,
       "y": 302
     },
-    "max_anomaly": 420000,
+    "max_anomaly": 210000,
     "unlock_after": [
       "kaixuan_gate"
     ],
@@ -99,7 +99,7 @@
       "x": 104,
       "y": 248
     },
-    "max_anomaly": 460000,
+    "max_anomaly": 230000,
     "unlock_after": [
       "diancao"
     ],
@@ -121,7 +121,7 @@
       "x": 158,
       "y": 128
     },
-    "max_anomaly": 520000,
+    "max_anomaly": 260000,
     "unlock_after": [
       "hanze_lake"
     ],

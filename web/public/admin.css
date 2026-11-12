@@ -885,3 +885,4 @@ table.admin-table tr:hover td {
     min-width: 660px;
   }
 }
+.fx-admin-form{display:grid;gap:12px;max-width:720px}.fx-admin-form label{display:grid;gap:6px}.fx-admin-form input,.fx-admin-form select{width:100%;min-width:0;padding:9px;color:inherit;background:var(--surface,#292632);border:1px solid #726365;border-radius:4px}.fx-admin-form .action-btn{justify-self:start}

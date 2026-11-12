@@ -47,10 +47,15 @@
     const account = data?.account;
     $('fx-borrow').disabled = locked || !tradable || !account.needs_rescue || Boolean(account.debt);
     $('fx-repay').disabled = locked || !tradable || !account.debt || account.cash <= 0;
-    $('fx-work').disabled = locked || !tradable || !account.needs_rescue || Boolean(account.job);
+    $('fx-work').disabled = locked || !tradable || Boolean(account.job);
+    $('fx-work-minutes').disabled = locked || !tradable || Boolean(account?.job);
+    $('fx-credit-amount').disabled = locked || !tradable || Boolean(account?.credit);
+    $('fx-borrow-credit').disabled = locked || !tradable || Boolean(account?.credit);
     $('fx-claim-work').disabled = locked || !tradable || !account.job || Date.now() + serverOffset < account.job.ready_at;
     $('fx-retry').hidden = !pending;
     $('fx-retry').disabled = busy;
+    $('fx-title').disabled = locked || !tradable;
+    $('fx-set-title').disabled = locked || !tradable;
   }
   function updateWork() {
     const account = data?.account;
@@ -64,10 +69,13 @@
       $('fx-work-status').textContent = seconds > 0
         ? `拧螺丝中，还剩 ${Math.floor(seconds / 60)} 分 ${String(seconds % 60).padStart(2, '0')} 秒。`
         : '活干完了，工钱等你来领。';
-      $('fx-work-progress').max = data.rules.work_ms / 1000;
-      $('fx-work-progress').value = Math.max(0, (data.rules.work_ms - remaining) / 1000);
-    } else $('fx-work-status').textContent = !account ? '开户后，没钱时可以来接活。' : account.needs_rescue ? '没钱炒汇，就先拧会儿螺丝。' : '还没到进厂的时候，手里有钱就先用着。';
+      const duration = job.ready_at - job.started_at;
+      $('fx-work-progress').max = duration / 1000;
+      $('fx-claim-work').textContent = `下工，领取 ${money(job.pay)}`;
+      $('fx-work-progress').value = Math.max(0, (duration - remaining) / 1000);
+    } else $('fx-work-status').textContent = !account ? '开户后可以来接活。' : '随时可以接活，同时只能做一份。';
     $('fx-repay').textContent = account?.debt ? `还 ${money(Math.min(account.cash, account.debt))}` : '暂无欠款';
+    $('fx-credit-status').textContent = account?.credit ? `本金 ${money(account.credit.principal)} · 已计利息 ${money(account.credit.interest)} · 每小时约 ${money(Math.round(account.credit.principal * data.rules.credit_hourly_rate))}` : '暂无有息贷款';
     updateControls();
   }
   function preview() {
@@ -79,53 +87,19 @@
     $('fx-fee').textContent = valid ? money(Math.ceil(margin * leverage * data.rules.fee_rate)) : '—';
     $('fx-risk').textContent = `${Math.max(0, (1 - data.rules.maintenance_rate) / leverage * 100 - data.rules.half_spread * 200).toFixed(2)}%`;
   }
+  let chartPeriod = 30, chartPointer = null;
   function drawChart() {
     if (!data?.market) return;
-    const canvas = $('fx-chart');
-    const rect = canvas.getBoundingClientRect();
-    if (!rect.width || !rect.height) return;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.round(rect.width * dpr); canvas.height = Math.round(rect.height * dpr);
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.scale(dpr, dpr);
-    const history = data.market.history;
-    const values = history.map(point => point.price);
-    const min = Math.min(...values), max = Math.max(...values);
-    const padding = Math.max((max - min) * .18, data.market.price * .002);
-    const low = min - padding, high = max + padding;
-    const left = 6, right = rect.width - 61, top = 15, bottom = rect.height - 28;
-    const x = index => left + (right - left) * index / Math.max(1, values.length - 1);
-    const y = value => bottom - (value - low) / (high - low) * (bottom - top);
-    ctx.font = '10px Segoe UI, sans-serif'; ctx.lineWidth = 1;
-    for (let i = 0; i < 5; i++) {
-      const value = low + (high - low) * i / 4, height = y(value);
-      ctx.strokeStyle = '#d7dce0'; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(left, height); ctx.lineTo(right, height); ctx.stroke();
-      ctx.fillStyle = '#697580'; ctx.fillText(value.toFixed(2), right + 9, height + 3);
-    }
-    ctx.setLineDash([]);
-    ctx.beginPath(); values.forEach((value, i) => i ? ctx.lineTo(x(i), y(value)) : ctx.moveTo(x(i), y(value)));
-    ctx.strokeStyle = '#405e99'; ctx.lineWidth = 1.5; ctx.stroke();
-    ctx.beginPath(); ctx.arc(x(values.length - 1), y(values.at(-1)), 2.5, 0, Math.PI * 2); ctx.fillStyle = '#405e99'; ctx.fill();
-    for (const news of data.market.news_history || []) {
-      const index = history.findIndex(point => point.at === news.at);
-      if (index < 0) continue;
-      ctx.fillStyle = news.change_bps >= 0 ? '#23764f' : '#ae343b';
-      ctx.beginPath(); ctx.arc(x(index), y(values[index]), news.tier === 'quake' ? 5 : 3, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
-    }
-    ctx.fillStyle = '#748073'; ctx.fillText(time(history[0].at), left, rect.height - 7);
-    if (values.length > 1) { ctx.textAlign = 'right'; ctx.fillText(time(history.at(-1).at), right, rect.height - 7); }
-    canvas.setAttribute('aria-label', `河童货币兑人里元走势，最近 ${values.length} 拍，最低 ${price(min)}，最高 ${price(max)}，最新 ${price(data.market.price)}`);
-    $('fx-chart-empty').hidden = values.length > 1;
-    $('fx-chart-empty').textContent = '开市第一拍，等待下一笔报价…';
+    const bar = FXChart.draw($('fx-chart'), data.market, chartPeriod, chartPointer);
+    $('fx-chart-empty').hidden = Boolean(bar);
+    if (bar) $('fx-ohlc').textContent = `${time(bar.at)}  开 ${price(bar.open)}  高 ${price(bar.high)}  低 ${price(bar.low)}  收 ${price(bar.close)}${bar.current ? ' · 形成中' : ''}`;
   }
   function renderNews(market) {
     const news = market.news;
     const effect = market.event_effect;
     $('fx-news-type').textContent = newsLabels[news.tier] || '文文快讯';
     $('fx-news').textContent = news.headline ? `${news.headline}：${news.text}` : news.text;
-    $('fx-news-impact').textContent = Number.isFinite(news.change_bps) ? `${time(news.at)} · 事件当拍 ${impact(news.change_bps)} · 文文日报（虚构）` : '';
+    $('fx-news-impact').textContent = Number.isFinite(news.change_bps) ? `${time(news.at)} · 事件当拍 ${impact(news.change_bps)} · ${news.source || '文文日报'}（虚构）` : '';
     tone($('fx-news-impact'), news.change_bps || 0);
     $('fx-ticker').dataset.tier = effect?.tier || 'quiet';
     const status = $('fx-market-event');
@@ -142,12 +116,46 @@
     list.replaceChildren(...history.map(item => {
       const row = node('li');
       const header = node('div', undefined, 'news-heading');
-      header.append(node('span', `${time(item.at)} · ${newsLabels[item.tier] || '快讯'}`));
+      header.append(node('span', `${time(item.at)} · ${newsLabels[item.tier] || '快讯'} · ${item.source || '文文日报'}`));
       const change = node('b', impact(item.change_bps)); tone(change, item.change_bps); header.append(change);
       row.append(header, node('strong', item.headline), node('p', item.text));
       return row;
     }));
     if (!history.length) list.append(node('li', '还没有突发新闻。', 'empty'));
+  }
+  function renderProfile(account, previous) {
+    const profile = account?.profile, stats = profile?.stats;
+    const catalog = data.achievements || [];
+    const unlocked = profile?.unlocked || {};
+    $('fx-achievement-count').textContent = `成就 ${Object.keys(unlocked).length} / ${catalog.length}`;
+    const selector = $('fx-title'), key = JSON.stringify([Object.keys(unlocked), profile?.title_id]);
+    if (selector.dataset.entries !== key) {
+      selector.dataset.entries = key;
+      const none = node('option', '未挂名交易员'); none.value = '';
+      selector.replaceChildren(none, ...catalog.filter(item => Object.hasOwn(unlocked, item.id)).map(item => {
+        const option = node('option', item.title); option.value = item.id; return option;
+      }));
+      selector.value = profile?.title_id || '';
+    }
+    $('fx-career').replaceChildren(...(stats ? [
+      ['累计结算盈亏', signedMoney(stats.realized_pnl)], ['盈利 / 亏损', `${stats.wins} / ${stats.losses} 笔`],
+      ['最高净资产', money(stats.peak_equity)], ['打工所得', money(stats.work_earned)],
+      ['累计开仓', `${stats.opened} 笔`], ['持仓经历新闻', `${stats.news_count || 0} / ${data.news_total}`],
+    ].map(([label, value]) => { const item = node('div'); item.append(node('span', label), node('strong', value)); return item; }) : []));
+    $('fx-achievements').replaceChildren(...catalog.map(item => {
+      const earned = Object.hasOwn(unlocked, item.id);
+      const card = node('article', undefined, `achievement ${earned ? 'earned' : ''}`);
+      card.append(node('strong', `${earned ? '✓ ' : ''}${item.title}`), node('p', item.description));
+      const value = Math.min(item.target, Math.max(0, stats?.[item.stat] || 0));
+      const progress = node('progress'); progress.max = item.target; progress.value = value;
+      progress.setAttribute('aria-label', `${item.title}进度`);
+      const label = earned ? `已达成 · ${new Date(unlocked[item.id]).toLocaleDateString('zh-CN')}` : item.stat === 'peak_equity' ? `${money(value)} / ${money(item.target)}` : `${value} / ${item.target}`;
+      card.append(progress, node('small', label)); return card;
+    }));
+    if (previous?.profile) {
+      const fresh = catalog.filter(item => Object.hasOwn(unlocked, item.id) && !Object.hasOwn(previous.profile.unlocked, item.id));
+      if (fresh.length) $('fx-achievement-message').textContent = `新成就：${fresh.map(item => item.title).join('、')}。可在下方挂牌。`;
+    }
   }
   function renderPositions(account) {
     const container = $('fx-positions');
@@ -215,10 +223,13 @@
       } else action.append(node('span', accountMode === 'banned' ? '账户不可交易' : '模拟账户', 'account-label'));
     }
     renderPositions(account);
+    renderProfile(account, previous?.account);
     $('fx-player-count').textContent = `${data.total_players} 位交易者`;
     $('fx-leaderboard').replaceChildren(...data.rows.map(row => {
       const item = node('li', undefined, row.is_me ? 'is-me' : '');
-      item.append(node('span', String(row.rank).padStart(2, '0'), 'rank'), node('span', `${row.display_name}${row.is_me ? ' · 我' : ''}`, 'name'), node('strong', money(row.equity)));
+      const name = node('span', `${row.display_name}${row.is_me ? ' · 我' : ''}`, 'name');
+      name.append(node('small', row.title || '未挂名交易员', 'board-title'));
+      item.append(node('span', String(row.rank).padStart(2, '0'), 'rank'), name, node('strong', money(row.equity)));
       return item;
     }));
     if (!data.rows.length) $('fx-leaderboard').append(node('li', '暂时还没有人开户。', 'empty'));
@@ -230,7 +241,11 @@
   }
   function schedule() {
     clearTimeout(timer);
-    if (active && !document.hidden) timer = setTimeout(poll, 2000);
+    // 靠近下一拍开头同步，避免请求耗时让轮询相位逐渐落后。
+    const nextTick = data?.market.updated_at + (data?.rules.tick_ms || 2000);
+    const delay = online && Number.isFinite(nextTick)
+      ? Math.max(200, Math.min(2000, nextTick - (Date.now() + serverOffset) + 100)) : 2000;
+    if (active && !document.hidden) timer = setTimeout(poll, delay);
   }
   async function poll() {
     if (!active || document.hidden || busy) return schedule();
@@ -253,7 +268,7 @@
     pending = { action, body: {
       request_id: `fx_${globalThis.crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(36).slice(2)}`}`,
       expected_revision: data.account?.revision || 0, ...fields,
-      ...(action === 'open' ? { quote_seq: data.market.seq } : {}),
+      ...(['open', 'close'].includes(action) ? { quote_seq: data.market.seq } : {}),
     } };
     await sendPending();
   }
@@ -266,7 +281,10 @@
       const action = pending.action; pending = null;
       if (result.market) render(result);
       if (result.error) message(result.message, true);
-      else message(result.repeated ? '已确认上一笔操作，没有重复记账。' : ({ join: '已领取 ¥10,000 模拟资金。', open: '已成交。', close: '已平仓，资金到账。', borrow: '到账 ¥3,000。无息借款，记得还。', repay: '还款已入账。', work: '已接活，15 分钟后回来领工钱。', 'claim-work': '辛苦了，¥1,500 工钱已到账。' })[action]);
+      else if (result.receipt) {
+        const r = result.receipt;
+        message(`${result.repeated ? '原成交已确认，无重复记账。' : '已成交。'}${r.action === 'open' ? `开仓价 ${price(r.price)}，保证金 ${money(r.margin)}，手续费 ${money(r.fee)}，共扣 ${money(r.amount)}` : `平仓价 ${price(r.price)}，返还保证金及盈亏 ${money(r.amount)}`}`);
+      } else message(result.repeated ? '已确认上一笔操作，没有重复记账。' : ({ join: '已领取 ¥10,000 模拟资金。', open: '已成交。', close: '已平仓，资金到账。', borrow: '到账 ¥5,000。无息借款，记得还。', 'borrow-credit': '有息贷款已到账，每小时单利 0.5%。', repay: '还款已入账。', 'set-title': '称号已挂牌，富豪榜同步展示。', work: '已接活，做满所选时长后回来领工钱。', 'claim-work': '工钱已到账。' })[action]);
     } catch {
       online = false; $('fx-connection').textContent = '结果待确认'; $('fx-connection').classList.add('offline');
       message('连接中断，成交结果尚未确认。点击下方按钮确认，不会重复扣款。', true);
@@ -292,9 +310,23 @@
     $('fx-margin').value = (margin / 100).toFixed(2); preview();
   });
   $('fx-retry').addEventListener('click', sendPending);
-  for (const action of ['borrow', 'repay', 'work', 'claim-work']) {
+  $('fx-set-title').addEventListener('click', () => submit('set-title', { title: $('fx-title').value || null }));
+  for (const action of ['borrow', 'repay', 'claim-work']) {
     $(`fx-${action}`).addEventListener('click', () => submit(action));
   }
+  $('fx-work').addEventListener('click', () => submit('work', { minutes: Number($('fx-work-minutes').value) }));
+  $('fx-borrow-credit').addEventListener('click', () => {
+    const amount = Math.round(Number($('fx-credit-amount').value) * 100);
+    if (!Number.isSafeInteger(amount) || amount < data.rules.credit_min || amount > data.rules.credit_limit) return message('请输入 100～50,000 人里元。', true);
+    void submit('borrow-credit', { amount });
+  });
+  for (const button of document.querySelectorAll('[data-period]')) button.addEventListener('click', () => {
+    chartPeriod = Number(button.dataset.period); chartPointer = null;
+    for (const other of document.querySelectorAll('[data-period]')) other.setAttribute('aria-pressed', String(other === button));
+    drawChart();
+  });
+  $('fx-chart').addEventListener('pointermove', event => { chartPointer = event.clientX - $('fx-chart').getBoundingClientRect().left; drawChart(); });
+  $('fx-chart').addEventListener('pointerleave', () => { chartPointer = null; drawChart(); });
   window.addEventListener('resize', drawChart);
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) { ++generation; readController?.abort(); clearTimeout(timer); clearInterval(workTimer); workTimer = null; }

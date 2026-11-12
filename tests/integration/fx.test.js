@@ -6,7 +6,7 @@ const path = require('node:path');
 const { once } = require('node:events');
 const { test } = require('node:test');
 const { createApp, startServer } = require('../../server/index');
-const { SESSION_COOKIE } = require('../../shared/constants');
+const { SESSION_COOKIE, ADMIN_COOKIE } = require('../../shared/constants');
 const { createFixture } = require('../helpers/fixture');
 const fx = require('../../server/domain/fx');
 
@@ -58,7 +58,8 @@ test('FX HTTP journey: auth, shared quotes, atomic duplicate orders, private acc
   const beforeTick = app.store.getLatest().fx.market.seq;
   await new Promise(resolve => setTimeout(resolve, fx.RULES.tick_ms + 500));
   assert.ok(app.store.getLatest().fx.market.seq > beforeTick, 'timer advances with no polling');
-  const close = { request_id: 'close_player_one', expected_revision: current.account.revision, position_id: current.account.positions[0].id };
+  const latest = (await request('/api/fx/state')).data;
+  const close = { quote_seq: latest.market.seq, request_id: 'close_player_one', expected_revision: current.account.revision, position_id: current.account.positions[0].id };
   const closed = await request('/api/fx/close', close);
   assert.equal(closed.status, 200); assert.equal(closed.data.account.positions.length, 0);
   assert.equal((await request('/api/fx/close', close)).data.repeated, true);
@@ -72,7 +73,7 @@ test('FX HTTP journey: auth, shared quotes, atomic duplicate orders, private acc
   assert.equal((await request('/api/fx/claim-work', { request_id: 'early_claim_test', expected_revision: work.data.account.revision })).status, 400);
   const loanBody = { request_id: 'borrow_player_one', expected_revision: work.data.account.revision };
   const loan = await request('/api/fx/borrow', loanBody);
-  assert.equal(loan.data.account.cash, 300000); assert.equal(loan.data.account.debt, 300000);
+  assert.equal(loan.data.account.cash, 500000); assert.equal(loan.data.account.debt, 500000);
   assert.equal(loan.data.account.equity, 0);
   assert.equal((await request('/api/fx/borrow', loanBody)).data.repeated, true);
   const repaid = await request('/api/fx/repay', { request_id: 'repay_player_one', expected_revision: loan.data.account.revision });
@@ -92,4 +93,49 @@ test('FX HTTP journey: auth, shared quotes, atomic duplicate orders, private acc
   const arcade = await (await fetch(`${url}/arcade.html`)).text();
   assert.match(arcade, /FX战士天弓千亦/); assert.match(arcade, /href="\/fx.html"/); assert.doesNotMatch(arcade, /后户鼓乐/);
   const legacy = await (await fetch(`${url}/rhythm.html`)).text(); assert.match(legacy, /url=\/fx.html/);
+});
+
+test('FX admin HTTP enforces authorization, concurrent idempotency, audit persistence and shared market', async t => {
+  const dataDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ntjv-fx-admin-'));
+  const config = { isProduction: false, host: '127.0.0.1', port: 0, dataDir,
+    seedsDir: path.resolve(__dirname, '../../shared/seeds'), publicDir: path.resolve(__dirname, '../../web/public'),
+    admin: { password: 'test-password', usingGeneratedPassword: false, entryPath: '/admin-test.html' }, cookieSecure: false };
+  const logger = { info() {}, warn() {}, error() {} };
+  const app = createApp({ config, logger }); await app.store.initialize();
+  const f = createFixture({ userCount: 1, now: Math.floor(Date.now() / 1000) });
+  fx.advanceMarket(f.state);
+  fx.trade(f.state, f.registered[0], 'join', { request_id: 'admin-test-join', expected_revision: 0 });
+  f.state.admin_sessions['test-admin-session'] = { created_at: Math.floor(Date.now() / 1000), last_seen_at: Math.floor(Date.now() / 1000) };
+  f.state.sessions['test-player-session'] = { user_id: f.registered[0].id, created_at: Math.floor(Date.now() / 1000), last_seen_at: Math.floor(Date.now() / 1000) };
+  await app.store.replaceState(f.state);
+  const server = startServer(app, logger); await once(server, 'listening');
+  t.after(async () => { await new Promise(resolve => server.close(resolve)); await app.store.flush(); await fs.rm(dataDir, { recursive: true, force: true }); });
+  const url = `http://127.0.0.1:${server.address().port}`;
+  const adminCookie = `${ADMIN_COOKIE}=test-admin-session`, playerCookie = `${SESSION_COOKIE}=test-player-session`;
+  const post = async (action, body, cookie) => {
+    const res = await fetch(`${url}/api/admin/fx/${action}`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(cookie ? { Cookie: cookie } : {}) }, body: JSON.stringify(body) });
+    return { status: res.status, data: await res.json() };
+  };
+  const grant = { request_id: 'concurrent-admin-credit', user_id: f.registered[0].id, amount: 500000, reason: '测试奖励' };
+  for (const cookie of [undefined, playerCookie]) {
+    assert.equal((await post('credit', grant, cookie)).status, 403);
+    assert.equal((await post('event', { request_id: 'unauthorized-event', event_id: 'tenshi-quake' }, cookie)).status, 403);
+  }
+  const results = await Promise.all(Array.from({ length: 8 }, () => post('credit', grant, adminCookie)));
+  assert.ok(results.every(result => result.status === 200));
+  assert.equal(results.filter(result => !result.data.repeated).length, 1);
+  assert.equal(app.store.getLatest().fx.players[grant.user_id].cash, 1500000);
+  assert.equal(app.store.getLatest().admin_logs.filter(log => log.action === 'fx_credit').length, 1);
+  assert.equal((await post('credit', { ...grant, amount: 100 }, adminCookie)).status, 400);
+  const event = { request_id: 'concurrent-admin-event', event_id: 'tenshi-quake' };
+  const events = await Promise.all(Array.from({ length: 4 }, () => post('event', event, adminCookie)));
+  assert.ok(events.every(result => result.status === 200));
+  assert.equal(events.filter(result => !result.data.repeated).length, 1);
+  const publicView = await (await fetch(`${url}/api/fx/state`)).json();
+  assert.equal(publicView.market.news.event_id, event.event_id);
+  assert.equal(publicView.market.candles.at(-1).close, publicView.market.price);
+  assert.equal('admin_requests' in publicView.market, false);
+  const reopened = createApp({ config, logger }); await reopened.store.initialize();
+  assert.equal(reopened.store.getLatest().fx.players[grant.user_id].cash, 1500000);
+  assert.equal(reopened.store.getLatest().admin_logs.filter(log => log.action === 'fx_event').length, 1);
 });

@@ -53,7 +53,9 @@ async function main() {
     // 固定的较重账户：12 笔持仓、30 笔历史。行情及随机新闻不计入性能差异。
     fx.advanceMarket(f.state, now);
     f.state.fx.market.history = Array.from({ length: 180 }, (_, i) => ({ at: now - (179 - i) * 2000, price: 100 }));
+    f.state.fx.market.candles = Array.from({ length: 360 }, (_, i) => ({ at: Math.floor(now / 10000) * 10000 - (359 - i) * 10000, open: 100, high: 101, low: 99, close: 100 }));
     f.state.fx.market.major_event_ticks = 900;
+    f.state.fx.market.updated_at = now + (seconds + 120) * 1000; // 此场景固定报价，另有混合压测覆盖实时行情。
     let seq = 0;
     for (const user of f.registered) {
       const trade = (action, extra = {}) => {
@@ -75,7 +77,7 @@ async function main() {
       const tradeNumber = kind === 'burst' ? 0 : 1 + Math.floor(index / users);
       const account = f.state.fx.players[f.registered[index % users].id];
       const body = write ? JSON.stringify(writeKind === 'fx'
-        ? { request_id: `load-${kind}-${index}`, expected_revision: account.revision + tradeNumber, position_id: account.positions[tradeNumber].id }
+        ? { request_id: `load-${kind}-${index}`, expected_revision: account.revision + tradeNumber, quote_seq: 1, position_id: account.positions[tradeNumber].id }
         : { game: 'puzzle', mode: 'spring', score: kind === 'burst' ? index + 1 : users + index + 1 }) : null;
       return new Promise(resolve => {
         const req = http.request({ host: '127.0.0.1', port: ready.port, agent, method: write ? 'POST' : 'GET',

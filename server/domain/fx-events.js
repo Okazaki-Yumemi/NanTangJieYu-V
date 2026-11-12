@@ -36,6 +36,18 @@ const CATALOG = [
   { id: 'chimata-buyout', tier: 'quake', direction: 1, headline: '千亦买下整座市场，忘了砍价', text: '收购款全部以河童货币支付。卖家还没反应过来，空头已经开始找临时工。' },
   { id: 'flandre-vault', tier: 'quake', direction: -1, headline: '芙兰问金库上的红点能不能捏', text: '采访提前结束。河童央行正在核对消失的金库、金库钥匙和金库本身的保险单。' },
   { id: 'koishi-shorts', tier: 'quake', direction: 1, headline: '恋恋无意识买光所有卖单', text: '她只是想点一份黄瓜沙拉。交易所宣布这是有记录以来最贵的一顿午饭。' },
+  { id: 'kosuzu-manual', tier: 'rumor', direction: 1, source: '铃奈庵小报', headline: '小铃翻出失传交易秘籍，第一页写着别买', text: '第二页被虫吃了。读者坚信后面一定还有反转，纷纷买入等待续篇。' },
+  { id: 'hatate-photo', tier: 'rumor', direction: -1, source: '花果子念报', headline: '姬海棠果拍到央行行长偷偷种土豆', text: '市场担忧黄瓜本位制动摇。行长解释只是想换个口味，解释被排在收费版。' },
+  { id: 'kogasa-scare', tier: 'rumor', direction: -1, source: '人里茶馆传闻', headline: '小伞终于吓到人了，对方正在看账户', text: '交易员表示主要是数字吓人。小伞坚持把这次计入年度业绩。' },
+  { id: 'nazrin-found', tier: 'rumor', direction: 1, source: '河童通讯社', headline: '娜兹玲在沙发缝里找到外汇储备', text: '数量足够买下三条商业街，以及那张终于可以扔掉的旧沙发。' },
+  { id: 'seija-chart', tier: 'surge', direction: 1, source: '花果子念报', headline: '正邪倒挂报价屏，散户抄底抄到了天花板', text: '维修员把屏幕翻正后发现买单已经成交。交易所宣布尊重大家的倒立自由。' },
+  { id: 'miko-guidance', tier: 'surge', direction: -1, source: '文文日报', headline: '神子同时听取一万条投资建议，选择全部拉黑', text: '顾问团失去唯一客户，紧急抛售河童货币支付场地租金。' },
+  { id: 'byakuren-savings', tier: 'surge', direction: 1, source: '命莲寺晨钟', headline: '白莲发现复印机可以复印存单', text: '银行澄清复印件不能取款，但寺院意外接下了全城的打印业务。' },
+  { id: 'reisen-receipt', tier: 'surge', direction: -1, source: '永远亭值班记录', headline: '铃仙把交易回执发到了月球，月面要求运费到付', text: '账单末尾有四十七个零。荷取询问能否走普通快递，暂未得到回复。' },
+  { id: 'okina-backdoor', tier: 'quake', direction: 1, source: '河童通讯社', headline: '隐岐奈打开金库后门，里面是一整座金库', text: '新金库的后门后面还有金库。审计员已经走了六小时，报告仍只有“很多”两个字。' },
+  { id: 'yuuma-audit', tier: 'quake', direction: -1, source: '花果子念报', headline: '尤魔把资产负债表吃了，只说负债有点塞牙', text: '河童央行宣布报表进入消化期。评级机构第一次给出“建议饭后再看”的评级。' },
+  { id: 'hecatia-sale', tier: 'quake', direction: 1, source: '地狱购物频道', headline: '赫卡提亚三界联名T恤仅收河童货币', text: '三界同时开抢，库存只有两件。第三件穿在女神身上，正在考虑是否也挂链接。' },
+  { id: 'doremy-dream', tier: 'quake', direction: -1, source: '梦境财经', headline: '哆来咪宣布昨夜的牛市只是集体午睡', text: '交易员醒来发现盈利没有了，加班记录却还在。梦境客服表示不支持七天无理由退款。' },
 ];
 
 function normalizeMarket(market) {

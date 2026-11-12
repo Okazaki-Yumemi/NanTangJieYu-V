@@ -34,6 +34,7 @@
       players: document.getElementById('tab-players'),
       codes: document.getElementById('tab-codes'),
       lottery: document.getElementById('tab-lottery'),
+      fx: document.getElementById('tab-fx'),
       logs: document.getElementById('tab-logs')
     }
   };
@@ -176,6 +177,7 @@
       players: renderPlayers,
       codes: renderCodes,
       lottery: renderLottery,
+      fx: renderFx,
       logs: renderLogs
     };
     (renderers[activeTab] || renderOverview)();
@@ -1150,6 +1152,68 @@
         }
       });
     }
+  }
+
+  // ---------- FX 交易所 ----------
+  let fxPending = null, fxBusy = false;
+  const fxMoney = cents => `¥${(cents / 100).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  function renderFx() {
+    const panel = elements.panels.fx, market = admin.fx;
+    const tiers = { rumor: '小道消息', surge: '市场异动', quake: '金融地震' };
+    panel.innerHTML = `
+      <div class="admin-card"><h2>天弓交易所</h2><p>河童货币 / 人里元：<b>${market.price?.toFixed(4) || '等待开市'}</b> · ${market.players.length} 位交易者 · <a href="/fx.html" target="_blank" rel="noopener">打开交易终端</a></p>
+        <p class="helper-text">${escapeHtml(market.news?.headline || market.news?.text || '暂无新闻')}。点击顶部刷新，更新账户与行情。</p>
+        ${fxPending ? '<p role="status">有一笔操作等待确认。重试使用原编号，不会重复加钱或触发事件。</p><button id="admin-fx-retry" class="action-btn primary" type="button">确认原操作结果</button>' : ''}
+      </div>
+      <div class="admin-card"><h2>给玩家加钱</h2><p class="helper-text">只调整 FX 模拟资金，计入净资产；玩家需先在 FX 开户。每笔记录原因与前后余额。</p>
+        <form id="admin-fx-credit" class="fx-admin-form"><label>玩家<select name="user_id" required><option value="">请选择玩家</option>${market.players.filter(p => !p.banned).map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.display_name)} · 可用 ${fxMoney(p.cash)}</option>`).join('')}</select></label>
+          <label>金额（人里元）<input name="amount" type="number" min="0.01" max="1000000" step="0.01" value="5000" required /></label>
+          <label>原因<input name="reason" maxlength="120" placeholder="如：测试奖励、异常补偿" required /></label><button class="action-btn primary" type="submit">核对并加款</button>
+        </form>
+      </div>
+      <div class="admin-card"><h2>手动触发新闻</h2><p class="helper-text">立即影响全服汇率和持仓，也会触发强平。冲击幅度在所列范围内随机。手动大事件后，下次自动大事件重新等待 15～30 分钟。</p>
+        <form id="admin-fx-event" class="fx-admin-form"><label>事件<select name="event_id">${market.events.map(e => `<option value="${escapeHtml(e.id)}">${tiers[e.tier]} · ${e.direction > 0 ? '涨' : '跌'} ${(e.min_bps / 100).toFixed(1)}～${e.max_bps / 100}% · ${escapeHtml(e.headline)}</option>`).join('')}</select></label><p id="admin-fx-event-description" class="helper-text"></p><button class="action-btn danger" type="submit">核对并触发事件</button></form>
+      </div>
+      <div class="admin-card"><h2>账户概览</h2><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>玩家</th><th>可用余额</th><th>净资产（含负债）</th></tr></thead><tbody>${market.players.map(p => `<tr><td>${escapeHtml(p.display_name)}${p.banned ? '（封禁）' : ''}</td><td>${fxMoney(p.cash)}</td><td>${fxMoney(p.equity)}</td></tr>`).join('') || '<tr><td colspan="3">暂无 FX 账户</td></tr>'}</tbody></table></div></div>`;
+    const creditForm = panel.querySelector('#admin-fx-credit'), eventForm = panel.querySelector('#admin-fx-event');
+    for (const control of panel.querySelectorAll('input,select,button')) control.disabled = fxBusy || Boolean(fxPending);
+    const retry = panel.querySelector('#admin-fx-retry');
+    if (retry) { retry.disabled = fxBusy; retry.onclick = sendFxPending; }
+    const describe = () => { panel.querySelector('#admin-fx-event-description').textContent = market.events.find(e => e.id === eventForm.elements.event_id.value)?.text || ''; };
+    eventForm.elements.event_id.onchange = describe; describe();
+    creditForm.onsubmit = async event => {
+      event.preventDefault(); if (fxBusy || fxPending) return;
+      const user_id = creditForm.elements.user_id.value, amount = Math.round(Number(creditForm.elements.amount.value) * 100), reason = creditForm.elements.reason.value.trim();
+      const player = market.players.find(p => p.id === user_id);
+      if (!player || !reason || !Number.isSafeInteger(amount) || amount <= 0) return;
+      fxBusy = true;
+      const confirmed = await adminConfirm({ title: '确认 FX 加款', message: `给「${player.display_name}」增加 ${fxMoney(amount)}，原因：${reason}。`, confirmLabel: '确认加款' });
+      fxBusy = false;
+      if (!confirmed) return;
+      fxPending = { action: 'credit', body: { request_id: NTJ.newRequestId(), user_id, amount, reason } };
+      await sendFxPending();
+    };
+    eventForm.onsubmit = async event => {
+      event.preventDefault(); if (fxBusy || fxPending) return;
+      const item = market.events.find(e => e.id === eventForm.elements.event_id.value);
+      fxBusy = true;
+      const confirmed = await adminConfirm({ title: '确认触发全服事件', message: `${item.headline}：汇率将${item.direction > 0 ? '上涨' : '下跌'} ${item.min_bps / 100}～${item.max_bps / 100}%，可能导致玩家强平。`, danger: true, confirmLabel: '立即触发' });
+      fxBusy = false;
+      if (!confirmed) return;
+      fxPending = { action: 'event', body: { request_id: NTJ.newRequestId(), event_id: item.id } };
+      await sendFxPending();
+    };
+  }
+  async function sendFxPending() {
+    if (fxBusy || !fxPending) return;
+    fxBusy = true; renderFx();
+    try {
+      const result = await api('POST', `/api/admin/fx/${fxPending.action}`, fxPending.body);
+      admin = result.admin; fxPending = null; toast(result.message);
+    } catch (error) {
+      if (['BAD_REQUEST', 'FORBIDDEN'].includes(error.error)) fxPending = null;
+      toast(error.message || '结果待确认，请重试原操作。', 'error');
+    } finally { fxBusy = false; renderTab(); }
   }
 
   // ---------- 日志 ----------

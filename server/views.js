@@ -12,6 +12,7 @@ const weights = require('./domain/weights');
 const lottery = require('./domain/lottery');
 const codesModule = require('./domain/codes');
 const adminLog = require('./domain/admin-log');
+const fxAdmin = require('./domain/fx-admin');
 const contributions = require('./domain/contributions');
 const { memo } = require('./state-cache');
 
@@ -292,6 +293,7 @@ function buildAdminState(state, seeds) {
         : []
     })),
     players: playersView,
+    fx: fxAdmin.view(state),
     codes_stats: codesStats,
     prizes: lottery.listPrizesWithStatus(state, seeds),
     draws: lottery.listDraws(state, seeds, { limit: 100 }),

@@ -23,9 +23,9 @@ function trigger(state, tier = 'quake', index = 0, bps = events.TIERS[tier].min_
     : sequence(10000, tier === 'surge' ? 0 : 99, index, bps, 450));
 }
 
-test('24 distinct fictional events have both directions in every severity tier', () => {
-  assert.equal(events.CATALOG.length, 24);
-  assert.equal(new Set(events.CATALOG.map(event => event.id)).size, 24);
+test('36 distinct fictional events have both directions in every severity tier', () => {
+  assert.equal(events.CATALOG.length, 36);
+  assert.equal(new Set(events.CATALOG.map(event => event.id)).size, 36);
   for (const tier of Object.keys(events.TIERS)) {
     assert.deepEqual([...new Set(events.CATALOG.filter(event => event.tier === tier).map(event => event.direction))].sort(), [-1, 1]);
   }
@@ -77,7 +77,9 @@ test('aftershocks fluctuate both ways, expire after ten ticks, and survive a sav
     const before = state.fx.market.price;
     const up = tick % 2 === 0;
     fx.advanceMarket(state, state.fx.market.updated_at + 2000, sequence(up ? 20000 : 0));
-    assert.equal(state.fx.market.price, Math.round(before * (1 + (up ? .015 : -.015)) * 10000) / 10000);
+    const change = state.fx.market.price / before - 1;
+    assert.equal(Math.sign(change), up ? 1 : -1);
+    assert.ok(Math.abs(change) > .035, 'earthquake aftershocks amplify both directions');
     assert.equal(state.fx.market.event_effect?.remaining_ticks || 0, 10 - tick);
     assert.deepEqual(state.fx.market.news, news);
     assert.equal(state.fx.market.news_history.length, 1);
@@ -85,7 +87,8 @@ test('aftershocks fluctuate both ways, expire after ten ticks, and survive a sav
   assert.equal(state.fx.market.event_effect, null);
   const before = state.fx.market.price;
   fx.advanceMarket(state, state.fx.market.updated_at + 2000, sequence(20000, 99));
-  assert.equal(state.fx.market.price, Math.round(before * 1.003 * 10000) / 10000);
+  const change = state.fx.market.price / before - 1;
+  assert.ok(change > 0 && change < .033, 'normal volatility resumes after the aftershock expires');
 });
 
 test('cooldown prevents consecutive disasters, recent headlines avoid repetition, archive remains bounded', () => {

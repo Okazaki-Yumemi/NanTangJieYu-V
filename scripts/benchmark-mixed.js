@@ -166,7 +166,7 @@ async function exercise() {
           actor.nextAction = elapsed + 8000;
           const close = state.account.positions.length >= 3 || (actor.count++ % 2 && state.account.positions.length);
           const body = { request_id: `mixed-order-${++seq}`, expected_revision: state.account.revision,
-            ...(close ? { position_id: state.account.positions[0].id } : { side: actor.index % 2 ? 'short' : 'long', margin: 10000, leverage: 1, quote_seq: state.market.seq }) };
+            ...(close ? { position_id: state.account.positions[0].id, quote_seq: state.market.seq } : { side: actor.index % 2 ? 'short' : 'long', margin: 10000, leverage: 1, quote_seq: state.market.seq }) };
           await request(`/api/fx/${close ? 'close' : 'open'}`, { cookie, category: 'fx-trade', body, allow: ['STALE_QUOTE', 'CONFLICT'] });
         }
       } else if (actor.group === 'campus') {
