@@ -5,7 +5,7 @@ const fx = require('../../server/domain/fx');
 const pricing = require('../../server/domain/fx-market');
 const credit = require('../../server/domain/fx-credit');
 const admin = require('../../server/domain/fx-admin');
-const { aggregate } = require('../../web/public/fx-chart');
+const { aggregate, series } = require('../../web/public/fx-chart');
 function fixture() {
   const state = { users: { a: { id: 'a', display_name: '测试' } }, admin_logs: [] };
   fx.advanceMarket(state, 10000);
@@ -28,6 +28,40 @@ test('candles preserve real high/low, migrate history, aggregate periods and nev
   assert.equal(market.candles.length, 360);
   const restored = JSON.parse(JSON.stringify(market)); pricing.normalizeMarket(restored);
   assert.deepEqual(restored, market);
+});
+
+test('two-second candles use each real tick, including intra-tick manual events, while longer periods keep their history', () => {
+  const coarse = [{ at: 0, open: 99, high: 101, low: 98, close: 100 }];
+  const market = { updated_at: 14000, price: 102, candles: structuredClone(coarse), history: [
+    { at: 10000, price: 100 }, { at: 12000, price: 105 }, { at: 12000, price: 97 }, { at: 14000, price: 102 },
+  ] };
+  pricing.normalizeMarket(market);
+  assert.deepEqual(market.candles, coarse, 'migration must preserve old ten-second candles');
+  assert.deepEqual(series(market, 2), [
+    { at: 10000, open: 100, high: 100, low: 100, close: 100 },
+    { at: 12000, open: 100, high: 105, low: 97, close: 97 },
+    { at: 14000, open: 97, high: 102, low: 97, close: 102 },
+  ]);
+  pricing.recordCandle(market, 16000, 101, 102);
+  pricing.recordCandle(market, 16000, 106, 101);
+  assert.deepEqual(series(market, 2).at(-1), { at: 16000, open: 102, high: 106, low: 101, close: 106 });
+  assert.equal(series(market, 10).length, 2);
+  assert.equal(series(market, 30).length, 1);
+  assert.equal(series(market, 60).length, 1);
+  const restored = JSON.parse(JSON.stringify(market)); pricing.normalizeMarket(restored);
+  assert.deepEqual(restored, market, 'restart does not duplicate or rebuild saved ticks');
+});
+
+test('two-second history is bounded and does not invent fine quotes from old coarse bars or downtime', () => {
+  const market = { updated_at: 10000, price: 100, candles: [{ at: 0, open: 80, high: 120, low: 60, close: 100 }] };
+  pricing.normalizeMarket(market);
+  assert.deepEqual(series(market, 2), [{ at: 10000, open: 100, high: 100, low: 100, close: 100 }]);
+  pricing.recordCandle(market, 86400000, 105, 100);
+  assert.equal(market.tick_candles.length, 2, 'no candles are fabricated between quotes');
+  for (let i = 1; i <= 200; i++) pricing.recordCandle(market, 86400000 + i * 2000, 105);
+  assert.equal(market.tick_candles.length, 180);
+  assert.equal(market.tick_candles.at(-1).at - market.tick_candles[0].at, 179 * 2000);
+  assert.equal(market.candles[0].at, 0, 'fine history eviction leaves coarse history intact');
 });
 
 test('market has larger ordinary swings, clustered volatility and private trend state', () => {
@@ -115,6 +149,8 @@ test('admin credits and events are validated, idempotent, audited and settle liq
   assert.equal(account.positions.length, 0); assert.equal(account.history[0].reason, 'liquidation');
   assert.equal(state.fx.market.candles[0].close, state.fx.market.price);
   assert.equal(state.fx.market.candles[0].high, 100);
+  assert.equal(state.fx.market.tick_candles.at(-1).close, state.fx.market.price);
+  assert.equal(state.fx.market.tick_candles.at(-1).high, 100);
   const price = state.fx.market.price;
   assert.equal(admin.operate(state, 'event', event, 10003).repeated, true);
   assert.equal(state.fx.market.price, price); assert.equal(state.admin_logs.length, 2);

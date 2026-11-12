@@ -54,6 +54,7 @@ async function main() {
     fx.advanceMarket(f.state, now);
     f.state.fx.market.history = Array.from({ length: 180 }, (_, i) => ({ at: now - (179 - i) * 2000, price: 100 }));
     f.state.fx.market.candles = Array.from({ length: 360 }, (_, i) => ({ at: Math.floor(now / 10000) * 10000 - (359 - i) * 10000, open: 100, high: 101, low: 99, close: 100 }));
+    f.state.fx.market.tick_candles = Array.from({ length: 180 }, (_, i) => ({ at: Math.floor(now / 2000) * 2000 - (179 - i) * 2000, open: 100, high: 101, low: 99, close: 100 }));
     f.state.fx.market.major_event_ticks = 900;
     f.state.fx.market.updated_at = now + (seconds + 120) * 1000; // 此场景固定报价，另有混合压测覆盖实时行情。
     let seq = 0;

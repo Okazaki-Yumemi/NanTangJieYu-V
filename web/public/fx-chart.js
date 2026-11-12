@@ -12,6 +12,9 @@
     }
     return result;
   }
+  function series(market, seconds) {
+    return aggregate((seconds === 2 ? market.tick_candles : market.candles) || [], seconds);
+  }
   function draw(canvas, market, seconds, pointerX) {
     const rect = canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return null;
@@ -20,7 +23,7 @@
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
     ctx.scale(dpr, dpr);
-    const bars = aggregate(market.candles || [], seconds).slice(-Math.max(20, Math.min(80, Math.floor(rect.width / 9))));
+    const bars = series(market, seconds).slice(-Math.max(20, Math.min(80, Math.floor(rect.width / 9))));
     if (!bars.length) return null;
     const min = Math.min(...bars.map(b => b.low)), max = Math.max(...bars.map(b => b.high));
     const pad = Math.max((max - min) * .14, market.price * .003);
@@ -62,6 +65,6 @@
     canvas.setAttribute('aria-label', `${seconds} 秒蜡烛图，${bars.length} 根，最低 ${min.toFixed(4)}，最高 ${max.toFixed(4)}，最新 ${market.price.toFixed(4)}`);
     return { ...selected, current: index === bars.length - 1 };
   }
-  if (typeof module !== 'undefined') module.exports = { aggregate };
-  else window.FXChart = { aggregate, draw };
+  if (typeof module !== 'undefined') module.exports = { aggregate, series };
+  else window.FXChart = { aggregate, series, draw };
 })();

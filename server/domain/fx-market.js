@@ -2,33 +2,47 @@
 
 const CANDLE_MS = 10000;
 const CANDLE_LIMIT = 360;
+const TICK_CANDLE_MS = 2000;
+const TICK_CANDLE_LIMIT = 180;
 const clamp = (n, low, high) => Math.max(low, Math.min(high, n));
 
-function recordCandle(market, at, price, previous = price) {
-  const bucket = Math.floor(at / CANDLE_MS) * CANDLE_MS;
-  const last = market.candles.at(-1);
+function appendCandle(candles, at, price, previous, interval, limit) {
+  const bucket = Math.floor(at / interval) * interval;
+  const last = candles.at(-1);
   if (last?.at === bucket) {
     last.high = Math.max(last.high, price);
     last.low = Math.min(last.low, price);
     last.close = price;
   } else {
     // 开盘价取上一笔真实报价；停服期间不补造蜡烛。
-    market.candles.push({ at: bucket, open: previous, high: Math.max(previous, price), low: Math.min(previous, price), close: price });
-    if (market.candles.length > CANDLE_LIMIT) market.candles.shift();
+    candles.push({ at: bucket, open: previous, high: Math.max(previous, price), low: Math.min(previous, price), close: price });
+    if (candles.length > limit) candles.shift();
+  }
+}
+
+function recordCandle(market, at, price, previous = price) {
+  appendCandle(market.candles, at, price, previous, CANDLE_MS, CANDLE_LIMIT);
+  market.tick_candles ??= [];
+  appendCandle(market.tick_candles, at, price, previous, TICK_CANDLE_MS, TICK_CANDLE_LIMIT);
+}
+
+function restoreCandles(market, key, interval, limit) {
+  if (!Array.isArray(market[key]) || !market[key].length) {
+    market[key] = [];
+    let previous;
+    for (const point of market.history || []) {
+      if (!Number.isFinite(point.at) || !Number.isFinite(point.price)) continue;
+      appendCandle(market[key], point.at, point.price, previous ?? point.price, interval, limit);
+      previous = point.price;
+    }
+    if (!market[key].length) appendCandle(market[key], market.updated_at, market.price, market.price, interval, limit);
   }
 }
 
 function normalizeMarket(market) {
-  if (!Array.isArray(market.candles)) {
-    market.candles = [];
-    let previous;
-    for (const point of market.history || []) {
-      if (!Number.isFinite(point.at) || !Number.isFinite(point.price)) continue;
-      recordCandle(market, point.at, point.price, previous ?? point.price);
-      previous = point.price;
-    }
-    if (!market.candles.length) recordCandle(market, market.updated_at, market.price);
-  }
+  restoreCandles(market, 'candles', CANDLE_MS, CANDLE_LIMIT);
+  // 升级时只从留存的逐拍报价恢复，不把旧 10 秒蜡烛拆成虚构报价。
+  restoreCandles(market, 'tick_candles', TICK_CANDLE_MS, TICK_CANDLE_LIMIT);
   if (!Number.isFinite(market.momentum)) market.momentum = 0;
   if (!Number.isFinite(market.variance)) market.variance = 0.000025;
 }
@@ -46,4 +60,4 @@ function nextMove(market, pick) {
   return move;
 }
 
-module.exports = { CANDLE_MS, CANDLE_LIMIT, recordCandle, normalizeMarket, nextMove };
+module.exports = { CANDLE_MS, CANDLE_LIMIT, TICK_CANDLE_MS, TICK_CANDLE_LIMIT, recordCandle, normalizeMarket, nextMove };

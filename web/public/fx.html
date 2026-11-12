@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#343b4b" />
   <title>FX战士天弓千亦 · 四季游园会</title>
-  <link rel="stylesheet" href="/fx.css?v=4" />
+  <link rel="stylesheet" href="/fx.css?v=5" />
 </head>
 <body>
   <main class="exchange">
@@ -25,7 +25,7 @@
       <section class="panel chart-panel" aria-labelledby="market-title">
         <div class="panel-label"><span>外汇行情</span><span id="fx-updated">每 2 秒一拍 · 全服同步</span></div>
         <div class="market-title"><div><h2 id="market-title">河童货币 <span>/ 人里元</span></h2><p>1 河童货币值多少人里元</p></div><div class="price"><strong id="fx-price">—</strong><span id="fx-change">等待开市</span></div></div>
-        <div class="chart-toolbar" role="group" aria-label="蜡烛周期"><span>蜡烛图</span><button type="button" data-period="10" aria-pressed="false">10 秒</button><button type="button" data-period="30" aria-pressed="true">30 秒</button><button type="button" data-period="60" aria-pressed="false">1 分钟</button><span>绿涨 / 红跌</span></div><p id="fx-ohlc" class="ohlc">等待报价…</p>
+        <div class="chart-toolbar" role="group" aria-label="蜡烛周期"><span>蜡烛图</span><button type="button" data-period="2" aria-pressed="false">2 秒</button><button type="button" data-period="10" aria-pressed="false">10 秒</button><button type="button" data-period="30" aria-pressed="true">30 秒</button><button type="button" data-period="60" aria-pressed="false">1 分钟</button><span>绿涨 / 红跌</span></div><p id="fx-ohlc" class="ohlc">等待报价…</p>
         <div class="chart-wrap"><canvas id="fx-chart" role="img" aria-label="河童货币兑人里元的近期模拟汇率蜡烛图"></canvas><p id="fx-chart-empty">正在读取行情…</p></div>
         <div class="quote-strip"><span>卖出价 <b id="fx-bid">—</b></span><span>买入价 <b id="fx-ask">—</b></span><span>真实开高低收</span></div>
         <p id="fx-market-event" class="market-event">当前正常波动，新闻事件会在图上标记。</p>
@@ -83,12 +83,12 @@
       <p><b>⑤ 上榜</b>　净资产 = 可用余额 + 持仓保证金 + 浮动盈亏 − 待还贷款。仅展示前 20 名，自己的名次显示在账户区。</p>
       <p><b>⑥ 借贷与打工</b>　无持仓且余额不足 ¥100.05 时，可无息借 ¥5,000，全部欠款还清才能再借。有息贷款随时可申请 ¥100～50,000，每小时按剩余本金收取 0.5% 单利，离线和停服期间也计息；还清该笔后可再借。还款优先支付利息，其次有息本金，最后无息贷款，所有债务均扣除净资产。随时可打工，选择 5 / 15 / 30 / 60 分钟，按每分钟 ¥100 支付，做满到点领取；一次只能接一份，离线计时。</p>
       <p><b>⑦ 突发新闻</b>　小道消息带来小幅跳动，市场异动可能猛涨猛跌，金融地震的单次冲击可达约 8%～18%。大事件过后会有短暂余震，涨跌方向仍然随机。新闻会直接影响所有人的持仓，图上圆点对应事件发生时刻；留档里的涨跌是事件当拍实际变动。</p>
-      <p>蜡烛图取实际报价的开、高、低、收，每根最新蜡烛会随报价更新，可切换 10 秒、30 秒、1 分钟周期。服务器每 2 秒生成统一行情；自动大事件仍每 15～30 分钟一次，管理员可额外触发。停服时行情暂停，贷款和打工仍按实际时间计算。所有价格与新闻均为虚构游戏内容。</p>
+      <p>蜡烛图取实际报价的开、高、低、收，每根最新蜡烛会随报价更新，可切换 2 秒、10 秒、30 秒、1 分钟周期。服务器每 2 秒生成统一行情；自动大事件仍每 15～30 分钟一次，管理员可额外触发。停服时行情暂停，贷款和打工仍按实际时间计算。所有价格与新闻均为虚构游戏内容。</p>
     </div></details>
     <footer>行情纯属虚构，工钱倒是一分不少。<a href="/art-credits.html">素材署名</a></footer>
     <noscript>请启用 JavaScript 后进入模拟交易。</noscript>
   </main>
-  <script src="/fx-chart.js?v=1"></script>
+  <script src="/fx-chart.js?v=2"></script>
   <script src="/fx.js?v=4"></script>
 </body>
 </html>
