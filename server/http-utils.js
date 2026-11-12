@@ -6,6 +6,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const { gzip } = require('node:zlib');
 
 const MAX_JSON_BODY_BYTES = 64 * 1024;
 
@@ -24,8 +25,24 @@ const MIME_TYPES = {
 };
 
 function sendJson(res, statusCode, payload) {
-  res.writeHead(statusCode, { 'Content-Type': 'application/json; charset=utf-8' });
-  res.end(JSON.stringify(payload));
+  const body = Buffer.from(JSON.stringify(payload));
+  const headers = { 'Content-Type': 'application/json; charset=utf-8', Vary: 'Accept-Encoding' };
+  const accept = String(res.req?.headers['accept-encoding'] || '');
+  const encodings = accept.toLowerCase().split(',').map(item => item.trim().split(';'));
+  const encoding = encodings.find(([name]) => name === 'gzip') || encodings.find(([name]) => name === '*');
+  const quality = encoding?.slice(1).find(value => value.trim().startsWith('q='));
+  const allowed = encoding && (quality === undefined || Number(quality.trim().slice(2)) > 0);
+  const end = data => {
+    if (res.destroyed) return;
+    res.writeHead(statusCode, { ...headers, 'Content-Length': data.length });
+    res.end(data);
+  };
+  if (body.length < 1024 || !allowed) return end(body);
+  gzip(body, { level: 1 }, (error, compressed) => {
+    if (error || compressed.length >= body.length) return end(body);
+    headers['Content-Encoding'] = 'gzip';
+    end(compressed);
+  });
 }
 
 function sendText(res, statusCode, text, contentType = 'text/plain; charset=utf-8', extraHeaders = {}) {
@@ -138,7 +155,7 @@ function serveLocalRhythm(req, res, filePath, size) {
   stream.pipe(res);
 }
 
-function serveStatic(res, pathname, { publicDir, adminEntryPath, request }) {
+async function serveStatic(res, pathname, { publicDir, adminEntryPath, request }) {
   let routePath = pathname === '/' ? '/index.html' : pathname;
   const isAdminEntry = Boolean(adminEntryPath) && routePath === adminEntryPath;
   if (isAdminEntry) {
@@ -159,7 +176,7 @@ function serveStatic(res, pathname, { publicDir, adminEntryPath, request }) {
   }
   let stat = null;
   try {
-    stat = fs.statSync(filePath);
+    stat = await fs.promises.stat(filePath);
   } catch {
     stat = null;
   }
@@ -179,13 +196,21 @@ function serveStatic(res, pathname, { publicDir, adminEntryPath, request }) {
 
   const ext = path.extname(filePath).toLowerCase();
   const headers = { 'Content-Type': MIME_TYPES[ext] || 'application/octet-stream' };
+  headers.ETag = `W/"${stat.size.toString(16)}-${stat.mtimeMs.toString(16)}"`;
   if (['.png', '.jpg', '.jpeg', '.svg', '.webp', '.woff2'].includes(ext)) {
     headers['Cache-Control'] = 'public, max-age=3600';
   } else if (['.html', '.css', '.js'].includes(ext)) {
     headers['Cache-Control'] = 'no-cache';
   }
-  res.writeHead(200, headers);
-  fs.createReadStream(filePath).pipe(res);
+  if (['GET', 'HEAD'].includes(request?.method) && request.headers['if-none-match']?.split(',').map(value => value.trim()).includes(headers.ETag)) {
+    res.writeHead(304, headers); res.end(); return;
+  }
+  res.writeHead(200, { ...headers, 'Content-Length': stat.size });
+  if (request?.method === 'HEAD') return res.end();
+  const stream = fs.createReadStream(filePath);
+  stream.on('error', error => res.destroy(error));
+  res.on('close', () => stream.destroy());
+  stream.pipe(res);
 }
 
 /**

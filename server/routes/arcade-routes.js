@@ -4,6 +4,7 @@ const { SESSION_COOKIE } = require('../../shared/constants');
 const { sendJson, collectBody, getCookie } = require('../http-utils');
 const { getSessionUser } = require('../domain/players');
 const { sendPersistenceError } = require('./player-routes');
+const { memo } = require('../state-cache');
 
 const DAY = 86400000;
 const puzzleLevels = new Set(['spring', 'summer', 'autumn', 'winter', 'boundary', 'frost', 'storehouse', 'crossroads']);
@@ -22,11 +23,11 @@ function scoreLimit(game, mode, now) {
 }
 
 function leaderboard(state, key) {
-  return Object.entries(state.arcade_scores[key] || {})
+  return memo(state, `arcade:${key}`, () => Object.entries(state.arcade_scores[key] || {})
     .filter(([id]) => state.users[id] && !state.users[id].banned)
     .sort(([aId, a], [bId, b]) => b.score - a.score || a.at - b.at || aId.localeCompare(bId))
     .slice(0, 20)
-    .map(([id, entry], index) => ({ rank: index + 1, display_name: state.users[id].display_name, score: entry.score }));
+    .map(([id, entry], index) => ({ rank: index + 1, display_name: state.users[id].display_name, score: entry.score })));
 }
 
 function registerRoutes(router, { store }) {

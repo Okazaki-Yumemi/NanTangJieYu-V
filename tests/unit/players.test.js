@@ -137,6 +137,15 @@ test('login verifies credentials and bans blocked users', () => {
   assert.equal(banned.error, 'USER_BANNED');
 });
 
+test('prepared login verification cannot authorize an account after its password changes', () => {
+  const fixture = createFixture({ userCount: 1 });
+  const user = fixture.registered[0];
+  const passwordVerification = { valid: true, user_id: user.id, salt: user.password_salt, hash: user.password_hash };
+  user.password_hash = 'replaced-by-admin';
+  const result = players.loginPlayer(fixture.state, { display_name: user.display_name, password: 'pass1234' }, { seeds: fixture.seeds, passwordVerification }, fixture.now);
+  assert.equal(result.error, 'INVALID_CREDENTIALS');
+});
+
 test('computeEnergy regenerates over time and caps', () => {
   const config = { energy_cap: 5, energy_regen_interval_sec: 90 };
   const user = { energy: 2, last_energy_at: 1000 };

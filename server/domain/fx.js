@@ -4,6 +4,7 @@
 const { randomInt } = require('node:crypto');
 const { newId } = require('../auth');
 const events = require('./fx-events');
+const { memo } = require('../state-cache');
 
 const RULES = Object.freeze({
   initial_cash: 1000000, min_margin: 10000, max_margin: 10000000000,
@@ -112,12 +113,12 @@ function advanceMarket(state, now = Date.now(), pick = randomInt) {
 
 function rankings(state) {
   if (!state.fx?.market) return [];
-  return Object.entries(state.fx.players)
+  return memo(state, 'fx-rankings', () => Object.entries(state.fx.players)
     .filter(([id]) => state.users[id] && !state.users[id].banned)
     .map(([id, account]) => ({ user_id: id, display_name: state.users[id].display_name,
-      equity: accountView(account, state.fx.market).equity, started_at: account.started_at }))
+      equity: account.cash - (account.debt || 0) + account.positions.reduce((sum, position) => sum + markedPosition(position, state.fx.market).value, 0), started_at: account.started_at }))
     .sort((a, b) => b.equity - a.equity || a.started_at - b.started_at || a.user_id.localeCompare(b.user_id))
-    .map((row, index) => ({ ...row, rank: index + 1 }));
+    .map((row, index) => ({ ...row, rank: index + 1 })));
 }
 
 function view(state, user) {

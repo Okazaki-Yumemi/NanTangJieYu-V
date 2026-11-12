@@ -69,16 +69,17 @@ function createApp(overrides = {}) {
     if (pathname === '/healthz') {
       // 健康检查不读取状态，不产生会话
       const { sendJson } = require('./http-utils');
-      sendJson(res, 200, { status: 'ok', timestamp: Date.now() });
+      const healthy = !store.getMetrics().writeBlocked;
+      sendJson(res, healthy ? 200 : 503, { status: healthy ? 'ok' : 'storage_unavailable', timestamp: Date.now() });
       return;
     }
 
     if (!pathname.startsWith('/api/')) {
-      serveStatic(res, pathname, {
+      await serveStatic(res, pathname, {
         publicDir: config.publicDir,
         adminEntryPath: config.admin.entryPath,
         request: req
-      });
+      }).catch(error => { logger.error('[static] 静态文件读取失败:', error); res.destroy(error); });
       return;
     }
 
@@ -126,7 +127,17 @@ if (require.main === module) {
     app.store
       .initialize()
       .then(() => {
-        startServer(app);
+        const server = startServer(app);
+        let stopping = false;
+        const stop = () => {
+          if (stopping) return;
+          stopping = true;
+          server.close(async () => { await app.store.flush(); process.exit(0); });
+          server.closeIdleConnections?.();
+          setTimeout(() => process.exit(1), 15000).unref();
+        };
+        process.once('SIGTERM', stop);
+        process.once('SIGINT', stop);
       })
       .catch((error) => {
         const paths = app.store.getPaths();

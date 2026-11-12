@@ -41,13 +41,14 @@ function registerRoutes(router, { store }) {
           // 错误订单也不能回滚这一拍行情或强平结果。
           const advanced = fx.advanceMarket(state);
           const outcome = fx.trade(state, user, action, body);
-          const payload = { ...outcome, ...fx.view(state, user) };
-          if (outcome.error && !advanced) return store.abort(payload);
+          if (outcome.error && !advanced) return store.abort(outcome);
           if (user && !outcome.error) state.sessions[session].last_seen_at = Math.floor(Date.now() / 1000);
-          return payload;
+          return outcome;
         });
         const statuses = { USER_NOT_FOUND: 401, FORBIDDEN: 403, CONFLICT: 409, STALE_QUOTE: 409 };
-        sendJson(res, result.error ? statuses[result.error] || 400 : 200, result);
+        const state = store.getLatest();
+        sendJson(res, result.error ? statuses[result.error] || 400 : 200,
+          { ...result, ...fx.view(state, getSessionUser(state, getCookie(req, SESSION_COOKIE))) });
       } catch (error) { sendPersistenceError(res, error); }
     });
   }

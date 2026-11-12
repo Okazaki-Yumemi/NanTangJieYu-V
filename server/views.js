@@ -13,6 +13,7 @@ const lottery = require('./domain/lottery');
 const codesModule = require('./domain/codes');
 const adminLog = require('./domain/admin-log');
 const contributions = require('./domain/contributions');
+const { memo } = require('./state-cache');
 
 function nowSec() {
   return Math.floor(Date.now() / 1000);
@@ -60,19 +61,21 @@ function buildRegionViews(state, seeds, ctx) {
 }
 
 function buildOverallLeaderboard(state, limit = 50) {
-  const rows = Object.values(state.users).map((user) => ({
-    user_id: user.id,
-    display_name: user.display_name,
-    team: user.team,
-    total_contribution: user.total_contribution,
-    banned: Boolean(user.banned)
-  }));
-  rows.sort(
-    (a, b) =>
-      b.total_contribution - a.total_contribution ||
-      a.display_name.localeCompare(b.display_name, 'zh-CN')
-  );
-  return rows.slice(0, limit).map((row, index) => ({ ...row, rank: index + 1 }));
+  return memo(state, 'overall-leaderboard', () => {
+    const rows = Object.values(state.users).map((user) => ({
+      user_id: user.id,
+      display_name: user.display_name,
+      team: user.team,
+      total_contribution: user.total_contribution,
+      banned: Boolean(user.banned)
+    }));
+    rows.sort(
+      (a, b) =>
+        b.total_contribution - a.total_contribution ||
+        a.display_name.localeCompare(b.display_name, 'zh-CN')
+    );
+    return rows.map((row, index) => ({ ...row, rank: index + 1 }));
+  }).slice(0, limit);
 }
 
 function getUserRank(state, userId) {

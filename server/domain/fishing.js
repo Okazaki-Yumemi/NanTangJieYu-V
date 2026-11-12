@@ -1,4 +1,5 @@
 'use strict';
+const { memo } = require('../state-cache');
 
 const { randomInt, randomBytes } = require('node:crypto');
 const amounts=require('../../web/public/fishing-amounts');
@@ -63,14 +64,14 @@ function shopView(gear) {
     next_big_fish_chance:item.id==='bait' && gear.bait<5?bigFishChance({...gear,bait:gear.bait+1}):null}));
 }
 function leaderboard(state) {
-  return Object.entries(state.fishing?.players || {})
+  return memo(state, 'fishing-best', () => Object.entries(state.fishing?.players || {})
     .filter(([id, value]) => value.best && state.users[id] && !state.users[id].banned)
     .map(([id, value]) => ({ ...value.best, user_id: id, display_name: state.users[id].display_name, catches: value.catches }))
     .sort((a,b) => amounts.compare(b.length_cm,a.length_cm) || a.caught_at - b.caught_at || a.user_id.localeCompare(b.user_id))
-    .slice(0,30).map((row,index) => ({ ...row, rank:index+1 }));
+    .slice(0,30).map((row,index) => ({ ...row, rank:index+1 })));
 }
 function totalLeaderboard(state) {
-  return Object.entries(state.fishing?.players || {})
+  return memo(state, 'fishing-total', () => Object.entries(state.fishing?.players || {})
     .filter(([id, value]) => value.best && state.users[id] && !state.users[id].banned)
     .map(([id, value]) => ({
       id, display_name: state.users[id].display_name, catches: value.catches || 0,
@@ -78,7 +79,7 @@ function totalLeaderboard(state) {
     }))
     .sort((a, b) => amounts.compare(b.total_cm, a.total_cm) || a.id.localeCompare(b.id))
     .slice(0, 30)
-    .map(({ id, ...row }, index) => ({ ...row, rank: index + 1 }));
+    .map(({ id, ...row }, index) => ({ ...row, rank: index + 1 })));
 }
 function view(state, user, now = Date.now()) {
   const item = user ? record(state,user.id) : null;

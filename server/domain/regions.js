@@ -1,4 +1,5 @@
 'use strict';
+const { memo } = require('../state-cache');
 
 /**
  * 区域（Region）领域逻辑：解锁推导、异变值结算、CLEAR 状态机。
@@ -239,20 +240,22 @@ function prizeAvailability(state, prize) {
  * 区域贡献排行榜（按个人对该区域的贡献降序）。
  */
 function buildRegionLeaderboard(state, regionId, limit = 10) {
-  const rows = [];
-  for (const user of Object.values(state.users)) {
-    const contribution = Number(user.region_contributions[regionId]) || 0;
-    if (contribution > 0) {
-      rows.push({
-        user_id: user.id,
-        display_name: user.display_name,
-        team: user.team,
-        contribution
-      });
+  return memo(state, `region:${regionId}`, () => {
+    const rows = [];
+    for (const user of Object.values(state.users)) {
+      const contribution = Number(user.region_contributions[regionId]) || 0;
+      if (contribution > 0) {
+        rows.push({
+          user_id: user.id,
+          display_name: user.display_name,
+          team: user.team,
+          contribution
+        });
+      }
     }
-  }
-  rows.sort((a, b) => b.contribution - a.contribution || a.display_name.localeCompare(b.display_name, 'zh-CN'));
-  return rows.slice(0, limit).map((row, index) => ({ ...row, rank: index + 1 }));
+    rows.sort((a, b) => b.contribution - a.contribution || a.display_name.localeCompare(b.display_name, 'zh-CN'));
+    return rows.map((row, index) => ({ ...row, rank: index + 1 }));
+  }).slice(0, limit);
 }
 
 /**

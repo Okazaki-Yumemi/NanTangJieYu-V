@@ -9,6 +9,7 @@
   "scripts": {
     "start": "node server/index.js",
     "test": "node --test",
+    "bench:backend": "node scripts/benchmark-backend.js",
     "seed:dev": "node scripts/seed-dev.js",
     "codes:generate": "node scripts/generate-codes.js",
     "data:export": "node scripts/export-data.js"

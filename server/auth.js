@@ -48,11 +48,42 @@ function verifyPassword(password, salt, expectedHash) {
   );
 }
 
+// 将密码计算移出 HTTP 事件循环和写事务；最多占两个 libuv 线程，给磁盘 I/O 留余量。
+let passwordTasks = 0;
+const passwordQueue = [];
+function hashPasswordAsync(password, salt = crypto.randomBytes(16).toString('hex')) {
+  if (passwordQueue.length >= 256) return Promise.reject(Object.assign(new Error('Password queue is full'), { code: 'SERVER_BUSY' }));
+  return new Promise((resolve, reject) => {
+    passwordQueue.push({ password: String(password || ''), salt, resolve, reject });
+    drainPasswords();
+  });
+}
+function drainPasswords() {
+  while (passwordTasks < 2 && passwordQueue.length) {
+    const task = passwordQueue.shift();
+    passwordTasks++;
+    crypto.scrypt(task.password, task.salt, 64, (error, hash) => {
+      passwordTasks--;
+      if (error) task.reject(error); else task.resolve({ salt: task.salt, hash: hash.toString('hex') });
+      drainPasswords();
+    });
+  }
+}
+async function verifyPasswordAsync(password, salt, expectedHash) {
+  if (!salt || !expectedHash) return false;
+  const { hash } = await hashPasswordAsync(password, salt);
+  const actual = Buffer.from(hash, 'hex');
+  const expected = Buffer.from(expectedHash, 'hex');
+  return actual.length === expected.length && crypto.timingSafeEqual(actual, expected);
+}
+
 module.exports = {
   newId,
   newToken,
   generateRegistrationCode,
   normalizeDisplayName,
   hashPassword,
+  hashPasswordAsync,
+  verifyPasswordAsync,
   verifyPassword
 };

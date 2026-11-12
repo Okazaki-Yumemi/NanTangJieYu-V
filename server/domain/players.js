@@ -90,7 +90,7 @@ function validateDisplayName(value, activityConfig, sensitiveWords) {
 /**
  * 玩家注册：验证注册码 → 建号 → 绑码 → 建会话。
  */
-function registerPlayer(state, payload, ctx, nowSec) {
+function validateRegistration(state, payload, ctx) {
   const { seeds } = ctx;
   const activityConfig = seeds.activity;
   const activity = state.activity;
@@ -145,16 +145,26 @@ function registerPlayer(state, payload, ctx, nowSec) {
     return { error: ERROR_CODES.TEAM_JOIN_RESTRICTED, message: joinCheck.message };
   }
 
+  return { codeEntry, displayName: nameCheck.displayName, password, teamId };
+}
+
+function registerPlayer(state, payload, ctx, nowSec) {
+  const checked = validateRegistration(state, payload, ctx);
+  if (checked.error) return checked;
+  const { codeEntry, displayName, password, teamId } = checked;
+  const { seeds } = ctx;
+  const activityConfig = seeds.activity;
+
   const now = nowSec;
   const userId = newId('user');
-  const passwordRecord = hashPassword(password);
+  const passwordRecord = ctx.passwordRecord || hashPassword(password);
   const lotteryConfig = seeds.lottery;
   const baseWeight = Number(lotteryConfig.code_type_base_weights[codeEntry.type]) || lotteryConfig.default_base_weight || 1;
 
   const user = {
     id: userId,
-    display_name: nameCheck.displayName,
-    display_name_lower: normalizeDisplayName(nameCheck.displayName),
+    display_name: displayName,
+    display_name_lower: normalizeDisplayName(displayName),
     team: teamId,
     code: codeEntry.code,
     code_type: codeEntry.type,
@@ -197,7 +207,11 @@ function loginPlayer(state, payload, ctx, nowSec) {
     return { error: ERROR_CODES.BAD_REQUEST, message: '请填写昵称和密码。' };
   }
   const user = findUserByDisplayName(state, displayName);
-  if (!user || !verifyPassword(password, user.password_salt, user.password_hash)) {
+  const verified = ctx.passwordVerification;
+  const passwordMatches = user && (verified
+    ? verified.valid && verified.user_id === user.id && verified.salt === user.password_salt && verified.hash === user.password_hash
+    : verifyPassword(password, user.password_salt, user.password_hash));
+  if (!passwordMatches) {
     return { error: ERROR_CODES.INVALID_CREDENTIALS, message: '昵称或密码错误。' };
   }
   if (user.banned) {
@@ -332,6 +346,7 @@ module.exports = {
   displayNameOf,
   canJoinTeam,
   validateDisplayName,
+  validateRegistration,
   registerPlayer,
   loginPlayer,
   createSession,

@@ -183,3 +183,81 @@ test('cloneJson deep clones', () => {
   cloned.a.b.push(3);
   assert.deepEqual(source.a.b, [1, 2]);
 });
+
+test('concurrent transactions publish and resolve only after the batch is durable', async t => {
+  const dataDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ntjv-store-'));
+  t.after(() => fs.rm(dataDir, { recursive: true, force: true }));
+  let syncs = 0; let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  let reached; const writing = new Promise(resolve => { reached = resolve; });
+  const store = createStateStore({ dataDir, maxBatchSize: 64,
+    createInitialState: () => ({ count: 0 }),
+    directorySync: async () => { if (++syncs === 4) { reached(); await gate; } }
+  });
+  await store.initialize();
+  let acknowledged = 0;
+  const tasks = Array.from({ length: 40 }, () => store.transact(state => ++state.count).then(value => { acknowledged++; return value; }));
+  await writing;
+  assert.equal(acknowledged, 0);
+  assert.equal(store.getLatest().count, 0);
+  release();
+  assert.deepEqual(await Promise.all(tasks), Array.from({ length: 40 }, (_, i) => i + 1));
+  assert.equal(store.getLatest().count, 40);
+  assert.equal(JSON.parse(await fs.readFile(store.getPaths().stateFile)).count, 40);
+  assert.equal(store.getMetrics().commits, 1);
+});
+
+test('abort and thrown mutators roll back independently inside a batch', async t => {
+  const store = await createTempStore(t); await store.initialize();
+  const results = await Promise.allSettled([
+    store.transact(state => { state.counters.a = 1; return 1; }),
+    store.transact(state => { state.counters.a = 100; return store.abort('cancelled'); }),
+    store.transact(state => { state.counters.a = 1000; throw new Error('rejected'); }),
+    store.transact(state => ++state.counters.a)
+  ]);
+  assert.deepEqual(results.map(item => item.status), ['fulfilled', 'fulfilled', 'rejected', 'fulfilled']);
+  assert.equal(results[1].value, 'cancelled');
+  assert.equal(results[3].value, 2);
+  assert.equal(store.getLatest().counters.a, 2);
+});
+
+test('persistence failure rejects the entire batch and blocks further writes', async t => {
+  const dataDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ntjv-store-'));
+  t.after(() => fs.rm(dataDir, { recursive: true, force: true }));
+  let fail = false;
+  const store = createStateStore({ dataDir, createInitialState: () => ({ count: 0 }),
+    directoryFsyncPlatform: 'linux', directorySync: async () => { if (fail) throw new Error('disk unavailable'); }
+  });
+  await store.initialize(); fail = true;
+  const results = await Promise.allSettled(Array.from({ length: 3 }, () => store.transact(state => ++state.count)));
+  assert.ok(results.every(item => item.status === 'rejected'));
+  assert.equal(store.getLatest().count, 0);
+  assert.equal(store.getMetrics().writeBlocked, true);
+  await assert.rejects(store.transact(state => ++state.count), /disk unavailable/);
+  await store.flush();
+  assert.equal(JSON.parse(await fs.readFile(store.getPaths().stateFile)).count, 0);
+});
+
+test('snapshot transactions remain ordered barriers between concurrent writes', async t => {
+  const store = await createTempStore(t); await store.initialize();
+  await Promise.all([
+    store.transact(state => { state.counters.a = 1; }),
+    store.transact(state => { state.counters.a = 2; }, { snapshotBeforeCommit: true, snapshotLabel: 'barrier' }),
+    store.transact(state => { state.counters.a = 3; })
+  ]);
+  const dir = store.getPaths().dataDir;
+  const snapshot = (await fs.readdir(dir)).find(name => name.startsWith('state.barrier-'));
+  assert.equal(JSON.parse(await fs.readFile(path.join(dir, snapshot))).counters.a, 1);
+  assert.equal(store.getLatest().counters.a, 3);
+});
+
+test('bounded write queues reject excess work without losing accepted transactions', async t => {
+  const dataDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ntjv-store-'));
+  t.after(() => fs.rm(dataDir, { recursive: true, force: true }));
+  const store = createStateStore({ dataDir, createInitialState: () => ({ count: 0 }), maxPending: 2, maxBatchSize: 2 });
+  await store.initialize();
+  const accepted = [store.transact(state => ++state.count), store.transact(state => ++state.count)];
+  await assert.rejects(store.transact(state => ++state.count), { code: 'SERVER_BUSY' });
+  await Promise.all(accepted); await store.flush();
+  assert.equal(store.getLatest().count, 2);
+});

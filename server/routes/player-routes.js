@@ -5,7 +5,7 @@
  */
 
 const { ERROR_CODES, SESSION_COOKIE } = require('../../shared/constants');
-const { newToken } = require('../auth');
+const { newToken, hashPasswordAsync, verifyPasswordAsync } = require('../auth');
 const interactions = require('../domain/interactions');
 const players = require('../domain/players');
 const contributions = require('../domain/contributions');
@@ -38,6 +38,10 @@ function sendDomainError(res, result) {
 }
 
 function sendPersistenceError(res, error) {
+  if (error.code === 'SERVER_BUSY') {
+    res.setHeader('Retry-After', '1');
+    return sendJson(res, 503, { error: 'SERVER_BUSY', message: '服务器忙，请稍后重试。' });
+  }
   console.error('[api] 状态事务失败:', error);
   sendJson(res, 500, {
     error: ERROR_CODES.INTERNAL_ERROR,
@@ -47,7 +51,9 @@ function sendPersistenceError(res, error) {
 
 async function readBodyOr400(req, res) {
   try {
-    return await collectBody(req);
+    const body = await collectBody(req);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('Expected object');
+    return body;
   } catch {
     sendJson(res, 400, { error: ERROR_CODES.BAD_REQUEST, message: '请求格式错误。' });
     return null;
@@ -110,8 +116,12 @@ function registerRoutes(router, appCtx) {
       return;
     }
     try {
+      const checked = players.validateRegistration(store.getLatest(), body, { seeds });
+      if (checked.error) return sendDomainError(res, checked);
+      const passwordRecord = await hashPasswordAsync(checked.password);
       const result = await transactWithSession(appCtx, req, res, (state, ctx, sessionInfo) => {
-        const registered = players.registerPlayer(state, body, ctx, ctx.now);
+        // 异步计算期间码/昵称可能被抢先使用，进入事务后必须重新完整校验。
+        const registered = players.registerPlayer(state, body, { ...ctx, passwordRecord }, ctx.now);
         if (registered.error) {
           return registered;
         }
@@ -134,8 +144,13 @@ function registerRoutes(router, appCtx) {
       return;
     }
     try {
+      const candidate = players.findUserByDisplayName(store.getLatest(), body.display_name);
+      const passwordVerification = {
+        user_id: candidate?.id, salt: candidate?.password_salt, hash: candidate?.password_hash,
+        valid: candidate ? await verifyPasswordAsync(body.password, candidate.password_salt, candidate.password_hash) : false
+      };
       const result = await transactWithSession(appCtx, req, res, (state, ctx, sessionInfo) => {
-        const loggedIn = players.loginPlayer(state, body, ctx, ctx.now);
+        const loggedIn = players.loginPlayer(state, body, { ...ctx, passwordVerification }, ctx.now);
         if (loggedIn.error) {
           return loggedIn;
         }
@@ -204,7 +219,7 @@ function registerRoutes(router, appCtx) {
           action_result: outcome.action_result,
           duplicate: Boolean(outcome.duplicate),
           ledger_entry: outcome.ledger_entry,
-          state: buildHomeResponse(store, seeds, user.id, state).state
+          user_id: user.id
         };
       });
       if (result.error) {
@@ -218,7 +233,8 @@ function registerRoutes(router, appCtx) {
           [result.ledger_entry]
         );
       }
-      sendJson(res, 200, result);
+      const { user_id, ...payload } = result;
+      sendJson(res, 200, { ...payload, state: buildHomeResponse(store, seeds, user_id).state });
     } catch (error) {
       sendPersistenceError(res, error);
     }
