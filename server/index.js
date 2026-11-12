@@ -21,6 +21,7 @@ const adminRoutes = require('./routes/admin-routes');
 const publicRoutes = require('./routes/public-routes');
 const fishingRoutes = require('./routes/fishing-routes');
 const arcadeRoutes = require('./routes/arcade-routes');
+const fxRoutes = require('./routes/fx-routes');
 
 function createApp(overrides = {}) {
   const config = overrides.config || createConfig({ env: overrides.env });
@@ -49,6 +50,7 @@ function createApp(overrides = {}) {
   playerRoutes.registerRoutes(router, appCtx);
   fishingRoutes.registerRoutes(router, appCtx);
   arcadeRoutes.registerRoutes(router, appCtx);
+  const fxMarket = fxRoutes.registerRoutes(router, appCtx);
   adminRoutes.registerRoutes(router, appCtx);
 
   async function requestHandler(req, res) {
@@ -97,11 +99,17 @@ function createApp(overrides = {}) {
     }
   }
 
-  return { config, seeds, store, router, requestHandler };
+  return { config, seeds, store, router, requestHandler, fxMarket };
 }
 
 function startServer(app, logger = console) {
   const server = http.createServer(app.requestHandler);
+  // 即使所有玩家离线，服务运行期间行情和强平仍继续。
+  const marketTimer = setInterval(() => {
+    app.fxMarket.refresh().catch(error => logger.error('[fx] 行情保存失败:', error));
+  }, 250);
+  marketTimer.unref();
+  server.on('close', () => clearInterval(marketTimer));
   server.listen(app.config.port, app.config.host, () => {
     logger.info(`东方南堂界遇 V 服务已启动: http://${app.config.host}:${app.config.port}`);
     logger.info(`管理员入口: http://${app.config.host}:${app.config.port}${app.config.admin.entryPath}`);

@@ -12,8 +12,6 @@
   }
 
   function renderRecords() {
-    const rhythm = read('ntj-rhythm-best');
-    if (Number.isInteger(rhythm) && rhythm > 0) record('rhythm', `最高 ${rhythm} 分`);
     const puzzle = read('ntj-puzzle-bests-v1');
     if (puzzle) {
       const levels = ['spring', 'summer', 'autumn', 'winter', 'boundary', 'frost', 'storehouse', 'crossroads'];

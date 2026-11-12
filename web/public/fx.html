@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#343b4b" />
+  <title>FX战士天弓千亦 · 四季游园会</title>
+  <link rel="stylesheet" href="/fx.css?v=3" />
+</head>
+<body>
+  <main class="exchange">
+    <nav class="topline"><a href="/arcade.html">← 返回游园会</a><span>天弓证券　行情终端</span><span class="simulation">模拟盘</span></nav>
+    <header class="cover">
+      <div><h1>FX战士天弓千亦</h1><p class="subtitle">河童货币 / 人里元　·　只此一盘，盈亏自负</p></div>
+      <a href="#fx-rules" class="manual-link">交易说明</a>
+    </header>
+    <div class="ticker" id="fx-ticker"><span id="fx-news-type">文文快讯</span><div class="news-copy"><p id="fx-news" role="status" aria-live="polite">正在连接交易所…</p><small id="fx-news-impact"></small></div><span id="fx-connection" role="status">连接中</span></div>
+    <section class="account-strip" aria-label="我的模拟账户">
+      <div class="equity"><span>净资产（已扣贷款）</span><strong id="fx-equity">—</strong><small id="fx-rank">单位：人里元 ¥</small></div>
+      <dl><div><dt>可用</dt><dd id="fx-cash">—</dd></div><div><dt>保证金</dt><dd id="fx-margin-used">—</dd></div><div><dt>浮动盈亏</dt><dd id="fx-pnl">—</dd></div><div><dt>待还贷款</dt><dd id="fx-debt">—</dd></div></dl>
+      <div id="fx-account-action"><a class="button" href="/#login-name">登录校园账号</a></div>
+    </section>
+    <div class="trading-layout">
+      <section class="panel chart-panel" aria-labelledby="market-title">
+        <div class="panel-label"><span>外汇行情</span><span id="fx-updated">每 2 秒一拍 · 全服同步</span></div>
+        <div class="market-title"><div><h2 id="market-title">河童货币 <span>/ 人里元</span></h2><p>1 河童货币值多少人里元</p></div><div class="price"><strong id="fx-price">—</strong><span id="fx-change">等待开市</span></div></div>
+        <div class="chart-wrap"><canvas id="fx-chart" role="img" aria-label="河童货币兑人里元的近期模拟汇率走势"></canvas><p id="fx-chart-empty">正在读取行情…</p></div>
+        <div class="quote-strip"><span>卖出价 <b id="fx-bid">—</b></span><span>买入价 <b id="fx-ask">—</b></span><span>最近 180 拍</span></div>
+        <p id="fx-market-event" class="market-event">当前正常波动，新闻事件会在图上标记。</p>
+        <details class="news-archive"><summary>文文快讯留档 <span id="fx-news-count">0</span></summary><ol id="fx-news-history"><li class="empty">还没有突发新闻。</li></ol></details>
+      </section>
+      <section class="panel order-panel" aria-labelledby="order-title">
+        <h2 id="order-title" class="window-title">下单</h2>
+        <form id="fx-order">
+          <label for="fx-margin">投入保证金 <span>人里元</span></label>
+          <div class="money-input"><span>¥</span><input id="fx-margin" type="number" min="100" max="100000000" step="0.01" value="1000" inputmode="decimal" required /><button type="button" id="fx-max">最大</button></div>
+          <label for="fx-leverage">杠杆倍数</label>
+          <select id="fx-leverage"><option value="1">1 倍</option><option value="5">5 倍</option><option value="10" selected>10 倍</option><option value="20">20 倍</option><option value="50">50 倍</option><option value="100">100 倍</option></select>
+          <dl class="order-preview"><div><dt>名义仓位</dt><dd id="fx-notional">—</dd></div><div><dt>开仓手续费</dt><dd id="fx-fee">—</dd></div><div><dt>约可承受反向波动</dt><dd id="fx-risk">—</dd></div></dl>
+          <div class="trade-buttons"><button type="submit" name="side" value="long" class="long" disabled>买入 / 做多<span>涨了赚</span></button><button type="submit" name="side" value="short" class="short" disabled>卖出 / 做空<span>跌了赚</span></button></div>
+          <p class="order-note">按确认时最新报价成交。逐仓保证金跌至 20% 时强平；单笔亏损最多为保证金及开仓费。</p>
+        </form>
+        <p id="fx-message" role="status">正在连接交易所…</p>
+        <button id="fx-retry" type="button" hidden>确认上一笔交易结果</button>
+      </section>
+      <section class="panel rescue-panel" aria-labelledby="rescue-title">
+        <h2 id="rescue-title" class="window-title">没钱了？</h2>
+        <div class="rescue-intro"><img src="/assets/characters/nitori.png" alt="河城荷取" /><p>「借你可以，<br />记得还啊。」<small>河童应急借贷处</small></p></div>
+        <p class="rescue-rule">平掉所有持仓，剩下的钱不够下单时，可以借钱或进厂。</p>
+        <div class="rescue-actions"><button type="button" id="fx-borrow" disabled>借 ¥3,000</button><button type="button" id="fx-repay" disabled>还款</button></div>
+        <p class="small-note">无息。还清后才能再借；借款不增加净资产。</p>
+        <div class="work-box"><strong>河童工厂招临时工</strong><span class="work-pay">15 分钟 / ¥1,500</span><p id="fx-work-status">没钱炒汇，就先拧会儿螺丝。</p><progress id="fx-work-progress" max="900" value="0" aria-label="打工进度" hidden></progress><button type="button" id="fx-work" disabled>去打黑工</button><button type="button" id="fx-claim-work" hidden disabled>下工，领取 ¥1,500</button><span class="small-note">离开页面也计时，到点回来领工钱。</span></div>
+      </section>
+      <section class="panel positions-panel" aria-labelledby="positions-title">
+        <div class="section-title"><h2 id="positions-title">持仓 <span id="fx-position-count">0 / 12</span></h2><span class="muted">平仓按当时报价成交</span></div>
+        <div id="fx-positions" class="positions"><p class="empty">还没有持仓。先看看市场往哪边走。</p></div>
+        <details class="history"><summary>最近结算 <span id="fx-history-count">0</span></summary><div id="fx-history"><p class="empty">还没有结算记录。</p></div></details>
+      </section>
+      <section class="panel leaderboard-panel" aria-labelledby="leaderboard-title">
+        <div class="section-title"><h2 id="leaderboard-title">富豪榜</h2><span id="fx-player-count" class="muted">全服排行</span></div><p class="muted">按当前净资产排，借来的钱不算赚的。</p>
+        <ol id="fx-leaderboard"><li class="empty">正在读取排行榜…</li></ol>
+      </section>
+    </div>
+    <details class="rules" id="fx-rules"><summary>交易说明</summary><div>
+      <p><b>① 开户</b>　登录校园账号，领取 ¥10,000 模拟资金。账户跨设备保存，与活动贡献、抽奖和真实资金无关。</p>
+      <p><b>② 选方向</b>　汇率上涨时做多获利，下跌时做空获利。名义仓位 = 保证金 × 杠杆；杠杆同时放大盈利和亏损。</p>
+      <p><b>③ 看成本</b>　买入按买入价、卖出按卖出价成交，两者有 0.08% 的价差。开仓费为名义仓位的 0.05%，平仓不另收费。</p>
+      <p><b>④ 平仓</b>　点持仓旁的「平仓」按当前报价结算。每笔仓位独立承担盈亏，剩余保证金跌到 20% 自动强平，跳空时最多损失整笔保证金。</p>
+      <p><b>⑤ 上榜</b>　净资产 = 可用余额 + 持仓保证金 + 浮动盈亏 − 待还贷款。仅展示前 20 名，自己的名次显示在账户区。</p>
+      <p><b>⑥ 没钱了</b>　无持仓且余额不足最低开仓额 ¥100.05 时，可以向河童无息借 ¥3,000，还清才能再借。也可以去工厂打黑工，实际等待 15 分钟后领取 ¥1,500；同时只能接一份活。刷新或离线不会丢失进度，打工期间也可以借钱。</p>
+      <p><b>⑦ 突发新闻</b>　小道消息带来小幅跳动，市场异动可能猛涨猛跌，金融地震的单次冲击可达约 8%～18%。大事件过后会有短暂余震，涨跌方向仍然随机。新闻会直接影响所有人的持仓，图上圆点对应事件发生时刻；留档里的涨跌是事件当拍实际变动。</p>
+      <p>服务器每 2 秒生成统一行情及随机事件；运行期间离线照常结算，停服期间暂停。所有价格与新闻均为虚构游戏内容。</p>
+    </div></details>
+    <footer>行情纯属虚构，工钱倒是一分不少。<a href="/art-credits.html">素材署名</a></footer>
+    <noscript>请启用 JavaScript 后进入模拟交易。</noscript>
+  </main>
+  <script src="/fx.js?v=3"></script>
+</body>
+</html>
