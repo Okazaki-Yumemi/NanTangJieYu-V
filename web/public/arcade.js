@@ -18,9 +18,11 @@
       const cleared = levels.filter((id) => Number.isInteger(puzzle[id]) && puzzle[id] > 0).length;
       if (cleared) record('puzzle', `已解 ${cleared}/${levels.length} 关`);
     }
-    const danmaku = read('ntj-firefly-score-v2');
-    const expert = read('ntj-firefly-expert-v1');
-    if (Number.isInteger(expert) && expert > 0) record('danmaku', `符卡试炼 ${expert} 分`);
+    const danmaku = read('ntj-firefly-normal-v2');
+    const expert = read('ntj-firefly-expert-v2');
+    const lunatic = read('ntj-firefly-lunatic-v2');
+    if (Number.isInteger(lunatic) && lunatic > 0) record('danmaku', `极限挑战 ${lunatic} 分`);
+    else if (Number.isInteger(expert) && expert > 0) record('danmaku', `符卡试炼 ${expert} 分`);
     else if (Number.isInteger(danmaku) && danmaku > 0) record('danmaku', `巡夜最高 ${danmaku} 分`);
   }
 

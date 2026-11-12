@@ -2,10 +2,10 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>萤火弹幕 · 东方南堂界遇 V</title>
   <link rel="stylesheet" href="/styles.css?v=11" />
-  <link rel="stylesheet" href="/danmaku.css?v=5" />
+  <link rel="stylesheet" href="/danmaku.css?v=7" />
 </head>
 <body class="firefly-page">
   <main class="firefly-shell">
@@ -14,28 +14,37 @@
       <img src="/assets/taisei/wriggle-portrait.svg" alt="" />
       <div><span>四季游园会 · 符卡挑战</span><h1>萤火弹幕</h1><p>灯火散在弹幕里。趁下一波到来前，把它们拾回来。</p></div>
     </header>
-    <label class="firefly-mode">难度 <select id="firefly-mode"><option value="normal">巡夜</option><option value="expert">符卡试炼</option></select></label>
+    <label class="firefly-mode">难度 <select id="firefly-mode"><option value="normal">巡夜</option><option value="expert">符卡试炼</option><option value="lunatic">极限挑战</option></select></label>
     <div class="firefly-ledger"><span>得分 <strong id="firefly-score">0</strong></span><span>下盏倍率 <strong id="firefly-chain">×1</strong></span><span>余时 <strong id="firefly-time">36</strong></span><span>本机最佳 <strong id="firefly-best">0</strong></span></div>
     <div class="firefly-strip"><span id="firefly-pattern" role="status">一符 · 花雨</span><span id="firefly-guard">护身符 0/8</span></div>
+    <progress id="firefly-chain-time" class="firefly-chain-time" max="4" value="0" aria-label="连灯剩余时间（秒）"></progress>
     <div class="firefly-stage">
-      <canvas id="firefly-field" width="360" height="400" tabindex="0" aria-label="弹幕场地。用方向键或拖动移动。"></canvas>
+      <canvas id="firefly-field" width="360" height="400" tabindex="0" aria-label="弹幕场地。在任意位置相对拖动，松手即停；也可用方向键或 WASD，Shift 低速，X 或空格灵击。"></canvas>
       <div class="firefly-curtain" id="firefly-curtain">
         <p id="firefly-result" role="status">月下拾灯</p>
-        <small id="firefly-detail">穿过三道符卡，撑过 36 秒。</small>
+        <small id="firefly-detail">在场地任意位置拖动，松手即停。穿过三道符卡，撑过 36 秒。</small>
         <dl id="firefly-breakdown" class="firefly-breakdown hidden">
           <div><dt>拾灯</dt><dd id="firefly-lamp-points">0</dd></div>
           <div><dt>擦弹</dt><dd id="firefly-graze-points">0</dd></div>
+          <div><dt>灵击</dt><dd id="firefly-burst-points">0</dd></div>
           <div><dt>破符</dt><dd id="firefly-clear-points">0</dd></div>
         </dl>
         <button type="button" id="firefly-start">开始</button>
       </div>
     </div>
-    <p class="firefly-help">拖动或用方向键移动。每盏灯 10 分，4 秒内接着拾灯，倍率最高 ×4。擦弹加 2 分，累计八次可挡下一次碰撞。虚线出现时，提前让开弹道。</p>
-    <button type="button" id="firefly-pause" disabled>暂停</button>
+    <div class="firefly-controls" aria-label="战斗操作">
+      <button type="button" id="firefly-focus" aria-pressed="false" disabled>低速 · 关</button>
+      <button type="button" id="firefly-burst" disabled>灵击 0/8</button>
+      <button type="button" id="firefly-pause" disabled>暂停</button>
+    </div>
+    <p class="firefly-help">在场地任意位置拖动，角色跟随手指移动的方向，松手即停。另一只手可点「低速」精确慢移，或在蓄满后点「灵击」消弹。擦弹加 2 分，攒满 8 次后灵击每颗消弹加 3 分；留着不用可挡一次碰撞，但会中断连灯。</p>
+    <p class="firefly-help">每盏灯 10 分，4 秒内接着拾灯，倍率最高 ×4。试炼每符至少 2 盏，极限每符至少 3 盏；每符限时 12 秒。瞄准虚线出现后再换位。新玩法成绩单独排行，旧纪录保留。</p>
+    <p class="firefly-help">键盘：方向键 / WASD 移动，按住 Shift 低速，X / 空格灵击，Esc 暂停。</p>
     <p id="firefly-ranking-status" class="firefly-help" role="status"></p>
     <section id="firefly-ranking" aria-label="弹幕排行榜"></section>
   </main>
   <script src="/arcade-scores.js?v=2"></script>
-  <script src="/danmaku.js?v=5"></script>
+  <script src="/danmaku-game.js?v=2"></script>
+  <script src="/danmaku.js?v=7"></script>
 </body>
 </html>

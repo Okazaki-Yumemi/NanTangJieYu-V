@@ -44,6 +44,9 @@
   } catch { /* Optional storage. */ }
   let audio;
   let master;
+  let musicBus;
+  const strikeBuffers = new Map();
+  const musicLevel = .42;
   let track;
   let loadingTrack;
   const routedTracks = new WeakMap();
@@ -154,6 +157,9 @@
       if (!master) {
         master = audio.createGain();
         master.connect(audio.destination);
+        musicBus = audio.createGain();
+        musicBus.gain.value = musicLevel;
+        musicBus.connect(master);
       }
       master.gain.value = volume;
       audio.resume().catch(() => {});
@@ -164,12 +170,12 @@
     if (audio && master && !routedTracks.has(media)) {
       try {
         const input = audio.createMediaElementSource(media);
-        input.connect(master);
+        input.connect(musicBus);
         routedTracks.set(media, input);
       } catch { /* Older browsers can still use the media volume property. */ }
     }
     media.muted = muted;
-    media.volume = routedTracks.has(media) ? 1 : volume;
+    media.volume = routedTracks.has(media) ? 1 : volume * musicLevel;
   }
 
   function stopTrack(media) {
@@ -180,7 +186,7 @@
     media.load();
   }
 
-  function tone(at, pitch, duration, volume, type = 'sine', endPitch = pitch) {
+  function tone(at, pitch, duration, volume, type = 'sine', endPitch = pitch, bus = master) {
     if (muted || audio?.state !== 'running') return;
     const oscillator = audio.createOscillator();
     const gain = audio.createGain();
@@ -190,7 +196,7 @@
     gain.gain.setValueAtTime(.001, at);
     gain.gain.exponentialRampToValueAtTime(volume, at + .007);
     gain.gain.exponentialRampToValueAtTime(.001, at + duration);
-    oscillator.connect(gain).connect(master);
+    oscillator.connect(gain).connect(bus);
     voices.add(oscillator);
     oscillator.onended = () => { voices.delete(oscillator); oscillator.disconnect(); gain.disconnect(); };
     oscillator.start(at);
@@ -202,14 +208,70 @@
     voices.clear();
   }
 
+  function cymbalSample(kind) {
+    if (strikeBuffers.has(kind)) return strikeBuffers.get(kind);
+    const rim = kind === 'k';
+    const rate = audio.sampleRate;
+    const duration = rim ? .086 : .128;
+    const sample = audio.createBuffer(1, Math.ceil(rate * duration), rate);
+    const pcm = sample.getChannelData(0);
+    const partials = rim ? [3180, 4570, 6230, 7880] : [2350, 3620, 5110, 6960];
+    let previousNoise = 0;
+    let peak = 0;
+    for (let i = 0; i < pcm.length; i += 1) {
+      const time = i / rate;
+      const noise = Math.random() * 2 - 1;
+      const shimmer = (noise - previousNoise) * .46 * Math.exp(-time / .018);
+      previousNoise = noise;
+      let metal = 0;
+      for (const [index, frequency] of partials.entries()) {
+        metal += Math.sin(2 * Math.PI * frequency * time) * Math.exp(-time / (.036 - index * .006));
+      }
+      const edge = Math.min(1, time / .001, (duration - time) / .016);
+      pcm[i] = (shimmer + metal * .16) * edge;
+      peak = Math.max(peak, Math.abs(pcm[i]));
+    }
+    for (let i = 0; i < pcm.length; i += 1) pcm[i] *= .9 / peak;
+    strikeBuffers.set(kind, sample);
+    return sample;
+  }
+
+  function playStrike(kind, perfect, chord = false) {
+    if (muted || volume === 0) return;
+    if (audio?.state !== 'running') {
+      enableAudio();
+      return;
+    }
+    const at = audio.currentTime;
+    const strength = (perfect ? 1 : .88) * (chord ? .53 : 1);
+    if (phase === 'playing') {
+      musicBus.gain.cancelScheduledValues(at);
+      musicBus.gain.setValueAtTime(.18, at);
+      musicBus.gain.linearRampToValueAtTime(musicLevel, at + .105);
+    }
+
+    const strike = audio.createBufferSource();
+    const envelope = audio.createGain();
+    strike.buffer = cymbalSample(kind);
+    envelope.gain.value = strength;
+    strike.connect(envelope).connect(master);
+    voices.add(strike);
+    strike.onended = () => {
+      voices.delete(strike);
+      strike.disconnect();
+      envelope.disconnect();
+    };
+    strike.start(at);
+  }
+
   function queueMusic(time) {
     const melody = [293.66, 349.23, 440, 392, 349.23, 261.63, 293.66, 220];
     while (audioCursor < run.beats && delay + audioCursor * run.beat <= time + 85) {
       const offset = delay + audioCursor * run.beat - time;
       if (!muted && audio?.state === 'running' && offset > -55) {
         const at = audio.currentTime + Math.max(0, offset / 1000);
-        tone(at, audioCursor % 4 === 0 ? 135 : 97, .065, .065, 'sine', 60);
-        if (audioCursor % 2 === 0) tone(at, melody[(audioCursor / 2) % melody.length], .3, .045, 'triangle');
+        tone(at, audioCursor % 4 === 0 ? 135 : 97, .065, .065, 'sine', 60, musicBus);
+        if (audioCursor % 2 === 0) tone(at, melody[(audioCursor / 2) % melody.length], .3, .045, 'triangle', undefined, musicBus);
       }
       audioCursor += 1;
     }
@@ -260,7 +322,6 @@
   function hit(kind) {
     if (phase !== 'playing') return;
     const time = clock(performance.now());
-    if (audio?.state === 'running') tone(audio.currentTime, kind === 'd' ? 153 : 580, .14, .13, kind === 'd' ? 'sine' : 'triangle', kind === 'd' ? 47 : 193);
     let note;
     let distance = run.window;
     for (let index = run.firstPending; index < run.notes.length; index += 1) {
@@ -279,6 +340,7 @@
       return;
     }
     const rating = distance <= run.perfectWindow ? 'perfect' : 'good';
+    playStrike(kind, rating === 'perfect', note.chord);
     resolve(note, rating, rating === 'good' ? (time < note.at ? '偏早' : '偏晚') : '');
   }
 
@@ -437,6 +499,20 @@
     if (muted) stopAudio();
     else enableAudio();
     if (track || loadingTrack) setTrackVolume(track || loadingTrack);
+  });
+  el('sound-test').addEventListener('click', async () => {
+    if (muted || volume === 0) {
+      el('sound-status').textContent = '请先取消静音并调高音量。';
+      return;
+    }
+    enableAudio();
+    try { await audio?.resume(); } catch { /* Show a readable status below. */ }
+    if (audio?.state !== 'running') {
+      el('sound-status').textContent = '浏览器未能开启声音。';
+      return;
+    }
+    el('sound-status').textContent = '试音：鼓心';
+    playStrike('d', true);
   });
   volumeControl.value = Math.round(volume * 100);
   el('volume-value').textContent = `${volumeControl.value}%`;

@@ -1,5 +1,5 @@
 .firefly-page { background: #101a19; color: #f2ebd5; }
-.firefly-shell { width: min(100%, 510px); margin: auto; padding: 12px 14px 32px; }
+.firefly-shell { width: min(100%, 510px); margin: auto; padding: 12px 14px calc(32px + env(safe-area-inset-bottom)); }
 .firefly-nav { display: flex; justify-content: space-between; align-items: center; min-height: 44px; }
 .firefly-shell a { color: #c9d5bc; font-size: 14px; }
 .firefly-cover { position: relative; isolation: isolate; overflow: hidden; display: grid; align-items: end; min-height: clamp(118px, 27vw, 166px); margin: 0 0 12px; padding: 14px; border-block: 1px solid #9caf8261; background: #263a34; }
@@ -24,6 +24,25 @@
 .firefly-mode { display:flex; align-items:center; gap:10px; margin:10px 0; color:#f0e0c1; }
 .firefly-mode select { min-height:44px; padding:6px 12px; background:#282238; color:#f0e0c1; border:1px solid #a68b77; font:inherit; }
 .firefly-ledger > span { display: grid; gap: 1px; }
-.firefly-breakdown { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(240px, 85vw); margin: 0 0 16px; padding: 8px 0; text-align: center; background: #242b2e; border-block: 1px solid #b196715f; }
+.firefly-breakdown { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: min(300px, 85vw); margin: 0 0 16px; padding: 8px 0; text-align: center; background: #242b2e; border-block: 1px solid #b196715f; }
 .firefly-breakdown dt { color: #c3c9b1; font-size: 12px; }
 .firefly-breakdown dd { margin: 0; color: #f3d6a5; font: 700 20px Georgia, serif; }
+.firefly-controls { display: grid; grid-template-columns: 1fr 1.2fr auto; gap: 8px; margin-top: 10px; }
+.firefly-controls button { min-height: 48px; padding: 8px; font-size: 14px; touch-action: manipulation; }
+#firefly-focus { background: transparent; color: #f0e0c1; }
+#firefly-focus[aria-pressed="true"] { background: #34544a; border-color: #a8ddcd; }
+#firefly-burst:not(:disabled) { background: #a8ddcd; border-color: #c3f5e6; }
+.firefly-chain-time { display: block; width: 100%; height: 4px; border: 0; border-radius: 0; background: #342943; accent-color: #ffd27f; }
+.firefly-chain-time::-webkit-progress-bar { background: #342943; }
+.firefly-chain-time::-webkit-progress-value { background: #ffd27f; }
+.firefly-chain-time::-moz-progress-bar { background: #ffd27f; }
+.firefly-curtain small { max-width: 90%; padding-inline: 8px; }
+@media (max-width: 700px), (max-height: 600px) {
+  .firefly-shell.is-running .firefly-cover,
+  .firefly-shell.is-running .firefly-mode { display: none; }
+  .firefly-shell.is-running .firefly-stage {
+    width: min(100%, calc((100svh - 224px - env(safe-area-inset-bottom)) * .9));
+    margin-inline: auto;
+  }
+  .firefly-shell.is-running .firefly-help { display: none; }
+}

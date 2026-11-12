@@ -425,6 +425,18 @@ describe('HTTP integration: full event journey', () => {
     assert.deepEqual(board.json.rows.map(({ rank, score }) => ({ rank, score })), [{ rank: 1, score: 420 }]);
     const expert = await request('GET', '/api/arcade/leaderboard?game=danmaku&mode=expert');
     assert.deepEqual(expert.json.rows, []);
+    for (const mode of ['normal-v2', 'expert-v2', 'lunatic-v2']) {
+      const fresh = await request('GET', `/api/arcade/leaderboard?game=danmaku&mode=${mode}`);
+      assert.equal(fresh.status, 200);
+      assert.deepEqual(fresh.json.rows, []);
+      const submitted = await request('POST', '/api/arcade/score', { body: { ...body, mode, score: 123 }, headers });
+      assert.equal(submitted.status, 200);
+      assert.equal(submitted.json.best, 123);
+    }
+    const legacy = await request('GET', '/api/arcade/leaderboard?game=danmaku&mode=normal');
+    assert.equal(legacy.json.rows[0].score, 420);
+    const invalid = await request('POST', '/api/arcade/score', { body: { ...body, mode: 'lunatic-v3' }, headers });
+    assert.equal(invalid.status, 400);
     const shortChart = { game: 'rhythm', mode: 'four-seasons-hard-original-3m', score: 8765 };
     assert.equal((await request('POST', '/api/arcade/score', { body: shortChart, headers })).status, 200);
     const original = await request('GET', '/api/arcade/leaderboard?game=rhythm&mode=four-seasons-hard-original');

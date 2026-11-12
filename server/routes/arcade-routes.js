@@ -16,7 +16,8 @@ function shanghaiDate(now) {
 function scoreLimit(game, mode, now) {
   if (typeof mode !== 'string' || mode.length > 40) return 0;
   if (game === 'puzzle' && puzzleLevels.has(mode)) return 99999;
-  if (game === 'danmaku' && ['normal', 'expert'].includes(mode)) return 20000;
+  // 新玩法独立计分，保留旧榜单以兼容旧页面和已有成绩。
+  if (game === 'danmaku' && ['normal', 'expert', 'normal-v2', 'expert-v2', 'lunatic-v2'].includes(mode)) return 20000;
   if (game === 'dye' && mode === shanghaiDate(now)) return 99;
   if (game === 'rhythm' && /^(four-seasons|hidden-star)-(normal|hard|expert|master|lunatic)-(original(?:-3m)?|practice)$/.test(mode)) return 10000;
   return 0;

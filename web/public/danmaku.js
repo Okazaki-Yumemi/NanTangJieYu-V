@@ -1,63 +1,50 @@
 (() => {
   'use strict';
 
-  const byId = (name) => document.getElementById(`firefly-${name}`);
+  const engine = window.NTJDanmaku;
+  const byId = name => document.getElementById(`firefly-${name}`);
   const canvas = byId('field');
+  const shell = document.querySelector('.firefly-shell');
   const ctx = canvas.getContext('2d');
   const { width, height } = canvas;
   const start = byId('start');
   const pause = byId('pause');
+  const burstButton = byId('burst');
+  const focusButton = byId('focus');
   const curtain = byId('curtain');
-  const keys = new Set();
-  const arrows = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
-  const player = { x: 180, y: 324 };
+  const mode = byId('mode');
   const sprite = new Image();
   sprite.src = '/assets/reimu-survivors.png';
-  const mode = byId('mode');
-  const duration = 36;
-  const patterns = ['一符 · 花雨', '二符 · 横流', '三符 · 星环'];
-  const colors = ['#ff9eaa', '#94d9ee', '#e0a6f4'];
-  let expert = false;
+  const keys = new Set();
+  const movementKeys = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', a: 'left', d: 'right', w: 'up', s: 'down' };
+  let game = engine.createGame(mode.value);
+  game.phase = 'ready';
+  game.lantern = null;
   let best = readBest();
-  let phase = 'ready';
-  let score = 0;
-  let lampPoints = 0;
-  let clearPoints = 0;
   let runId = 0;
-  let lamps = 0;
-  let spellLamps = 0;
-  let spell = 0;
-  let grazes = 0;
-  let guard = 0;
-  let invulnerableUntil = 0;
-  let chain = 0;
-  let lastLamp = -Infinity;
-  let notes = [];
-  let elapsed = 0;
-  let nextWave = 0;
-  let wave = 0;
-  let bullets = [];
-  let warning = null;
-  let lantern;
   let pointer = null;
+  let pointerPoint = null;
   let target = null;
+  let focusLocked = false;
+  let pendingBurst = false;
   let frame;
-  let last;
+  let last = 0;
+  let accumulator = 0;
 
-  function scoreKey() {
-    return expert ? 'ntj-firefly-expert-v1' : 'ntj-firefly-score-v2';
-  }
-
+  function scoreKey() { return `ntj-firefly-${game.mode}-v2`; }
+  function rankingMode() { return `${game.mode}-v2`; }
   function readBest() {
-    try { return Math.max(0, Number(localStorage.getItem(scoreKey())) || 0); } catch { return 0; }
+    try { return Math.max(0, Number(localStorage.getItem(scoreKey())) || 0); }
+    catch { return 0; }
   }
-
-  function spawnLantern() {
-    const half = player.x > width / 2 ? 28 : width / 2 + 30;
-    lantern = { x: half + Math.random() * 115, y: 124 + Math.random() * 232 };
+  function isFocused() { return focusLocked || keys.has('Shift'); }
+  function text(id, value) {
+    const node = byId(id);
+    if (node.textContent !== String(value)) node.textContent = value;
   }
 
   function draw() {
+    const { elapsed, warning, bullets, guard, invulnerableUntil, lantern, player, notes } = game;
     const pattern = Math.min(2, Math.floor(elapsed / 12));
     ctx.fillStyle = ['#162824', '#192533', '#2a2031'][pattern];
     ctx.fillRect(0, 0, width, height);
@@ -112,6 +99,23 @@
       ctx.fillStyle = '#fff0b0';
       ctx.fillRect(lantern.x - 2, lantern.y - 3, 4, 6);
     }
+    for (const effect of game.effects) {
+      const progress = Math.min(1, (elapsed - effect.at) / .35);
+      ctx.strokeStyle = '#b0f5e0';
+      ctx.globalAlpha = 1 - progress;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, effect.radius * (.25 + .75 * progress), 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    if (isFocused() && game.phase === 'playing') {
+      ctx.strokeStyle = '#fff3bf80';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, 21, 0, Math.PI * 2);
+      ctx.stroke();
+    }
     if (sprite.naturalWidth) {
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(sprite, 0, 0, 13, 13, Math.round(player.x) - 13, Math.round(player.y) - 14, 26, 26);
@@ -135,292 +139,188 @@
   }
 
   function updateLedger() {
-    byId('score').textContent = score;
-    byId('time').textContent = Math.max(0, Math.ceil(duration - elapsed));
-    byId('best').textContent = best;
-    byId('chain').textContent = `×${elapsed - lastLamp < 4 ? Math.min(chain + 1, 4) : 1}`;
-    const pattern = expert ? `${patterns[spell]} · 灯火 ${Math.min(spellLamps, 2)}/2` : patterns[spell];
-    if (byId('pattern').textContent !== pattern) byId('pattern').textContent = pattern;
-    byId('guard').textContent = guard === 8 ? '护身符就绪' : `护身符 ${guard}/8`;
+    const rules = engine.MODES[game.mode];
+    const playing = game.phase === 'playing';
+    text('score', game.score);
+    text('time', Math.max(0, Math.ceil(engine.DURATION - game.elapsed)));
+    text('best', best);
+    text('chain', `×${game.elapsed - game.lastLamp < 4 ? Math.min(game.chain + 1, 4) : 1}`);
+    const remaining = Math.max(0, Math.ceil((game.spell + 1) * 12 - game.elapsed));
+    text('pattern', `${engine.PATTERNS[game.spell]}${rules.quota ? ` · 灯 ${game.spellLamps}/${rules.quota} · ${remaining}秒` : ''}`);
+    text('guard', game.guard === 8 ? '护身符就绪' : `护身符 ${game.guard}/8`);
+    text('burst', game.guard === 8 ? '灵击 · 就绪' : `灵击 ${game.guard}/8`);
+    burstButton.disabled = !playing || game.guard < engine.GUARD_MAX;
+    focusButton.disabled = !playing;
+    focusButton.setAttribute('aria-pressed', String(isFocused()));
+    text('focus', isFocused() ? '低速 · 开' : '低速 · 关');
+    byId('chain-time').value = Math.max(0, 4 - (game.elapsed - game.lastLamp));
   }
 
   function releaseInput() {
     keys.clear();
-    pointer = null;
-    target = null;
-  }
-
-  function rankingMode() {
-    return expert ? 'expert' : 'normal';
+    pointer = pointerPoint = target = null;
+    pendingBurst = false;
+    updateLedger();
   }
 
   function showRanking() {
     window.NTJArcadeScores?.mount(byId('ranking'), 'danmaku', rankingMode());
   }
 
-  async function submitResult(cleared) {
-    if (!window.NTJArcadeScores || score === 0) return;
+  async function submitResult() {
+    if (!window.NTJArcadeScores || game.score === 0) return;
     const finishedRun = runId;
-    const status = byId('ranking-status');
-    status.textContent = '正在保存成绩…';
-    const result = await window.NTJArcadeScores.submit('danmaku', {
-      mode: rankingMode(),
-      score,
-      detail: `${cleared ? '全符卡通过 · ' : ''}${lamps} 盏灯 · 擦弹 ${grazes} 次`,
-    });
+    text('ranking-status', '正在保存成绩…');
+    const result = await window.NTJArcadeScores.submit('danmaku', { mode: rankingMode(), score: game.score });
     if (finishedRun !== runId) return;
-    status.textContent = result.message || (result.improved ? '已刷新榜上纪录。' : '已保留你的榜上最佳。');
+    text('ranking-status', result.message || (result.improved ? '已刷新榜上纪录。' : '已保留你的榜上最佳。'));
   }
 
-  function end(message, nextPhase, cleared = false) {
-    phase = nextPhase;
+  function showCurtain() {
     cancelAnimationFrame(frame);
     releaseInput();
-    if (nextPhase === 'over' && score > best) {
-      best = score;
-      try { localStorage.setItem(scoreKey(), String(best)); } catch { /* Play works without storage. */ }
+    const finished = game.phase === 'over';
+    shell.classList.toggle('is-running', !finished);
+    if (finished && game.score > best) {
+      best = game.score;
+      try { localStorage.setItem(scoreKey(), String(best)); } catch { /* Storage is optional. */ }
     }
     updateLedger();
     curtain.classList.remove('hidden');
-    byId('result').textContent = message;
-    const finished = nextPhase === 'over';
-    byId('detail').textContent = finished ? `${score} 分 · 拾灯 ${lamps} 盏 · 擦弹 ${grazes} 次` : '离开时会自动暂停';
+    text('result', finished ? game.result : '暂停');
+    text('detail', finished ? `${game.score} 分 · 灯 ${game.lamps} 盏 · 擦弹 ${game.grazes} 次 · 灵击 ${game.bursts} 次` : '点击继续，接着刚才的位置玩。');
     byId('breakdown').classList.toggle('hidden', !finished);
     if (finished) {
-      byId('lamp-points').textContent = lampPoints;
-      byId('graze-points').textContent = grazes * 2;
-      byId('clear-points').textContent = clearPoints;
-      void submitResult(cleared);
+      text('lamp-points', game.lampPoints);
+      text('graze-points', game.grazePoints);
+      text('burst-points', game.burstPoints);
+      text('clear-points', game.clearPoints);
+      void submitResult();
     }
-    start.textContent = phase === 'paused' ? '继续' : '再来一次';
+    start.textContent = finished ? '再来一次' : '继续';
     pause.disabled = true;
-    mode.disabled = nextPhase === 'paused';
+    mode.disabled = !finished;
     start.focus({ preventScroll: true });
   }
 
-  function planWave() {
-    const pattern = Math.min(2, Math.floor(nextWave / 12));
-    const shots = [];
-    const launch = (x, y, angle, speed) => {
-      shots.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, color: colors[pattern] });
-    };
-    if (pattern === 0) {
-      const x = 180 + Math.sin(wave * 1.33) * 104;
-      for (let i = -2; i <= 2; i += 1) launch(x, 4, Math.PI / 2 + i * .24, 111);
-    } else if (pattern === 1) {
-      const side = wave % 2;
-      const gap = (wave * 3) % 8;
-      for (let i = 0; i < 9; i += 1) {
-        if (i === gap || i === gap + 1) continue;
-        launch(side ? width - 3 : 3, 33 + i * 43, side ? Math.PI : 0, 148);
-      }
-    } else {
-      const x = 180 + Math.sin(wave * 1.46) * 92;
-      const y = 98 + Math.cos(wave * 1.2) * 33;
-      for (let i = 0; i < 12; i += 1) launch(x, y, i * Math.PI / 6 + wave * .22, 115);
-    }
-    if (expert && wave % 2 === 0) {
-      // Aim once, when the warning appears. Moving during the warning opens a lane.
-      const x = wave % 4 ? 4 : width - 4;
-      const y = pattern === 1 ? 4 : 64;
-      const aim = Math.atan2(player.y - y, player.x - x);
-      for (let i = -1; i <= 1; i += 1) launch(x, y, aim + i * .19, 151);
-    }
-    return shots;
-  }
-
-  function updateWave() {
-    if (!warning && elapsed >= nextWave - .42) warning = planWave();
-    if (elapsed < nextWave) return;
-    bullets.push(...warning);
-    warning = null;
-    wave += 1;
-    const interval = elapsed < 12 ? 1.08 : elapsed < 24 ? 1.4 : 1.22;
-    nextWave += interval * (expert ? .83 : 1);
-  }
-
-  function award(points) {
-    score += points;
-    notes.push({ x: player.x, y: player.y, label: `+${points}`, at: elapsed });
-  }
-
-  function movePlayer(dt) {
-    const dx = target ? target.x - player.x : Number(keys.has('ArrowRight')) - Number(keys.has('ArrowLeft'));
-    const dy = target ? target.y - player.y : Number(keys.has('ArrowDown')) - Number(keys.has('ArrowUp'));
-    const distance = Math.hypot(dx, dy);
-    if (!distance) return;
-    const step = target ? Math.min(distance, 255 * dt) : 185 * dt;
-    player.x = Math.max(9, Math.min(width - 9, player.x + dx / distance * step));
-    player.y = Math.max(9, Math.min(height - 9, player.y + dy / distance * step));
-  }
-
   function tick(now) {
-    if (phase !== 'playing') return;
-    const dt = Math.min(.033, (now - last) / 1000);
+    if (game.phase !== 'playing') return;
+    accumulator += Math.min(.1, Math.max(0, (now - last) / 1000));
     last = now;
-    elapsed += dt;
-    updateWave();
-    movePlayer(dt);
-    for (const bullet of bullets) {
-      bullet.x += bullet.vx * dt;
-      bullet.y += bullet.vy * dt;
-    }
-    bullets = bullets.filter(({ x, y }) => x > -12 && x < width + 12 && y > -12 && y < height + 12);
-    notes = notes.filter((note) => elapsed - note.at < 1);
-    let hit = false;
-    if (elapsed >= invulnerableUntil) {
-      for (const bullet of bullets) {
-        const distance = Math.hypot(player.x - bullet.x, player.y - bullet.y);
-        if (distance < 8) {
-          hit = true;
-          break;
-        }
-        if (distance < 21 && !bullet.grazed) {
-          bullet.grazed = true;
-          grazes += 1;
-          guard = Math.min(8, guard + 1);
-          award(2);
-        }
-      }
-    }
-    if (hit && guard === 8) {
-      guard = 0;
-      invulnerableUntil = elapsed + 1.1;
-      bullets = bullets.filter(({ x, y }) => Math.hypot(player.x - x, player.y - y) > 38);
-      hit = false;
-    }
-    if (Math.hypot(player.x - lantern.x, player.y - lantern.y) < 15) {
-      lamps += 1;
-      spellLamps += 1;
-      chain = elapsed - lastLamp < 4 ? Math.min(4, chain + 1) : 1;
-      lastLamp = elapsed;
-      lampPoints += chain * 10;
-      award(chain * 10);
-      spawnLantern();
-    }
-    const boundary = elapsed >= (spell + 1) * 12;
-    const missedQuota = expert && boundary && spellLamps < 2;
-    if (boundary && !missedQuota && spell < 2) {
-      if (expert) {
-        clearPoints += 30;
-        award(30);
-      }
-      spell += 1;
-      spellLamps = 0;
+    while (accumulator >= engine.STEP && game.phase === 'playing') {
+      engine.step(game, {
+        dx: Number(keys.has('right')) - Number(keys.has('left')),
+        dy: Number(keys.has('down')) - Number(keys.has('up')),
+        target, focus: isFocused(), burst: pendingBurst
+      });
+      pendingBurst = false;
+      accumulator -= engine.STEP;
     }
     draw();
     updateLedger();
-    if (hit) {
-      end('撞上弹幕', 'over');
-    } else if (missedQuota) {
-      end(`${patterns[spell]}未破，少了灯火`, 'over');
-    } else if (elapsed >= duration) {
-      clearPoints += 50;
-      award(50);
-      end('三道符卡全部通过', 'over', true);
-    } else {
-      frame = requestAnimationFrame(tick);
-    }
+    if (game.phase === 'over') showCurtain();
+    else frame = requestAnimationFrame(tick);
   }
 
   start.addEventListener('click', () => {
-    if (phase !== 'paused') {
+    if (game.phase !== 'paused') {
       runId += 1;
-      byId('ranking-status').textContent = '';
-      score = 0;
-      lampPoints = clearPoints = 0;
-      lamps = 0;
-      spellLamps = 0;
-      spell = 0;
-      grazes = 0;
-      guard = 0;
-      chain = 0;
-      lastLamp = -Infinity;
-      invulnerableUntil = 0;
-      warning = null;
-      notes = [];
-      elapsed = 0;
-      nextWave = .7;
-      wave = 0;
-      bullets = [];
-      Object.assign(player, { x: 180, y: 324 });
-      spawnLantern();
+      game = engine.createGame(mode.value);
+      text('ranking-status', '');
     }
-    phase = 'playing';
+    game.phase = 'playing';
+    shell.classList.add('is-running');
+    releaseInput();
     mode.disabled = true;
     curtain.classList.add('hidden');
     pause.disabled = false;
     canvas.focus({ preventScroll: true });
+    document.querySelector('.firefly-ledger').scrollIntoView({ block: 'start', behavior: 'auto' });
     last = performance.now();
+    accumulator = 0;
     frame = requestAnimationFrame(tick);
   });
 
   mode.addEventListener('change', () => {
     runId += 1;
-    byId('ranking-status').textContent = '';
-    byId('breakdown').classList.add('hidden');
-    expert = mode.value === 'expert';
+    game = engine.createGame(mode.value);
+    game.phase = 'ready';
+    shell.classList.remove('is-running');
+    game.lantern = null;
     best = readBest();
-    phase = 'ready';
-    elapsed = score = spell = spellLamps = guard = 0;
-    bullets = [];
-    notes = [];
-    warning = lantern = null;
-    invulnerableUntil = 0;
-    Object.assign(player, { x: 180, y: 324 });
-    byId('result').textContent = expert ? '符卡试炼' : '月下拾灯';
-    byId('detail').textContent = expert ? '每道符卡限时 12 秒，至少拾两盏灯。虚线瞄准出现后，记得换位。' : '穿过三道符卡，撑过 36 秒。';
+    releaseInput();
+    text('ranking-status', '');
+    byId('breakdown').classList.add('hidden');
+    text('result', engine.MODES[game.mode].label);
+    const quota = engine.MODES[game.mode].quota;
+    text('detail', quota ? `每道符卡 12 秒，至少取 ${quota} 盏灯。瞄准预警出现后再换位。` : '穿过三道符卡，撑过 36 秒。');
     start.textContent = '开始';
-    updateLedger();
     draw();
     showRanking();
   });
 
   function pauseGame() {
-    if (phase === 'playing') end('暂停', 'paused');
+    if (game.phase !== 'playing') return;
+    game.phase = 'paused';
+    showCurtain();
   }
-
   pause.addEventListener('click', pauseGame);
   window.addEventListener('blur', pauseGame);
   document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
-  canvas.addEventListener('keydown', (event) => {
-    if (phase !== 'playing') return;
-    if (event.key === 'Escape') pauseGame();
-    if (!arrows.includes(event.key)) return;
-    event.preventDefault();
-    keys.add(event.key);
+  document.addEventListener('keydown', event => {
+    if (game.phase !== 'playing' || event.ctrlKey || event.altKey || event.metaKey ||
+        ['INPUT', 'SELECT', 'TEXTAREA'].includes(event.target.tagName)) return;
+    const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    if (key === 'Escape') { event.preventDefault(); pauseGame(); return; }
+    if (key === 'x' || key === ' ') {
+      event.preventDefault();
+      if (!event.repeat) pendingBurst = true;
+    } else if (key === 'Shift' || Object.hasOwn(movementKeys, key)) {
+      event.preventDefault();
+      keys.add(movementKeys[key] || key);
+    }
   });
-  canvas.addEventListener('keyup', (event) => keys.delete(event.key));
-  canvas.addEventListener('blur', releaseInput);
+  document.addEventListener('keyup', event => {
+    const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    keys.delete(movementKeys[key] || key);
+  });
+  // 第二根手指点灵击 / 低速时，保持第一根手指的拖动。
+  canvas.addEventListener('blur', () => keys.clear());
+  burstButton.addEventListener('click', () => {
+    if (game.phase !== 'playing') return;
+    canvas.focus({ preventScroll: true });
+    pendingBurst = true;
+  });
+  focusButton.addEventListener('click', () => {
+    if (game.phase !== 'playing') return;
+    focusLocked = !focusLocked;
+    canvas.focus({ preventScroll: true });
+    updateLedger();
+  });
 
   function aim(event) {
     if (event.pointerId !== pointer) return;
     const rect = canvas.getBoundingClientRect();
-    target = {
-      x: (event.clientX - rect.left) * width / rect.width,
-      y: (event.clientY - rect.top) * height / rect.height - (event.pointerType === 'touch' ? 21 : 0),
-    };
+    const current = { x: event.clientX, y: event.clientY };
+    target = engine.dragTarget(target, pointerPoint, current, rect);
+    pointerPoint = current;
   }
-
-  canvas.addEventListener('pointerdown', (event) => {
-    if (phase !== 'playing' || pointer !== null || event.button !== 0) return;
+  canvas.addEventListener('pointerdown', event => {
+    if (game.phase !== 'playing' || pointer !== null || event.button !== 0) return;
     canvas.focus({ preventScroll: true });
     pointer = event.pointerId;
+    pointerPoint = { x: event.clientX, y: event.clientY };
+    target = { ...game.player };
     canvas.setPointerCapture(pointer);
-    aim(event);
   });
   canvas.addEventListener('pointermove', aim);
   for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {
-    canvas.addEventListener(type, (event) => {
-      if (event.pointerId === pointer) {
-        pointer = null;
-        target = null;
-      }
+    canvas.addEventListener(type, event => {
+      if (event.pointerId === pointer) pointer = pointerPoint = target = null;
     });
   }
-
   draw();
   updateLedger();
   showRanking();
-  sprite.addEventListener('load', () => { if (phase !== 'playing') draw(); });
+  sprite.addEventListener('load', () => { if (game.phase !== 'playing') draw(); });
 })();
