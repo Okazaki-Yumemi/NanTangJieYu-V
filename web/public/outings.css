@@ -34,8 +34,8 @@
 }
 
 .outing-fx {
-  background-color: #283c3a;
-  background-image: linear-gradient(90deg, #243431e8, #24343133), url('/assets/outing-fx.svg');
+  background-color: #354359;
+  background-image: linear-gradient(90deg, #303c51e8, #303c5122), url('/assets/outing-fx.svg?v=2');
   background-size: cover;
   background-position: center;
 }

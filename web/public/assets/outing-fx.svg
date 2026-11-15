@@ -1,1 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="300" height="150" viewBox="0 0 300 150"><rect width="300" height="150" fill="#283c3a"/><g stroke="#81948d" opacity=".18"><path d="M0 30H300M0 60H300M0 90H300M0 120H300M30 0V150M60 0V150M90 0V150M120 0V150M150 0V150M180 0V150M210 0V150M240 0V150M270 0V150"/></g><g stroke="#a7c896" fill="#a7c896"><path d="M130 70V119M175 45V98M220 24V76M265 12V61"/><path d="M124 88h12v21h-12zM169 58h12v29h-12zM214 37h12v26h-12zM259 22h12v27h-12z"/></g><g stroke="#d48d7b" fill="#d48d7b"><path d="M152 67V115M197 42V92M242 20V73"/><path d="M146 77h12v24h-12zM191 53h12v25h-12zM236 33h12v25h-12z"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="150" viewBox="0 0 300 150">
+  <title>千亦的月虹市场</title>
+  <rect width="300" height="150" fill="#354359"/>
+  <g stroke="#a7bec9" opacity=".13"><path d="M0 30H300M0 60H300M0 90H300M0 120H300M30 0V150M60 0V150M90 0V150M120 0V150M150 0V150M180 0V150M210 0V150M240 0V150M270 0V150"/></g>
+  <path d="M187 150c-14-33-15-91 37-131 12 26 37 46 76 56v75Z" fill="#92b2c6" opacity=".28"/>
+  <path d="M222 40c2-9 11-11 16-5 5-1 10 2 10 6h-26m42 36c2-11 14-15 22-6 7-2 13 2 14 9h-36" fill="#f0f0e3" opacity=".35"/>
+  <g fill="#9dbea2" stroke="#9dbea2"><path d="M134 80v43m28-69v55m28-72v51"/><path d="M130 91h8v23h-8zm28-24h8v30h-8zm28-18h8v25h-8z"/></g>
+  <g transform="translate(225 67) rotate(13)"><rect x="-22" y="-35" width="48" height="72" rx="2" fill="#f8f0dc" stroke="#d4bd8c"/><rect x="-17" y="-30" width="38" height="62" fill="none" stroke="#c5a875"/><path d="M-13-24v-3h4m23 0h3v3M-13 26v3h4m23 0h3v-3" fill="none" stroke="#b7a37e"/></g>
+  <circle cx="260" cy="105" r="15" fill="#ad6b65" stroke="#ead6b2" stroke-width="2"/><path d="m254 102 5-4 6 4-5 5zm0 7 5 4 6-4" fill="none" stroke="#f8ead3" stroke-width="2"/>
+  <path d="M0 144h43v6H0Z" fill="#c46e76"/><path d="M43 144h43v6H43Z" fill="#d49a65"/><path d="M86 144h43v6H86Z" fill="#dbc06e"/><path d="M129 144h43v6h-43Z" fill="#8aa772"/><path d="M172 144h43v6h-43Z" fill="#68a79f"/><path d="M215 144h43v6h-43Z" fill="#7899be"/><path d="M258 144h42v6h-42Z" fill="#9b83b0"/>
+  <path d="M4 147h292" stroke="#fff1d2" stroke-dasharray="2 4" opacity=".6"/>
+</svg>

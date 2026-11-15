@@ -3,16 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#343b4b" />
+  <meta name="theme-color" content="#343d56" />
   <title>FX战士天弓千亦 · 四季游园会</title>
   <link rel="stylesheet" href="/fx.css?v=6" />
+  <link rel="stylesheet" href="/fx-chimata.css?v=1" />
+  <link rel="icon" type="image/svg+xml" href="/assets/fx-market-emblem.svg" />
 </head>
 <body>
   <main class="exchange">
-    <nav class="topline"><a href="/arcade.html">← 返回游园会</a><span>天弓证券　行情终端</span><span class="simulation">模拟盘</span></nav>
+    <nav class="topline"><a href="/arcade.html">← 返回游园会</a><span>月虹市场　／　天弓外汇柜台</span><span class="simulation">模拟盘</span></nav>
     <header class="cover">
-      <div><h1>FX战士天弓千亦</h1><p class="subtitle">幻想乡五品种外汇市场　·　统一以人里元结算</p></div>
-      <a href="#fx-rules" class="manual-link">交易说明</a>
+      <div class="market-brand"><img class="market-emblem" src="/assets/fx-market-emblem.svg" width="75" height="88" alt="" /><div><p class="market-eyebrow">無主物の神 · 天弓千亦主理</p><h1><span>FX战士</span>天弓千亦</h1><p class="subtitle">月虹之下，五种行情。<br class="mobile-brand-break" />统一以人里元结算。</p></div></div>
+      <div class="market-signoff"><div class="market-seal" aria-hidden="true"><strong>天弓</strong><span>市場公認</span></div><a href="#fx-rules" class="manual-link">交易说明</a></div>
     </header>
     <div class="ticker" id="fx-ticker"><span id="fx-news-type">文文快讯</span><div class="news-copy"><p id="fx-news" role="status" aria-live="polite">正在连接交易所…</p><small id="fx-news-impact"></small></div><span id="fx-connection" role="status">连接中</span></div>
     <section class="account-strip" aria-label="我的模拟账户">
@@ -66,6 +68,11 @@
         <p id="fx-message" role="status">正在连接交易所…</p>
         <button id="fx-retry" type="button" hidden>确认上一笔交易结果</button>
       </section>
+      <aside class="panel chimata-counter" id="fx-chimata-counter" aria-labelledby="chimata-title" data-mood="quiet">
+        <div class="counter-title"><h2 id="chimata-title">千亦的柜台</h2><span id="fx-counter-status">等候开市</span></div>
+        <div class="counter-body"><span class="blank-card" aria-hidden="true"></span><p id="fx-chimata-line">空白的凭证留给新来的客人。市场，马上开门。</p></div>
+        <p class="counter-signature">天弓千亦 · 集市之神</p>
+      </aside>
       <section class="panel rescue-panel" aria-labelledby="rescue-title">
         <h2 id="rescue-title" class="window-title">借贷 / 打工</h2>
         <div class="rescue-intro"><img src="/assets/characters/nitori.png" alt="河城荷取" /><p>「借你可以，<br />记得还啊。」<small>河童应急借贷处</small></p></div>
@@ -88,10 +95,10 @@
       <p><b>⑧ 市场联动</b>　四种货币各有波动特点，共享市场情绪，并带有自身扰动；行情会经历盘整、趋势和活跃阶段。河童货币 / 月都圆是两边兑人里元汇率的比值。避险和相关关系只是走势倾向，不保证固定反向或获利。</p>
       <p>蜡烛图取实际报价的开、高、低、收，每根最新蜡烛会随报价更新，可切换 2 秒、10 秒、30 秒、1 分钟周期。服务器每 2 秒生成统一行情；自动大事件仍每 15～30 分钟一次，管理员可额外触发。停服时行情暂停，贷款和打工仍按实际时间计算。所有价格与新闻均为虚构游戏内容。</p>
     </div></details>
-    <footer>行情纯属虚构，工钱倒是一分不少。<a href="/art-credits.html">素材署名</a></footer>
+    <footer class="market-footer"><span>月虹之下，交易照常。<span class="footer-sign"> — 天弓千亦的市场</span></span><a href="/art-credits.html">素材与设计署名</a></footer>
     <noscript>请启用 JavaScript 后进入模拟交易。</noscript>
   </main>
   <script src="/fx-chart.js?v=3"></script>
-  <script src="/fx.js?v=5"></script>
+  <script src="/fx.js?v=6"></script>
 </body>
 </html>

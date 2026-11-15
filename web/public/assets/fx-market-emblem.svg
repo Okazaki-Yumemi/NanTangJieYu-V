@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="112" viewBox="0 0 96 112">
+  <title>月虹市场纹章</title>
+  <desc>七色拼布围绕蓝天白云与一张空白卡牌，取意于天弓千亦。</desc>
+  <path d="M8 11 48 2 88 11v58c0 19-18 31-40 40C26 100 8 88 8 69Z" fill="#f6f2e7" stroke="#464d69" stroke-width="2"/>
+  <path d="M14 16 48 8 82 16v51c0 17-14 27-34 36-20-9-34-19-34-36Z" fill="#bfd7e3"/>
+  <path d="M15 34c6-7 13-7 18 0 7-3 14 1 14 7H15m35 17c2-9 11-12 17-6 6-2 12 2 14 7v7H50" fill="#fffdf6" opacity=".9"/>
+  <path d="M13 16 23 14v12l-10 2Z" fill="#c46e76"/><path d="m23 14 10-3v12l-10 3Z" fill="#d49a65"/>
+  <path d="m33 11 10-2v12l-10 2Z" fill="#dbc06e"/><path d="m43 9 10 0v12H43Z" fill="#8aa772"/>
+  <path d="m53 9 10 2v12l-10-2Z" fill="#68a79f"/><path d="m63 11 10 3v12l-10-3Z" fill="#7899be"/>
+  <path d="m73 14 10 2v12l-10-2Z" fill="#9b83b0"/>
+  <path d="m16 19 32-7 32 7" fill="none" stroke="#fff5ce" stroke-dasharray="2 3"/>
+  <g transform="rotate(-9 47 65)">
+    <rect x="28" y="37" width="37" height="54" rx="2" fill="#fdf9ee" stroke="#645f6a" stroke-width="1.5"/>
+    <rect x="32" y="41" width="29" height="46" rx="1" fill="none" stroke="#c6a66c"/>
+    <path d="M35 47v-3h4m17 0h3v3M35 81v3h4m17 0h3v-3" fill="none" stroke="#c6a66c"/>
+  </g>
+  <circle cx="73" cy="80" r="11" fill="#b66b62" stroke="#f8edda" stroke-width="2"/>
+  <path d="m68 77 4-3 5 3-4 4Zm0 5 4 3 5-3" fill="none" stroke="#fff3d9" stroke-width="1.5"/>
+</svg>

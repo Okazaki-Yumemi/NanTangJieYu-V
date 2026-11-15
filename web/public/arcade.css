@@ -35,7 +35,8 @@
               linear-gradient(0deg, var(--surface, #352638), transparent 80%),
               var(--art, url('/assets/event-poster.jpg')) right var(--crop, 10%) / auto 225% no-repeat;
 }
-.ticket-fx { --surface: #263d36; --art: url('/assets/characters/nitori.png'); --crop: 20%; }
+.ticket-fx { --surface: #354359; --art: url('/assets/outing-fx.svg?v=2'); }
+.ticket-fx a::before { background-size: auto, auto, auto 100%; background-position: center, center, right center; }
 .ticket-puzzle { --surface: #28332d; --art: url('/assets/taisei/marisa-portrait.svg'); }
 .ticket-bullet { --surface: #29263d; --art: url('/assets/taisei/wriggle-portrait.svg'); }
 .ticket-lake { --surface: #233940; --art: url('/assets/taisei/cirno-portrait.svg'); }

@@ -1,0 +1,83 @@
+/* 千亦的拼布、披风与交易凭证；行情中的红绿仍只表达盈亏。 */
+:root{
+  --ink:#303747;--muted:#6a707b;--paper:#faf7ef;--line:#b7b6b1;
+  --market-blue:#424c6a;--market-thread:#c4aa73;
+  --market-patch:linear-gradient(90deg,#c46e76 0 14.28%,#d49a65 14.28% 28.56%,#dbc06e 28.56% 42.84%,#8aa772 42.84% 57.12%,#68a79f 57.12% 71.4%,#7899be 71.4% 85.68%,#9b83b0 85.68% 100%);
+  background:#cbd7da;
+}
+.exchange{background:#eeeee7;border-color:#858f9d;box-shadow:3px 4px 0 #adb9bf}
+.topline{background:#343d56;border-bottom:2px solid #c4aa73}
+.simulation{border-color:#9b92aa;color:#f4e8c7}
+.cover{position:relative;min-height:148px;gap:22px;padding:20px 8px 24px;margin-bottom:12px;border-bottom:1px solid #8d93a0}
+.cover::after{content:'';position:absolute;bottom:5px;left:0;right:0;height:6px;background:var(--market-patch)}
+.market-brand{display:flex;align-items:center;gap:17px;min-width:0}
+.market-emblem{width:75px;height:88px;flex-shrink:0}
+.market-eyebrow{font:11px/1.5 'Microsoft YaHei',sans-serif;letter-spacing:3px;color:#626d86;margin:0 0 7px}
+.cover h1{font:700 30px/1.3 'STSong','SimSun','Microsoft YaHei',serif;letter-spacing:1px;color:#303b57}
+.cover h1 span{font-family:Consolas,monospace;font-size:22px;font-weight:500;letter-spacing:-1px;margin-right:9px}
+.subtitle{margin-top:8px;color:#687184;line-height:1.7}
+.mobile-brand-break{display:none}
+.market-signoff{display:flex;align-items:center;gap:22px;flex-shrink:0}
+.market-seal{display:grid;place-content:center;width:59px;height:59px;gap:3px;border:2px solid #ae7065;outline:1px solid #ae7065;outline-offset:-5px;color:#a36258;transform:rotate(-7deg);text-align:center;flex-shrink:0}
+.market-seal strong{font:700 19px/1.2 'STSong','SimSun',serif;letter-spacing:4px;padding-left:4px}
+.market-seal span{font-size:9px;letter-spacing:2px}
+.manual-link{color:#48536e;text-underline-offset:4px}
+.ticker{background:#f8f3df;border-color:#c3b99b;box-shadow:inset 3px 0 #bca477}
+.account-strip{background:#fffdf6;border-color:#aaaeb2}
+.equity>span::before{content:'帳';display:inline-grid;place-items:center;width:17px;height:17px;margin-right:6px;border:1px solid #bbb0a1;color:#846d50;font:12px 'SimSun',serif}
+.panel{border-color:#a6aab1}
+.panel-label,.section-title,.window-title{background:#e8ebee;border-bottom-color:#bdc3c9}
+.panel-label>span:first-child::before,.section-title h2::before,.window-title::before{content:'';display:inline-block;width:4px;height:11px;background:#a78aab;vertical-align:-1px;margin-right:7px}
+.positions-panel .section-title h2::before{background:#70a39b}
+.leaderboard-panel .section-title h2::before{background:#bd9b60}
+.profile-panel .section-title h2::before{background:#8f9b6a}
+.rescue-panel .window-title::before{background:#7597b7}
+.pair-board{background:#f9f7ef}
+.pair-board-label{background:#e8ebee}
+.pair-quote[aria-pressed=true]{background:#e7edf0;box-shadow:none;position:relative}
+.pair-quote[aria-pressed=true]::after{content:'';position:absolute;bottom:0;left:0;right:0;height:4px;background:var(--market-patch)}
+.pair-quote[aria-pressed=true]>span{font-weight:700;color:#3c4966}
+.chart-toolbar button[aria-pressed=true]{background:var(--market-blue);border-color:var(--market-blue)}
+.order-panel{border-top:3px solid #a994b5}
+.order-pair{color:#414e68}
+#fx-message[data-receipt=true]{position:relative;border-top:1px dashed #b7a78f;background:#f4efe2;padding:10px 9px 10px 11px;margin-top:13px;border-bottom:1px dashed #b7a78f}
+#fx-message[data-receipt=true]::before{content:'天弓印 · 成交凭证';display:block;font:700 11px/1.6 'SimSun',serif;letter-spacing:2px;color:#9d5e54;margin-bottom:4px}
+.chimata-counter{position:relative;overflow:hidden;padding:14px 12px 12px;background:#edf2f1;border-color:#a4b1bc}
+.chimata-counter::before{content:'';position:absolute;inset:0 0 auto;height:5px;background:var(--market-patch)}
+.counter-title{display:flex;align-items:center;justify-content:space-between;gap:7px;margin:3px 0 11px}
+.counter-title h2{font:700 14px 'STSong','SimSun',serif;color:#44526f;margin:0}
+.counter-title>span{font-size:9px;color:#647789;border:1px solid #b3c3cc;padding:3px 5px;white-space:nowrap}
+.counter-body{display:flex;align-items:flex-start;gap:12px;min-height:71px}
+.blank-card{position:relative;display:block;width:40px;height:57px;flex-shrink:0;border:1px solid #8995a6;background:#fffdf6;transform:rotate(-7deg);box-shadow:3px 3px 0 #d5e0e2;margin:4px 0 0 3px}
+.blank-card::before{content:'';position:absolute;inset:4px;border:1px solid #cfb781}
+.blank-card::after{content:'';position:absolute;left:4px;right:4px;bottom:4px;height:3px;background:var(--market-patch)}
+#fx-chimata-line{font:14px/1.85 'STSong','SimSun','Microsoft YaHei',serif;color:#455169;margin:0;min-height:78px}
+.counter-signature{display:flex;align-items:center;gap:8px;font-size:9px;color:#7d8794;margin:8px 0 0}
+.counter-signature::before{content:'';flex:1;border-top:1px dashed #b7b8b3}
+.chimata-counter[data-mood=storm] .counter-title>span{color:#936549;border-color:#c9a98b;background:#faf0e4}
+.chimata-counter[data-mood=rescue] .counter-title>span{color:#7b615f;border-color:#bba7a1}
+.chimata-counter[data-mood=work] .counter-title>span{color:#5c7968;border-color:#a4bbaf}
+.achievement.earned{background:#f2f1e5;border-color:#b6aa7a}
+.achievement.earned strong{color:#716342}
+.board-title{color:#82704f}
+.market-footer{border-top:1px dashed #b8ac99;margin-top:14px;padding-top:12px;line-height:1.6}
+.market-footer .footer-sign{color:#776b83}
+@media(max-width:1000px){
+  .cover{min-height:136px;gap:12px}.market-signoff{gap:15px}.market-emblem{width:64px;height:75px}.cover h1{font-size:27px}.market-brand{gap:12px}.market-eyebrow{letter-spacing:2px}
+}
+@media(max-width:700px){
+  .exchange{box-shadow:none}
+  .cover{min-height:116px;margin-bottom:10px;padding:15px 0 19px;align-items:center}
+  .market-brand{gap:9px}.market-emblem{width:46px;height:58px}
+  .market-eyebrow{font-size:8px;letter-spacing:1px;margin-bottom:5px}.cover h1{font-size:20px;letter-spacing:0;line-height:1.5}.cover h1 span{font-size:15px;margin-right:5px;letter-spacing:-1px}
+  .subtitle{font-size:9px;margin-top:5px}.market-signoff{align-self:flex-start;margin-top:3px}.market-seal{display:none}.manual-link{font-size:9px}
+  .mobile-brand-break{display:initial}
+  .trading-layout{grid-template-areas:'chart' 'order' 'positions' 'host' 'rescue' 'ranking' 'profile'}
+  .chimata-counter{grid-area:host;padding:13px 12px 11px}
+  .counter-body{min-height:62px;align-items:center}#fx-chimata-line{min-height:0;font-size:14px}
+  .counter-signature{margin-top:3px}.blank-card{width:35px;height:49px;margin-top:0}
+  .market-footer{font-size:9px;flex-wrap:wrap;gap:5px 12px}
+}
+@media(max-width:360px){
+  .market-emblem{width:36px;height:47px}.market-brand{gap:7px}.cover h1{font-size:18px}.cover h1 span{font-size:13px}.market-eyebrow{letter-spacing:0}.cover{gap:7px}.subtitle{max-width:208px}
+}

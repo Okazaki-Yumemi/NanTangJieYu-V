@@ -24,9 +24,10 @@
     element.classList.toggle('positive', amount > 0);
     element.classList.toggle('negative', amount < 0);
   }
-  function message(text, error = false) {
+  function message(text, error = false, receipt = false) {
     $('fx-message').textContent = text;
     $('fx-message').classList.toggle('negative', error);
+    $('fx-message').dataset.receipt = String(receipt && !error);
   }
   async function request(path, body, controller = new AbortController(), pairId = selectedPair) {
     const timeout = setTimeout(() => controller.abort(), 12000);
@@ -60,6 +61,39 @@
     $('fx-retry').disabled = busy;
     $('fx-title').disabled = locked || !tradable;
     $('fx-set-title').disabled = locked || !tradable;
+    renderChimata();
+  }
+  function renderChimata() {
+    const account = data?.account;
+    let mood = 'quiet', status, line;
+    if (busy || pending) {
+      status = '正在核账'; line = '还没盖印，就不算成交。等柜台把账核对清楚。';
+    } else if (!online) {
+      status = '等候报价'; line = '报价还没有送到柜台。等同步恢复，再谈这笔生意。';
+    } else if (!data.authenticated) {
+      status = '等你入市'; line = '空白的凭证留给新来的客人。登录之后，来市场逛逛吧。';
+    } else if (!data.can_trade) {
+      status = '凭证待查'; line = '这张凭证暂时不能使用，请联系管理员核对。';
+    } else if (!account) {
+      status = '尚未开户'; line = '先领启动资金。至于买什么，神明也不替你做决定。';
+    } else if (account.job && Date.now() + serverOffset >= account.job.ready_at) {
+      mood = 'work'; status = '工钱待领'; line = '工钱已经备好了。先领走你应得的那份，再来逛市场。';
+    } else if (account.needs_rescue && !account.job) {
+      mood = 'rescue'; status = '歇脚再来'; line = '钱散进市场了？先去工厂接活，赚来的工钱也有分量。';
+    } else if (data.market.event_effect) {
+      mood = 'storm'; status = '市场余波'; line = '风浪也是集市的一部分。盯住保证金，别只顾着看热闹。';
+    } else if (account.job) {
+      mood = 'work'; status = '工厂当班'; line = '让市场继续热闹吧。你的那份工钱，做满了再回来领。';
+    } else if (!account.positions.length) {
+      status = '静候落笔'; line = '没有持仓，也还是市场的客人。看清楚，再决定要不要出手。';
+    } else {
+      status = '持仓在册'; line = '买卖有凭，盈亏有账。能不能留住所有权，就看你的选择了。';
+    }
+    const counter = $('fx-chimata-counter');
+    if (counter.dataset.status === status) return;
+    counter.dataset.status = status; counter.dataset.mood = mood;
+    $('fx-counter-status').textContent = status;
+    $('fx-chimata-line').textContent = line;
   }
   function updateWork() {
     const account = data?.account;
@@ -327,7 +361,7 @@
       if (result.error) message(result.message, true);
       else if (result.receipt) {
         const r = result.receipt, pairId = r.pair_id || 'kappa_human';
-        message(`${result.repeated ? '原成交已确认，无重复记账。' : '已成交。'}${pairInfo(pairId).name} · ${r.action === 'open' ? `开仓价 ${price(r.price, pairId)}，保证金 ${money(r.margin)}，手续费 ${money(r.fee)}，共扣 ${money(r.amount)}` : `平仓价 ${price(r.price, pairId)}，返还保证金及盈亏 ${money(r.amount)}`}`);
+        message(`${result.repeated ? '原成交已确认，无重复记账。' : '已成交。'}${pairInfo(pairId).name} · ${r.action === 'open' ? `开仓价 ${price(r.price, pairId)}，保证金 ${money(r.margin)}，手续费 ${money(r.fee)}，共扣 ${money(r.amount)}` : `平仓价 ${price(r.price, pairId)}，返还保证金及盈亏 ${money(r.amount)}`}`, false, true);
       } else message(result.repeated ? '已确认上一笔操作，没有重复记账。' : ({ join: '已领取 ¥10,000 模拟资金。', open: '已成交。', close: '已平仓，资金到账。', borrow: '到账 ¥5,000。无息借款，记得还。', 'borrow-credit': '有息贷款已到账，每小时单利 0.5%。', repay: '还款已入账。', 'set-title': '称号已挂牌，富豪榜同步展示。', work: '已接活，做满所选时长后回来领工钱。', 'claim-work': '工钱已到账。' })[action]);
     } catch {
       online = false; $('fx-connection').textContent = '结果待确认'; $('fx-connection').classList.add('offline');
