@@ -3,13 +3,16 @@
   const $ = id => document.getElementById(id);
   const money = value => `${value < 0 ? '−' : ''}¥${(Math.abs(value) / 100).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const signedMoney = value => `${value >= 0 ? '+' : '−'}${money(Math.abs(value))}`;
-  const price = value => value.toFixed(4);
+  let selectedPair = 'kappa_human';
+  const pairInfo = (id = selectedPair) => data?.pairs.find(pair => pair.id === id);
+  const price = (value, id = selectedPair) => value.toFixed(pairInfo(id)?.precision || 4);
+  const currencyName = id => data?.pairs.find(pair => pair.base === id)?.base_name || '河童货币';
   const time = value => new Date(value).toLocaleTimeString('zh-CN', { hour12: false });
   let data = null, online = false, busy = false, pending = null;
   let timer = null, readController = null, generation = 0, active = true;
   let workTimer = null, serverOffset = 0;
   const newsLabels = { rumor: '小道消息', surge: '市场异动', quake: '金融地震' };
-  const impact = bps => `${bps >= 0 ? '+' : '−'}${(Math.abs(bps) / 100).toFixed(2)}%`;
+  const impact = bps => Number.isFinite(bps) ? `${bps >= 0 ? '+' : '−'}${(Math.abs(bps) / 100).toFixed(2)}%` : '—';
 
   function node(tag, text, className) {
     const element = document.createElement(tag);
@@ -25,10 +28,10 @@
     $('fx-message').textContent = text;
     $('fx-message').classList.toggle('negative', error);
   }
-  async function request(path, body, controller = new AbortController()) {
+  async function request(path, body, controller = new AbortController(), pairId = selectedPair) {
     const timeout = setTimeout(() => controller.abort(), 12000);
     try {
-      const response = await fetch(`/api/fx/${path}`, {
+      const response = await fetch(`/api/fx/${path}?pair=${encodeURIComponent(pairId)}`, {
         method: body ? 'POST' : 'GET', cache: 'no-store', credentials: 'same-origin', signal: controller.signal,
         ...(body ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}),
       });
@@ -39,7 +42,8 @@
     } finally { clearTimeout(timeout); }
   }
   function updateControls() {
-    const locked = !online || busy || Boolean(pending);
+    const locked = !online || busy || Boolean(pending) || data?.market.pair_id !== selectedPair;
+    for (const button of $('fx-pairs').querySelectorAll('button')) button.disabled = busy || Boolean(pending);
     const tradable = Boolean(data?.can_trade && data.account);
     for (const element of $('fx-order').elements) element.disabled = locked || !tradable;
     for (const button of $('fx-positions').querySelectorAll('button')) button.disabled = locked || !tradable;
@@ -89,34 +93,71 @@
   }
   let chartPeriod = 30, chartPointer = null;
   function drawChart() {
-    if (!data?.market) return;
+    if (!data?.market || data.market.pair_id !== selectedPair) return;
     const bar = FXChart.draw($('fx-chart'), data.market, chartPeriod, chartPointer);
     $('fx-chart-empty').hidden = Boolean(bar);
     if (bar) $('fx-ohlc').textContent = `${time(bar.at)}  开 ${price(bar.open)}  高 ${price(bar.high)}  低 ${price(bar.low)}  收 ${price(bar.close)}${bar.current ? ' · 形成中' : ''}`;
+  }
+  function pairLabels(pair) {
+    $('market-title').replaceChildren(document.createTextNode(`${pair.base_name} `), node('span', `/ ${pair.quote_name}`));
+    $('fx-market-unit').textContent = `1 ${pair.base_name}值多少${pair.quote_name}`;
+    $('fx-order-pair').textContent = pair.name;
+    $('fx-pair-description').textContent = pair.description;
+    for (const button of $('fx-pairs').querySelectorAll('button')) button.setAttribute('aria-pressed', String(button.dataset.pair === selectedPair));
+  }
+  function renderPairs() {
+    const board = $('fx-pairs');
+    for (const pair of data.pairs) {
+      let button = [...board.children].find(item => item.dataset.pair === pair.id);
+      if (!button) {
+        button = node('button', undefined, 'pair-quote'); button.type = 'button'; button.dataset.pair = pair.id;
+        button.append(node('span', pair.name), node('strong'), node('small'));
+        button.addEventListener('click', () => {
+          if (busy || pending || selectedPair === pair.id) return;
+          selectedPair = pair.id; online = false; chartPointer = null;
+          ++generation; readController?.abort(); clearTimeout(timer);
+          pairLabels(pair);
+          for (const id of ['fx-price', 'fx-bid', 'fx-ask']) $(id).textContent = '—';
+          $('fx-change').textContent = '正在切换'; tone($('fx-change'), 0);
+          $('fx-ohlc').textContent = '正在读取行情…';
+          $('fx-news-impact').textContent = '';
+          $('fx-market-event').textContent = '正在同步本品种的新闻影响…';
+          $('fx-chart').getContext('2d')?.clearRect(0, 0, $('fx-chart').width, $('fx-chart').height);
+          $('fx-chart-empty').textContent = `正在读取${pair.name}…`; $('fx-chart-empty').hidden = false;
+          $('fx-connection').textContent = '同步中';
+          updateControls(); void poll();
+        });
+        board.append(button);
+      }
+      button.querySelector('strong').textContent = price(pair.price, pair.id);
+      const change = (pair.price / pair.previous - 1) * 10000;
+      const label = button.querySelector('small'); label.textContent = `${impact(change)} / 本拍`; tone(label, change);
+    }
+    pairLabels(pairInfo());
   }
   function renderNews(market) {
     const news = market.news;
     const effect = market.event_effect;
     $('fx-news-type').textContent = newsLabels[news.tier] || '文文快讯';
     $('fx-news').textContent = news.headline ? `${news.headline}：${news.text}` : news.text;
-    $('fx-news-impact').textContent = Number.isFinite(news.change_bps) ? `${time(news.at)} · 事件当拍 ${impact(news.change_bps)} · ${news.source || '文文日报'}（虚构）` : '';
+    $('fx-news-impact').textContent = Number.isFinite(news.change_bps) ? `${time(news.at)} · 主涉${currencyName(news.currency)} · 本品种当拍 ${impact(news.change_bps)} · ${news.source || '文文日报'}（虚构）` : '';
     tone($('fx-news-impact'), news.change_bps || 0);
     $('fx-ticker').dataset.tier = effect?.tier || 'quiet';
     const status = $('fx-market-event');
     status.textContent = effect
-      ? `${newsLabels[effect.tier]}余震 · 后续约 ${effect.remaining_ticks * data.rules.tick_ms / 1000} 秒波动放大，方向不定。`
+      ? `${currencyName(effect.currency)} · ${newsLabels[effect.tier]}余震，后续约 ${effect.remaining_ticks * data.rules.tick_ms / 1000} 秒波动放大，其他货币受较弱影响。`
       : '当前正常波动。图上圆点 = 新闻事件，绿色上涨，红色下跌。';
     status.dataset.active = String(Boolean(effect));
     const history = market.news_history || [];
     $('fx-news-count').textContent = history.length;
     const list = $('fx-news-history');
-    const key = history.map(item => item.id).join(',');
+    const key = `${selectedPair}:${history.map(item => item.id).join(',')}`;
     if (list.dataset.entries === key) return;
     list.dataset.entries = key;
     list.replaceChildren(...history.map(item => {
       const row = node('li');
       const header = node('div', undefined, 'news-heading');
-      header.append(node('span', `${time(item.at)} · ${newsLabels[item.tier] || '快讯'} · ${item.source || '文文日报'}`));
+      header.append(node('span', `${time(item.at)} · ${currencyName(item.currency)} · ${newsLabels[item.tier] || '快讯'}`));
       const change = node('b', impact(item.change_bps)); tone(change, item.change_bps); header.append(change);
       row.append(header, node('strong', item.headline), node('p', item.text));
       return row;
@@ -166,30 +207,32 @@
       if (!positions.some(position => position.id === child.dataset.id)) child.remove();
     }
     for (const position of positions) {
+      const pair = pairInfo(position.pair_id);
       let item = [...container.children].find(child => child.dataset.id === position.id);
       if (!item) {
         item = node('article', undefined, 'position'); item.dataset.id = position.id;
         const content = node('div');
         const heading = node('div', undefined, 'position-heading');
-        heading.append(node('span', position.side === 'long' ? '做多' : '做空', `side ${position.side === 'short' ? 'short-tag' : ''}`), node('strong', `河童货币 · ${position.leverage}×`));
+        heading.append(node('span', position.side === 'long' ? '做多' : '做空', `side ${position.side === 'short' ? 'short-tag' : ''}`), node('strong', `${pair.name} · ${position.leverage}×`));
         const details = node('div', undefined, 'position-details');
-        details.append(node('span', `开仓 ${price(position.entry_price)}`), node('span', `保证金 ${money(position.margin)}`));
+        details.append(node('span', `开仓 ${price(position.entry_price, position.pair_id)}`), node('span', `保证金 ${money(position.margin)}`), node('span', '', 'position-exit'));
         content.append(heading, details);
         const result = node('div', undefined, 'position-result'); result.append(node('strong', '', 'position-pnl'));
         const close = node('button', '平仓'); close.type = 'button';
-        close.setAttribute('aria-label', `平仓：${position.side === 'long' ? '做多' : '做空'} ${position.leverage} 倍，开仓价 ${price(position.entry_price)}`);
-        close.addEventListener('click', () => submit('close', { position_id: position.id }));
+        close.setAttribute('aria-label', `平仓：${pair.name} ${position.side === 'long' ? '做多' : '做空'} ${position.leverage} 倍，开仓价 ${price(position.entry_price, position.pair_id)}`);
+        close.addEventListener('click', () => submit('close', { position_id: position.id, pair_id: position.pair_id }));
         result.append(close); item.append(content, result); container.append(item);
       }
       const pnl = item.querySelector('.position-pnl'); pnl.textContent = signedMoney(position.pnl); tone(pnl, position.pnl);
+      item.querySelector('.position-exit').textContent = `平仓报价 ${price(position.exit_price, position.pair_id)} ${pair.quote_name}`;
     }
     if (!positions.length) container.replaceChildren(node('p', '还没有持仓。先看看市场往哪边走。', 'empty'));
     const history = account?.history || [];
     $('fx-history-count').textContent = history.length;
     $('fx-history').replaceChildren(...history.map(entry => {
       const item = node('div', undefined, 'history-row');
-      const info = node('div', `${entry.side === 'long' ? '做多' : '做空'} ${entry.leverage}× · ${entry.reason === 'liquidation' ? '触发强平' : '手动平仓'}`);
-      info.append(node('small', `${time(entry.closed_at)} · ${price(entry.entry_price)} → ${price(entry.exit_price)}`));
+      const info = node('div', `${pairInfo(entry.pair_id).name} · ${entry.side === 'long' ? '做多' : '做空'} ${entry.leverage}× · ${entry.reason === 'liquidation' ? '触发强平' : '手动平仓'}`);
+      info.append(node('small', `${time(entry.closed_at)} · ${price(entry.entry_price, entry.pair_id)} → ${price(entry.exit_price, entry.pair_id)}`));
       const pnl = node('strong', signedMoney(entry.net_pnl)); tone(pnl, entry.net_pnl); item.append(info, pnl); return item;
     }));
     if (!history.length) $('fx-history').append(node('p', '还没有结算记录。', 'empty'));
@@ -200,6 +243,7 @@
     data = next; online = true;
     serverOffset = data.server_time - Date.now();
     const { market, account } = data;
+    renderPairs();
     $('fx-connection').textContent = '● 已同步'; $('fx-connection').classList.remove('offline');
     $('fx-price').textContent = price(market.price);
     const change = (market.price / market.previous - 1) * 100;
@@ -234,7 +278,7 @@
     }));
     if (!data.rows.length) $('fx-leaderboard').append(node('li', '暂时还没有人开户。', 'empty'));
     if (!previous && !pending) message(!data.authenticated ? '登录后领取模拟资金，开始交易。' : !data.can_trade ? '这个账号不能参与交易。' : account ? '账户已同步，可以继续交易。' : '先领取初始资金，再开第一笔交易。');
-    else if (reconnected && !pending && !busy) message('连接已恢复，行情和账户已同步。');
+    else if (reconnected && !pending && !busy) message(previous.market.pair_id !== selectedPair ? `已切换至${pairInfo().name}，持仓仍显示全部品种。` : '连接已恢复，行情和账户已同步。');
     const liquidation = account?.history.find(entry => entry.reason === 'liquidation');
     if (liquidation && previous?.account && !previous.account.history.some(entry => entry.id === liquidation.id) && !pending) message('有持仓触发强平，请查看最近结算。', true);
     preview(); drawChart(); updateWork();
@@ -264,10 +308,10 @@
     } finally { if (current === generation) schedule(); }
   }
   async function submit(action, fields = {}) {
-    if (busy || !online || !data || pending) return;
-    pending = { action, body: {
+    if (busy || !online || !data || pending || data.market.pair_id !== selectedPair) return;
+    pending = { action, pair: selectedPair, body: {
       request_id: `fx_${globalThis.crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(36).slice(2)}`}`,
-      expected_revision: data.account?.revision || 0, ...fields,
+      expected_revision: data.account?.revision || 0, pair_id: selectedPair, ...fields,
       ...(['open', 'close'].includes(action) ? { quote_seq: data.market.seq } : {}),
     } };
     await sendPending();
@@ -277,13 +321,13 @@
     busy = true; ++generation; readController?.abort(); clearTimeout(timer); updateControls();
     message('正在确认成交…');
     try {
-      const result = await request(pending.action, pending.body);
+      const result = await request(pending.action, pending.body, undefined, pending.pair);
       const action = pending.action; pending = null;
       if (result.market) render(result);
       if (result.error) message(result.message, true);
       else if (result.receipt) {
-        const r = result.receipt;
-        message(`${result.repeated ? '原成交已确认，无重复记账。' : '已成交。'}${r.action === 'open' ? `开仓价 ${price(r.price)}，保证金 ${money(r.margin)}，手续费 ${money(r.fee)}，共扣 ${money(r.amount)}` : `平仓价 ${price(r.price)}，返还保证金及盈亏 ${money(r.amount)}`}`);
+        const r = result.receipt, pairId = r.pair_id || 'kappa_human';
+        message(`${result.repeated ? '原成交已确认，无重复记账。' : '已成交。'}${pairInfo(pairId).name} · ${r.action === 'open' ? `开仓价 ${price(r.price, pairId)}，保证金 ${money(r.margin)}，手续费 ${money(r.fee)}，共扣 ${money(r.amount)}` : `平仓价 ${price(r.price, pairId)}，返还保证金及盈亏 ${money(r.amount)}`}`);
       } else message(result.repeated ? '已确认上一笔操作，没有重复记账。' : ({ join: '已领取 ¥10,000 模拟资金。', open: '已成交。', close: '已平仓，资金到账。', borrow: '到账 ¥5,000。无息借款，记得还。', 'borrow-credit': '有息贷款已到账，每小时单利 0.5%。', repay: '还款已入账。', 'set-title': '称号已挂牌，富豪榜同步展示。', work: '已接活，做满所选时长后回来领工钱。', 'claim-work': '工钱已到账。' })[action]);
     } catch {
       online = false; $('fx-connection').textContent = '结果待确认'; $('fx-connection').classList.add('offline');

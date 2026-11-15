@@ -1,4 +1,5 @@
 'use strict';
+const { currency, marketFor } = require('./fx-pairs');
 
 // 事件权重与冲击都留在服务端。余震只增加随机振幅，不预告下一拍方向。
 const TIERS = Object.freeze({
@@ -48,7 +49,30 @@ const CATALOG = [
   { id: 'yuuma-audit', tier: 'quake', direction: -1, source: '花果子念报', headline: '尤魔把资产负债表吃了，只说负债有点塞牙', text: '河童央行宣布报表进入消化期。评级机构第一次给出“建议饭后再看”的评级。' },
   { id: 'hecatia-sale', tier: 'quake', direction: 1, source: '地狱购物频道', headline: '赫卡提亚三界联名T恤仅收河童货币', text: '三界同时开抢，库存只有两件。第三件穿在女神身上，正在考虑是否也挂链接。' },
   { id: 'doremy-dream', tier: 'quake', direction: -1, source: '梦境财经', headline: '哆来咪宣布昨夜的牛市只是集体午睡', text: '交易员醒来发现盈利没有了，加班记录却还在。梦境客服表示不支持七天无理由退款。' },
-];
+  { id: 'moon-delivery', currency: 'moon', tier: 'rumor', direction: 1, source: '月面经济公报', headline: '月兔快递宣布隔夜达，隔的是月球的夜', text: '客户要等两周，快递公司却提前收齐了月都圆。财务称这是天然的现金流优势。' },
+  { id: 'kaguya-membership', currency: 'moon', tier: 'rumor', direction: -1, source: '永远亭值班记录', headline: '辉夜给全月球开通游戏会员，忘关自动续费', text: '永琳正在查找取消按钮。平台表示会员可享受九点八折的下一次续费。' },
+  { id: 'moon-rate', currency: 'moon', tier: 'surge', direction: 1, source: '月面经济公报', headline: '月都央行提高存款奖励：利息可以兑年糕', text: '月兔储户挤满银行，经理表示年糕虽硬，信用更硬。月都圆需求突然增加。' },
+  { id: 'moon-holiday', currency: 'moon', tier: 'surge', direction: -1, source: '月面经济公报', headline: '月兔宣布集体赏月，印钞厂找不到月亮', text: '罢工谈判卡在“月球上应该赏什么”的议题上。出口结算暂缓，客户开始退单。' },
+  { id: 'moon-vault', currency: 'moon', tier: 'quake', direction: 1, source: '月面经济公报', headline: '探测器撞开月背仓库，里面全是遗忘的黄金', text: '管理员承认钥匙丢了两千年。月都宣布储备充足，并要求探测器赔偿大门。' },
+  { id: 'junko-invoice', currency: 'moon', tier: 'quake', direction: -1, source: '文文日报', headline: '纯狐把月都财政预算净化成了一张白纸', text: '支出没了，收入也没了。月都财务部开始对着空白报表举行紧急会议。' },
+  { id: 'aya-subscribe', currency: 'tengu', tier: 'rumor', direction: 1, source: '文文日报', headline: '文文日报销量翻倍：每份报纸被风吹回来卖两遍', text: '射命丸文称这是循环经济。广告商只看到漂亮的发行数字，继续用天狗券充值。' },
+  { id: 'hatate-paywall', currency: 'tengu', tier: 'rumor', direction: -1, source: '花果子念报', headline: '姬海棠果把头条设为付费，忘了留下标题', text: '首页只剩“请先订阅”四个字。读者表示已经免费读完了全部内容。' },
+  { id: 'tengu-exclusive', currency: 'tengu', tier: 'surge', direction: 1, source: '妖怪山通讯', headline: '天狗独家拍到明天的新闻，广告费提前结算', text: '编辑部称预知能力不稳定，但收款二维码非常稳定。客户争抢明日头版。' },
+  { id: 'tengu-retraction', currency: 'tengu', tier: 'surge', direction: -1, source: '妖怪山通讯', headline: '全山报社同日刊登道歉，发现互相抄的是假新闻', text: '道歉稿又被互相转载，版税纠纷已经超过广告收入。天狗券遭到抛售。' },
+  { id: 'tengu-network', currency: 'tengu', tier: 'quake', direction: 1, source: '妖怪山通讯', headline: '妖怪山完成全境通信，第一条消息是广告招租', text: '河童基站与天狗送报网连成一片。广告主连夜换汇，试图买下每一阵风。' },
+  { id: 'tengu-blackout', currency: 'tengu', tier: 'quake', direction: -1, source: '人里茶馆传闻', headline: '大天狗宣布今天绝对没有新闻，报社全部停刊', text: '记者想报道这件事，被告知这也不算新闻。广告款集中退款，天狗券跌进瀑布。' },
+  { id: 'nether-tour', currency: 'nether', tier: 'rumor', direction: 1, source: '白玉楼庭报', headline: '白玉楼赏樱开放夜场，游客排队兑换冥钞', text: '妖梦提醒门票不含往生服务。旅行社立即把这句话印成了宣传口号。' },
+  { id: 'nether-buffet', currency: 'nether', tier: 'rumor', direction: -1, source: '白玉楼庭报', headline: '幽幽子报名自助餐，主办方紧急退回报名费', text: '冥界餐饮协会连夜下调盈利预期，保险公司表示这属于已知食欲。' },
+  { id: 'nether-toll', currency: 'nether', tier: 'surge', direction: 1, source: '三途川船讯', headline: '小町终于准点开船，渡口收入创纪录', text: '乘客怀疑自己上错了船。财务证实收款正常，只是船夫今天忘记午睡。' },
+  { id: 'nether-tax', currency: 'nether', tier: 'surge', direction: -1, source: '阎魔财税通告', headline: '映姬追缴三百年欠税，亡灵开始整理零钱', text: '账单比生前履历还长。冥界市场出现集中换汇支付税款的队伍。' },
+  { id: 'nether-sakura', currency: 'nether', tier: 'quake', direction: 1, source: '白玉楼庭报', headline: '西行妖只开了一朵，门票预售卖到下个世纪', text: '妖梦强调这不代表全面开放。黄牛已经开始出售下个世纪的排队号码。' },
+  { id: 'nether-budget', currency: 'nether', tier: 'quake', direction: -1, source: '三途川船讯', headline: '冥界国库批准无限饭票，幽幽子当场兑换', text: '财政官原以为无限只是宣传用语。厨师、会计和国库一起申请休假。' },
+].map(event => ({ currency: 'kappa', ...event }));
+
+function relativePrice(market, event) {
+  const target = currency(event.currency || 'kappa');
+  return (marketFor(market, `${target.id}_human`)?.price ?? target.initial) / target.initial * 100;
+}
 
 function normalizeMarket(market) {
   if (!Array.isArray(market.news_history)) market.news_history = [];
@@ -63,6 +87,7 @@ function normalizeMarket(market) {
   else {
     effect.remaining_ticks = Math.min(tier.aftershock_ticks, effect.remaining_ticks);
     effect.volatility = tier.volatility;
+    if (!currency(effect.currency)) effect.currency = 'kappa';
   }
 }
 
@@ -82,7 +107,7 @@ function nextEvent(market, pick) {
   const recentIds = new Set(market.news_history.slice(0, 3).map(item => item.event_id));
   // 靠近价格上下界时选向区间内冲击的新闻，避免播报暴涨但价格被上界卡住。
   const pool = CATALOG.filter(item => item.tier === tierName &&
-    (market.price > 25 || item.direction > 0) && (market.price < 420 || item.direction < 0));
+    (relativePrice(market, item) > 25 || item.direction > 0) && (relativePrice(market, item) < 420 || item.direction < 0));
   const fresh = pool.filter(item => !recentIds.has(item.id));
   const choices = fresh.length ? fresh : pool;
   const event = choices[pick(0, choices.length)];
@@ -90,9 +115,9 @@ function nextEvent(market, pick) {
   if (majorDue) market.major_event_ticks = pick(MAJOR_EVENT_MIN_TICKS, MAJOR_EVENT_MAX_TICKS + 1);
   market.event_cooldown = COOLDOWN_TICKS;
   market.event_effect = tier.aftershock_ticks ? {
-    tier: tierName, headline: event.headline, remaining_ticks: tier.aftershock_ticks, volatility: tier.volatility,
+    tier: tierName, currency: event.currency, headline: event.headline, remaining_ticks: tier.aftershock_ticks, volatility: tier.volatility,
   } : null;
   return { ...event, shock_bps };
 }
 
-module.exports = { TIERS, CATALOG, COOLDOWN_TICKS, MAJOR_EVENT_MIN_TICKS, MAJOR_EVENT_MAX_TICKS, HISTORY_LIMIT, normalizeMarket, nextEvent };
+module.exports = { TIERS, CATALOG, COOLDOWN_TICKS, MAJOR_EVENT_MIN_TICKS, MAJOR_EVENT_MAX_TICKS, HISTORY_LIMIT, normalizeMarket, nextEvent, relativePrice };

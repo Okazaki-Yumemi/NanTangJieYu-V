@@ -45,18 +45,42 @@ function normalizeMarket(market) {
   restoreCandles(market, 'tick_candles', TICK_CANDLE_MS, TICK_CANDLE_LIMIT);
   if (!Number.isFinite(market.momentum)) market.momentum = 0;
   if (!Number.isFinite(market.variance)) market.variance = 0.000025;
+  if (!Number.isFinite(market.anchor) || market.anchor <= 0) market.anchor = market.price;
+  if (!Number.isFinite(market.last_innovation)) market.last_innovation = 0;
+  if (!market.regime || !['range', 'trend', 'active'].includes(market.regime.mode)) market.regime = { mode: 'range', ticks: 90, drift: 0 };
 }
 
-function nextMove(market, pick) {
-  // 有厚尾的随机扰动 + 缓慢衰减的趋势 + 波动聚集。新闻冲击不写入趋势。
+function nextMove(market, pick, context = {}) {
+  if (!market.regime) market.regime = { mode: 'range', ticks: 90, drift: 0 };
+  if (!Number.isFinite(market.last_innovation)) market.last_innovation = 0;
+  // 共同风险因子 + 各货币自身扰动，盘整/趋势/活跃状态持续 2～6 个运行分钟。
   const u = (pick(0, 20001) + 1) / 20002;
   const noise = clamp(Math.log(u / (1 - u)) / 1.814, -3, 3);
-  const sigma = Math.sqrt(clamp(market.variance, 0.000016, 0.0001));
-  const innovation = noise * sigma;
-  const boundaryPull = market.price < 30 ? (30 - market.price) * 0.0002 : market.price > 400 ? (400 - market.price) * 0.00002 : 0;
-  const move = market.momentum + innovation + boundaryPull + noise * (market.event_effect?.volatility || 0);
-  market.momentum = clamp(market.momentum * 0.92 + innovation * 0.08, -0.0025, 0.0025);
+  market.last_noise = noise;
+  if (!context.regime && --market.regime.ticks <= 0) {
+    const roll = pick(0, 100);
+    const mode = roll < 45 ? 'range' : roll < 85 ? 'trend' : 'active';
+    market.regime = { mode, ticks: pick(60, 181), drift: mode === 'trend' ? (pick(0, 2) ? 1 : -1) * .00055 : 0 };
+  }
+  const regime = context.regime || market.regime;
+  const scale = regime.mode === 'active' ? 1.55 : regime.mode === 'range' ? .85 : 1.05;
+  const beta = context.beta ?? 1;
+  const combined = context.shared === undefined ? noise : beta * context.shared + Math.sqrt(1 - beta * beta) * noise;
+  const sigma = Math.sqrt(clamp(market.variance, 0.000016, 0.000064));
+  const innovation = combined * sigma;
+  const reference = context.reference || 100;
+  const relative = market.price / reference;
+  const boundaryPull = relative < .3 ? (.3 - relative) * .02 : relative > 4 ? (4 - relative) * .002 : 0;
+  const anchor = market.anchor || market.price;
+  const reversion = Math.log(anchor / market.price) * (regime.mode === 'range' ? .0025 : .0005);
+  const pullback = regime.mode === 'range' ? -.16 * market.last_innovation : 0;
+  const move = (market.momentum + innovation * scale + regime.drift * beta + pullback) * (context.volatility || 1)
+    + reversion + boundaryPull + combined * (context.aftershock ?? market.event_effect?.volatility ?? 0);
+  market.momentum = clamp(market.momentum * (regime.mode === 'trend' ? .96 : .84) + innovation * .06, -.0025, .0025);
   market.variance = 0.000025 * 0.04 + market.variance * 0.90 + innovation * innovation * 0.06;
+  market.last_innovation = innovation;
+  // 参考重心缓慢跟随价格，避免长期被钉在固定初始价。
+  market.anchor = Math.exp(Math.log(anchor) * .998 + Math.log(market.price) * .002);
   return move;
 }
 

@@ -10,6 +10,60 @@ const { SESSION_COOKIE, ADMIN_COOKIE } = require('../../shared/constants');
 const { createFixture } = require('../helpers/fixture');
 const fx = require('../../server/domain/fx');
 
+test('multi-pair HTTP keeps chart selection separate from position ownership, preserves exact receipts and survives restart', async t => {
+  const dataDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ntjv-fx-pairs-'));
+  const config = { isProduction: false, host: '127.0.0.1', port: 0, dataDir,
+    seedsDir: path.resolve(__dirname, '../../shared/seeds'), publicDir: path.resolve(__dirname, '../../web/public'),
+    admin: { password: 'test-password', usingGeneratedPassword: false, entryPath: '/admin-test.html' }, cookieSecure: false };
+  const logger = { info() {}, warn() {}, error() {} };
+  const app = createApp({ config, logger }); await app.store.initialize();
+  const fixture = createFixture({ userCount: 2, now: Math.floor(Date.now() / 1000) });
+  // Future clock fixes quotes for exact execution assertions; live ticks have their own journey below.
+  const now = Math.ceil(Date.now() / 2000) * 2000 + 60000;
+  fx.advanceMarket(fixture.state, now);
+  for (const [index, user] of fixture.registered.entries()) fixture.state.sessions[`pair-session-${index}`] = { user_id: user.id, created_at: Math.floor(Date.now() / 1000), last_seen_at: Math.floor(Date.now() / 1000) };
+  await app.store.replaceState(fixture.state);
+  const server = startServer(app, logger); await once(server, 'listening');
+  t.after(async () => { await new Promise(resolve => server.close(resolve)); await app.store.flush(); await fs.rm(dataDir, { recursive: true, force: true }); });
+  const url = `http://127.0.0.1:${server.address().port}`;
+  const request = async (action = 'state', pair = 'kappa_human', body, user = 0) => {
+    const res = await fetch(`${url}/api/fx/${action}?pair=${pair}`, {
+      method: body === undefined ? 'GET' : 'POST', headers: { Cookie: `${SESSION_COOKIE}=pair-session-${user}`, 'Content-Type': 'application/json' },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
+    return { status: res.status, data: await res.json() };
+  };
+  assert.equal((await request('state', 'invalid')).status, 400);
+  assert.equal((await request('join', 'invalid', { request_id: 'invalid-pair-join', expected_revision: 0 })).status, 400);
+  const joined = await request('join', 'kappa_moon', { request_id: 'multi-pair-join', expected_revision: 0 });
+  assert.equal(joined.data.market.pair_id, 'kappa_moon');
+  const moon = await request('state', 'moon_human');
+  const order = { request_id: 'multi-pair-order', pair_id: 'moon_human', expected_revision: 1, quote_seq: moon.data.market.seq, margin: 100000, leverage: 1, side: 'long' };
+  const results = await Promise.all([request('open', 'moon_human', order), request('open', 'kappa_moon', order)]);
+  assert.ok(results.every(r => r.status === 200)); assert.equal(results.filter(r => r.data.repeated).length, 1);
+  assert.equal(results[0].data.receipt.price, moon.data.market.ask);
+  assert.equal(results[1].data.market.pair_id, 'kappa_moon');
+  const position = results[0].data.account.positions[0];
+  assert.equal(position.pair_id, 'moon_human');
+  assert.equal((await request('open', 'tengu_human', { ...order, pair_id: 'tengu_human' })).status, 409);
+  assert.equal((await request('state', 'moon_human', undefined, 1)).data.account, null);
+  await app.store.transact(state => fx.triggerEvent(state, 'moon-rate', now + 2000, min => min));
+  const cross = (await request('state', 'kappa_moon')).data;
+  assert.equal(cross.pairs.length, 5); assert.equal(cross.account.positions[0].pair_id, 'moon_human');
+  assert.equal(cross.market.news.change_bps, cross.market.news.changes.kappa_moon);
+  assert.equal('pairs' in cross.market, false); assert.equal('regime' in cross.market, false);
+  const close = { request_id: 'multi-pair-close', pair_id: 'moon_human', expected_revision: cross.account.revision, quote_seq: cross.market.seq, position_id: position.id };
+  assert.equal((await request('close', 'kappa_moon', { ...close, quote_seq: 1 })).status, 409);
+  assert.equal((await request('close', 'kappa_moon', { ...close, pair_id: 'kappa_moon' })).status, 409);
+  const closed = await request('close', 'kappa_moon', close);
+  assert.equal(closed.status, 200); assert.equal(closed.data.market.pair_id, 'kappa_moon');
+  assert.equal(closed.data.receipt.price, cross.account.positions[0].exit_price);
+  assert.equal(closed.data.account.cash, cross.account.cash + cross.account.positions[0].value);
+  assert.deepEqual((await request('close', 'tengu_human', close)).data.receipt, closed.data.receipt);
+  const reopened = createApp({ config, logger }); await reopened.store.initialize();
+  assert.deepEqual(reopened.store.getLatest().fx, app.store.getLatest().fx);
+});
+
 test('FX HTTP journey: auth, shared quotes, atomic duplicate orders, private accounts, restart persistence and no client scores', async t => {
   const dataDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ntjv-fx-'));
   const config = { isProduction: false, host: '127.0.0.1', port: 0, dataDir,

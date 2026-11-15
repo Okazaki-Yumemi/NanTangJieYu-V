@@ -28,16 +28,18 @@
     const min = Math.min(...bars.map(b => b.low)), max = Math.max(...bars.map(b => b.high));
     const pad = Math.max((max - min) * .14, market.price * .003);
     const low = min - pad, high = max + pad;
-    const left = 4, right = rect.width - 60, top = 15, bottom = rect.height - 32;
+    const labelWidth = market.precision === 6 ? 74 : 60;
+    const left = 4, right = rect.width - labelWidth, top = 15, bottom = rect.height - 32;
     const step = (right - left) / Math.max(20, bars.length);
     const x = index => left + (index + .5) * step;
     const y = value => bottom - (value - low) / (high - low) * (bottom - top);
     const time = at => new Date(at).toLocaleTimeString('zh-CN', { hour12: false });
+    const axisPrice = value => value.toFixed(market.precision === 6 ? 6 : 2);
     ctx.font = '10px Consolas, monospace'; ctx.lineWidth = 1;
     for (let i = 0; i < 5; i++) {
       const value = low + (high - low) * i / 4, height = y(value);
       ctx.strokeStyle = '#d7dce0'; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(left, height); ctx.lineTo(right, height); ctx.stroke();
-      ctx.fillStyle = '#697580'; ctx.fillText(value.toFixed(2), right + 7, height + 3);
+      ctx.fillStyle = '#697580'; ctx.fillText(axisPrice(value), right + 7, height + 3);
     }
     ctx.setLineDash([]);
     bars.forEach((bar, i) => {
@@ -47,14 +49,15 @@
       ctx.fillRect(x(i) - step * .3, Math.min(y(bar.open), y(bar.close)), Math.max(2, step * .6), Math.max(1, Math.abs(y(bar.open) - y(bar.close))));
     });
     for (const news of market.news_history || []) {
+      if (!Number.isFinite(news.change_bps)) continue;
       const index = bars.findIndex(bar => news.at >= bar.at && news.at < bar.at + seconds * 1000);
       if (index < 0) continue;
       ctx.fillStyle = news.change_bps >= 0 ? '#23764f' : '#ae343b';
       ctx.beginPath(); ctx.arc(x(index), bottom + 7, news.tier === 'quake' ? 4 : 2.5, 0, Math.PI * 2); ctx.fill();
     }
     ctx.strokeStyle = '#7d8792'; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(left, y(market.price)); ctx.lineTo(right, y(market.price)); ctx.stroke();
-    ctx.fillStyle = '#343b4b'; ctx.fillRect(right + 2, y(market.price) - 7, 58, 15);
-    ctx.fillStyle = '#fff'; ctx.fillText(market.price.toFixed(2), right + 7, y(market.price) + 4);
+    ctx.fillStyle = '#343b4b'; ctx.fillRect(right + 2, y(market.price) - 7, labelWidth - 2, 15);
+    ctx.fillStyle = '#fff'; ctx.fillText(axisPrice(market.price), right + 7, y(market.price) + 4);
     const index = pointerX === null ? bars.length - 1 : Math.max(0, Math.min(bars.length - 1, Math.floor((pointerX - left) / step)));
     const selected = bars[index];
     if (pointerX !== null) {
@@ -62,7 +65,7 @@
     }
     ctx.setLineDash([]); ctx.fillStyle = '#697580'; ctx.fillText(time(bars[0].at), left, rect.height - 6);
     if (bars.length > 8) { ctx.textAlign = 'right'; ctx.fillText(time(bars.at(-1).at), x(bars.length - 1), rect.height - 6); }
-    canvas.setAttribute('aria-label', `${seconds} 秒蜡烛图，${bars.length} 根，最低 ${min.toFixed(4)}，最高 ${max.toFixed(4)}，最新 ${market.price.toFixed(4)}`);
+    canvas.setAttribute('aria-label', `${market.name || ''} ${seconds} 秒蜡烛图，${bars.length} 根，最低 ${min.toFixed(market.precision || 4)}，最高 ${max.toFixed(market.precision || 4)}，最新 ${market.price.toFixed(market.precision || 4)}`);
     return { ...selected, current: index === bars.length - 1 };
   }
   if (typeof module !== 'undefined') module.exports = { aggregate, series };

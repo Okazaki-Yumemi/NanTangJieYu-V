@@ -160,14 +160,15 @@ async function exercise() {
     async function play(actor, elapsed) {
       const cookie = actor.cookie;
       if (actor.group === 'fx') {
-        const q = await request('/api/fx/state', { cookie, category: 'fx-read' });
+        const pair = ['kappa_human', 'moon_human', 'tengu_human', 'nether_human', 'kappa_moon'][actor.index % 5];
+        const q = await request(`/api/fx/state?pair=${pair}`, { cookie, category: 'fx-read' });
         const state = q.data; if (!state?.account) return;
         if (elapsed >= (actor.nextAction || 0)) {
           actor.nextAction = elapsed + 8000;
           const close = state.account.positions.length >= 3 || (actor.count++ % 2 && state.account.positions.length);
           const body = { request_id: `mixed-order-${++seq}`, expected_revision: state.account.revision,
-            ...(close ? { position_id: state.account.positions[0].id, quote_seq: state.market.seq } : { side: actor.index % 2 ? 'short' : 'long', margin: 10000, leverage: 1, quote_seq: state.market.seq }) };
-          await request(`/api/fx/${close ? 'close' : 'open'}`, { cookie, category: 'fx-trade', body, allow: ['STALE_QUOTE', 'CONFLICT'] });
+            ...(close ? { position_id: state.account.positions[0].id, pair_id: state.account.positions[0].pair_id, quote_seq: state.market.seq } : { pair_id: pair, side: actor.index % 2 ? 'short' : 'long', margin: 10000, leverage: 1, quote_seq: state.market.seq }) };
+          await request(`/api/fx/${close ? 'close' : 'open'}?pair=${pair}`, { cookie, category: 'fx-trade', body, allow: ['STALE_QUOTE', 'CONFLICT'] });
         }
       } else if (actor.group === 'campus') {
         const r = await request('/api/player/state', { cookie, category: 'campus-read' });
@@ -233,7 +234,7 @@ async function exercise() {
     const report = { createdAt: new Date().toISOString(), runDir, url: `http://127.0.0.1:${port}`, durationSeconds: seconds, distribution,
       host: { node: process.version, cpu: os.cpus()[0].model.trim(), logicalCPUs: os.cpus().length, totalMemoryGiB: +(os.totalmem() / 1073741824).toFixed(1), platform: os.platform(), release: os.release() },
       statistics: Object.fromEntries(Object.entries(statistics).map(([key, row]) => [key, quantiles(row)])), failures, metrics, summary,
-      notes: ['HTTP virtual users, not 150 graphical browsers', 'Fishing uses actual timed control replays; other client-side games submit legal simulated results', 'External map-guessing website excluded', 'Current worktree includes existing uncommitted arcade changes'] };
+      notes: ['HTTP virtual users, not 150 graphical browsers', 'Fishing uses actual timed control replays; other client-side games submit legal simulated results', 'External map-guessing website excluded', 'FX actors are spread across five currency pairs with live shared quotes'] };
     fs.writeFileSync(path.join(runDir, 'report.json'), JSON.stringify(report, null, 2));
     await setPhase('idle-after-test');
     console.log(JSON.stringify({ report: path.join(runDir, 'report.json'), errors: failures.length, summary, nativePeakRssMiB: metrics.nativePeakRssMiB }, null, 2));

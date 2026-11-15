@@ -4,9 +4,12 @@ const { SESSION_COOKIE } = require('../../shared/constants');
 const { sendJson, collectBody, getCookie } = require('../http-utils');
 const { getSessionUser } = require('../domain/players');
 const fx = require('../domain/fx');
+const { DEFAULT_PAIR, pair } = require('../domain/fx-pairs');
 const { sendPersistenceError } = require('./player-routes');
 
 function registerRoutes(router, { store }) {
+  const requestedPair = req => new URL(req.url, 'http://localhost').searchParams.get('pair') ?? DEFAULT_PAIR;
+  const badPair = res => sendJson(res, 400, { error: 'BAD_REQUEST', message: '请选择有效的货币对。' });
   let refreshing = null;
   function refresh() {
     if (refreshing) return refreshing;
@@ -20,16 +23,20 @@ function registerRoutes(router, { store }) {
 
   router.get('/api/fx/state', async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
+    const pairId = requestedPair(req);
+    if (!pair(pairId)) return badPair(res);
     try {
       await refresh();
       const state = store.getLatest();
-      sendJson(res, 200, fx.view(state, getSessionUser(state, getCookie(req, SESSION_COOKIE))));
+      sendJson(res, 200, fx.view(state, getSessionUser(state, getCookie(req, SESSION_COOKIE)), pairId));
     } catch (error) { sendPersistenceError(res, error); }
   });
 
   for (const action of ['join', 'open', 'close', 'borrow', 'borrow-credit', 'repay', 'work', 'claim-work', 'set-title']) {
     router.post(`/api/fx/${action}`, async (req, res) => {
       res.setHeader('Cache-Control', 'no-store');
+      const pairId = requestedPair(req);
+      if (!pair(pairId)) return badPair(res);
       let body;
       try { body = await collectBody(req); }
       catch { return sendJson(res, 400, { error: 'BAD_REQUEST', message: '交易请求格式不正确。' }); }
@@ -48,7 +55,7 @@ function registerRoutes(router, { store }) {
         const statuses = { USER_NOT_FOUND: 401, FORBIDDEN: 403, CONFLICT: 409, STALE_QUOTE: 409 };
         const state = store.getLatest();
         sendJson(res, result.error ? statuses[result.error] || 400 : 200,
-          { ...result, ...fx.view(state, getSessionUser(state, getCookie(req, SESSION_COOKIE))) });
+          { ...result, ...fx.view(state, getSessionUser(state, getCookie(req, SESSION_COOKIE)), pairId) });
       } catch (error) { sendPersistenceError(res, error); }
     });
   }

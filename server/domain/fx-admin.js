@@ -1,6 +1,7 @@
 'use strict';
 const fx = require('./fx');
 const { CATALOG, TIERS } = require('./fx-events');
+const { currency } = require('./fx-pairs');
 const { logAdminAction } = require('./admin-log');
 const fail = message => ({ error: 'BAD_REQUEST', message });
 
@@ -8,11 +9,12 @@ function view(state) {
   const market = state.fx?.market;
   return {
     price: market?.price ?? null, news: market?.news ?? null,
+    pairs: fx.pairSummaries(market),
     players: Object.entries(state.fx?.players || {}).filter(([id]) => state.users[id]).map(([id, account]) => ({
       id, display_name: state.users[id].display_name, banned: Boolean(state.users[id].banned),
       cash: account.cash, equity: market ? fx.accountView(account, market).equity : account.cash,
     })).sort((a, b) => b.equity - a.equity),
-    events: CATALOG.map(event => ({ ...event, min_bps: TIERS[event.tier].min_bps, max_bps: TIERS[event.tier].max_bps })),
+    events: CATALOG.map(event => ({ ...event, currency_name: currency(event.currency).name, min_bps: TIERS[event.tier].min_bps, max_bps: TIERS[event.tier].max_bps })),
   };
 }
 function operate(state, action, body, now = Date.now()) {
@@ -32,10 +34,14 @@ function operate(state, action, body, now = Date.now()) {
     account.revision++;
     detail = { user_id: user.id, display_name: user.display_name, amount: body.amount, before, after: account.cash, reason: body.reason.trim() };
   } else if (action === 'event') {
-    const before = state.fx?.market?.price ?? 100;
+    const before = Object.fromEntries(fx.pairSummaries(state.fx?.market).map(pair => [pair.id, pair.price]));
     const result = fx.triggerEvent(state, body.event_id, now);
     if (result.error) return result;
-    detail = { event_id: body.event_id, headline: result.event.headline, before, after: state.fx.market.price, change_bps: result.event.change_bps };
+    const pairId = `${result.event.currency}_human`;
+    const target = fx.pairSummaries(state.fx.market).find(pair => pair.id === pairId);
+    detail = { event_id: body.event_id, currency: result.event.currency, pair_id: pairId, headline: result.event.headline,
+      before: before[pairId] ?? currency(result.event.currency).initial, after: target.price,
+      change_bps: result.event.changes[pairId], changes: result.event.changes };
   } else return fail('未知操作。');
   logAdminAction(state, `fx_${action}`, { ...detail, request_id: body.request_id }, Math.floor(now / 1000));
   state.fx.admin_requests = [...requests, { id: body.request_id, signature }].slice(-200);

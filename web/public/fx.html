@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#343b4b" />
   <title>FX战士天弓千亦 · 四季游园会</title>
-  <link rel="stylesheet" href="/fx.css?v=5" />
+  <link rel="stylesheet" href="/fx.css?v=6" />
 </head>
 <body>
   <main class="exchange">
     <nav class="topline"><a href="/arcade.html">← 返回游园会</a><span>天弓证券　行情终端</span><span class="simulation">模拟盘</span></nav>
     <header class="cover">
-      <div><h1>FX战士天弓千亦</h1><p class="subtitle">河童货币 / 人里元　·　只此一盘，盈亏自负</p></div>
+      <div><h1>FX战士天弓千亦</h1><p class="subtitle">幻想乡五品种外汇市场　·　统一以人里元结算</p></div>
       <a href="#fx-rules" class="manual-link">交易说明</a>
     </header>
     <div class="ticker" id="fx-ticker"><span id="fx-news-type">文文快讯</span><div class="news-copy"><p id="fx-news" role="status" aria-live="polite">正在连接交易所…</p><small id="fx-news-impact"></small></div><span id="fx-connection" role="status">连接中</span></div>
@@ -20,19 +20,21 @@
       <dl><div><dt>可用</dt><dd id="fx-cash">—</dd></div><div><dt>保证金</dt><dd id="fx-margin-used">—</dd></div><div><dt>浮动盈亏</dt><dd id="fx-pnl">—</dd></div><div><dt>待还贷款</dt><dd id="fx-debt">—</dd></div></dl>
       <div id="fx-account-action"><a class="button" href="/#login-name">登录校园账号</a></div>
     </section>
+    <section class="pair-board" aria-label="选择货币对"><div class="pair-board-label">市场报价 <span>点选品种 · 涨跌为本拍变化</span></div><div id="fx-pairs" class="pair-quotes" role="group" aria-label="交易品种"></div></section>
     <div class="trading-layout">
       <div class="market-column">
       <section class="panel chart-panel" aria-labelledby="market-title">
         <div class="panel-label"><span>外汇行情</span><span id="fx-updated">每 2 秒一拍 · 全服同步</span></div>
-        <div class="market-title"><div><h2 id="market-title">河童货币 <span>/ 人里元</span></h2><p>1 河童货币值多少人里元</p></div><div class="price"><strong id="fx-price">—</strong><span id="fx-change">等待开市</span></div></div>
+        <div class="market-title"><div><h2 id="market-title">河童货币 <span>/ 人里元</span></h2><p id="fx-market-unit">1 河童货币值多少人里元</p></div><div class="price"><strong id="fx-price">—</strong><span id="fx-change">等待开市</span></div></div>
+        <p id="fx-pair-description" class="pair-description"></p>
         <div class="chart-toolbar" role="group" aria-label="蜡烛周期"><span>蜡烛图</span><button type="button" data-period="2" aria-pressed="false">2 秒</button><button type="button" data-period="10" aria-pressed="false">10 秒</button><button type="button" data-period="30" aria-pressed="true">30 秒</button><button type="button" data-period="60" aria-pressed="false">1 分钟</button><span>绿涨 / 红跌</span></div><p id="fx-ohlc" class="ohlc">等待报价…</p>
         <div class="chart-wrap"><canvas id="fx-chart" role="img" aria-label="河童货币兑人里元的近期模拟汇率蜡烛图"></canvas><p id="fx-chart-empty">正在读取行情…</p></div>
-        <div class="quote-strip"><span>卖出价 <b id="fx-bid">—</b></span><span>买入价 <b id="fx-ask">—</b></span><span>真实开高低收</span></div>
+        <div class="quote-strip"><span>卖出价 <b id="fx-bid">—</b></span><span>买入价 <b id="fx-ask">—</b></span><span>实际报价 OHLC</span></div>
         <p id="fx-market-event" class="market-event">当前正常波动，新闻事件会在图上标记。</p>
         <details class="news-archive"><summary>文文快讯留档 <span id="fx-news-count">0</span></summary><ol id="fx-news-history"><li class="empty">还没有突发新闻。</li></ol></details>
       </section>
       <section class="panel positions-panel" aria-labelledby="positions-title">
-        <div class="section-title"><h2 id="positions-title">持仓 <span id="fx-position-count">0 / 12</span></h2><span class="muted">报价变化需重新确认</span></div>
+        <div class="section-title"><h2 id="positions-title">全部持仓 <span id="fx-position-count">0 / 12</span></h2><span class="muted">报价变化需重新确认</span></div>
         <div id="fx-positions" class="positions"><p class="empty">还没有持仓。先看看市场往哪边走。</p></div>
         <details class="history"><summary>最近结算 <span id="fx-history-count">0</span></summary><div id="fx-history"><p class="empty">还没有结算记录。</p></div></details>
       </section>
@@ -51,7 +53,7 @@
       </div>
       <div class="trade-column">
       <section class="panel order-panel" aria-labelledby="order-title">
-        <h2 id="order-title" class="window-title">下单</h2>
+        <h2 id="order-title" class="window-title">下单</h2><p id="fx-order-pair" class="order-pair">河童货币 / 人里元</p>
         <form id="fx-order">
           <label for="fx-margin">投入保证金 <span>人里元</span></label>
           <div class="money-input"><span>¥</span><input id="fx-margin" type="number" min="100" max="100000000" step="0.01" value="1000" inputmode="decimal" required /><button type="button" id="fx-max">最大</button></div>
@@ -77,18 +79,19 @@
     </div>
     <details class="rules" id="fx-rules"><summary>交易说明</summary><div>
       <p><b>① 开户</b>　登录校园账号，领取 ¥10,000 模拟资金。账户跨设备保存，与活动贡献、抽奖和真实资金无关。</p>
-      <p><b>② 选方向</b>　汇率上涨时做多获利，下跌时做空获利。名义仓位 = 保证金 × 杠杆；杠杆同时放大盈利和亏损。</p>
+      <p><b>② 选品种与方向</b>　先点市场报价切换货币对，再选择做多或做空。汇率表示 1 单位前者值多少后者，上涨时做多获利，下跌时做空获利。所有品种共用人里元账户，合计最多 12 笔持仓。名义仓位 = 保证金 × 杠杆；盈亏按汇率变动比例乘以名义仓位，以人里元结算，交叉盘也适用。杠杆同时放大盈利和亏损。</p>
       <p><b>③ 看成本</b>　买入按买入价、卖出按卖出价成交，两者有 0.08% 的价差。开仓费为名义仓位的 0.05%，平仓不另收费。</p>
       <p><b>④ 平仓</b>　点持仓旁的「平仓」按所见报价结算，报价变化时需重新确认。每笔仓位独立承担盈亏，剩余保证金跌到 20% 自动强平，跳空时最多损失整笔保证金。</p>
       <p><b>⑤ 上榜</b>　净资产 = 可用余额 + 持仓保证金 + 浮动盈亏 − 待还贷款。仅展示前 20 名，自己的名次显示在账户区。</p>
       <p><b>⑥ 借贷与打工</b>　无持仓且余额不足 ¥100.05 时，可无息借 ¥5,000，全部欠款还清才能再借。有息贷款随时可申请 ¥100～50,000，每小时按剩余本金收取 0.5% 单利，离线和停服期间也计息；还清该笔后可再借。还款优先支付利息，其次有息本金，最后无息贷款，所有债务均扣除净资产。随时可打工，选择 5 / 15 / 30 / 60 分钟，按每分钟 ¥100 支付，做满到点领取；一次只能接一份，离线计时。</p>
-      <p><b>⑦ 突发新闻</b>　小道消息带来小幅跳动，市场异动可能猛涨猛跌，金融地震的单次冲击可达约 8%～18%。大事件过后会有短暂余震，涨跌方向仍然随机。新闻会直接影响所有人的持仓，图上圆点对应事件发生时刻；留档里的涨跌是事件当拍实际变动。</p>
+      <p><b>⑦ 突发新闻</b>　小道消息带来小幅跳动，市场异动可能猛涨猛跌，金融地震的单次冲击可达约 8%～18%。大事件过后会有短暂余震，涨跌方向仍然随机。新闻直接冲击对应货币，并较弱地传导到其他市场；图上圆点和留档涨跌对应当前选择品种在事件当拍的实际变动。</p>
+      <p><b>⑧ 市场联动</b>　四种货币各有波动特点，共享市场情绪，并带有自身扰动；行情会经历盘整、趋势和活跃阶段。河童货币 / 月都圆是两边兑人里元汇率的比值。避险和相关关系只是走势倾向，不保证固定反向或获利。</p>
       <p>蜡烛图取实际报价的开、高、低、收，每根最新蜡烛会随报价更新，可切换 2 秒、10 秒、30 秒、1 分钟周期。服务器每 2 秒生成统一行情；自动大事件仍每 15～30 分钟一次，管理员可额外触发。停服时行情暂停，贷款和打工仍按实际时间计算。所有价格与新闻均为虚构游戏内容。</p>
     </div></details>
     <footer>行情纯属虚构，工钱倒是一分不少。<a href="/art-credits.html">素材署名</a></footer>
     <noscript>请启用 JavaScript 后进入模拟交易。</noscript>
   </main>
-  <script src="/fx-chart.js?v=2"></script>
-  <script src="/fx.js?v=4"></script>
+  <script src="/fx-chart.js?v=3"></script>
+  <script src="/fx.js?v=5"></script>
 </body>
 </html>

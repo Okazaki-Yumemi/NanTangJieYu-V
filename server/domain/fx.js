@@ -7,6 +7,8 @@ const events = require('./fx-events');
 const pricing = require('./fx-market');
 const credit = require('./fx-credit');
 const profile = require('./fx-profile');
+const instruments = require('./fx-pairs');
+const { DEFAULT_PAIR, PAIRS, CURRENCIES, marketFor } = instruments;
 const { memo } = require('../state-cache');
 
 const RULES = Object.freeze({
@@ -24,26 +26,41 @@ function normalize(state) {
   if (!state.fx || typeof state.fx !== 'object' || Array.isArray(state.fx)) state.fx = {};
   if (!state.fx.players || typeof state.fx.players !== 'object' || Array.isArray(state.fx.players)) state.fx.players = {};
   if (!state.fx.market || !Number.isFinite(state.fx.market.price) || state.fx.market.price <= 0) state.fx.market = null;
-  if (state.fx.market) { events.normalizeMarket(state.fx.market); pricing.normalizeMarket(state.fx.market); }
+  if (state.fx.market) { events.normalizeMarket(state.fx.market); pricing.normalizeMarket(state.fx.market); ensurePairs(state.fx.market); }
   for (const account of Object.values(state.fx.players)) {
     if (!Number.isSafeInteger(account.debt) || account.debt < 0) account.debt = 0;
     if (!account.job || !Number.isSafeInteger(account.job.ready_at)) account.job = null;
     if (account.job && !Number.isSafeInteger(account.job.pay)) account.job.pay = RULES.work_pay;
     profile.normalize(account);
+    for (const position of [...account.positions, ...account.history]) position.pair_id ??= DEFAULT_PAIR;
   }
 }
 
-function quotes(market) {
-  return { bid: priceRound(market.price * (1 - RULES.half_spread)), ask: priceRound(market.price * (1 + RULES.half_spread)) };
+function ensurePairs(market) {
+  if (!market.pairs || typeof market.pairs !== 'object' || Array.isArray(market.pairs)) market.pairs = {};
+  for (const pair of PAIRS.slice(1)) {
+    if (!market.pairs[pair.id]) {
+      const initial = pair.quote === 'human' ? instruments.currency(pair.base).initial
+        : instruments.round(market.price / market.pairs.moon_human.price, pair.precision);
+      market.pairs[pair.id] = { price: initial, previous: initial, updated_at: market.updated_at, history: [{ at: market.updated_at, price: initial }] };
+    }
+    pricing.normalizeMarket(market.pairs[pair.id]);
+  }
+}
+
+function quotes(market, pairId = DEFAULT_PAIR) {
+  const pair = instruments.pair(pairId), price = marketFor(market, pairId).price;
+  return { bid: instruments.round(price * (1 - RULES.half_spread), pair.precision), ask: instruments.round(price * (1 + RULES.half_spread), pair.precision) };
 }
 
 function markedPosition(position, market) {
-  const quote = quotes(market);
+  const pairId = position.pair_id || DEFAULT_PAIR;
+  const quote = quotes(market, pairId);
   const exit_price = position.side === 'long' ? quote.bid : quote.ask;
   const direction = position.side === 'long' ? 1 : -1;
   const rawPnl = Math.round(position.margin * position.leverage * direction * (exit_price / position.entry_price - 1));
   const pnl = Math.max(-position.margin, rawPnl);
-  return { ...position, exit_price, pnl, value: position.margin + pnl };
+  return { ...position, pair_id: pairId, exit_price, pnl, value: position.margin + pnl };
 }
 
 function accountView(account, market) {
@@ -72,7 +89,7 @@ function settle(account, position, market, now, reason) {
   account.positions = account.positions.filter(item => item.id !== position.id);
   account.history.unshift({ ...marked, closed_at: now, reason, net_pnl: marked.pnl - position.fee });
   account.history = account.history.slice(0, 30);
-  return { action: 'close', price: marked.exit_price, amount: marked.value, pnl: marked.pnl };
+  return { action: 'close', pair_id: marked.pair_id, price: marked.exit_price, amount: marked.value, pnl: marked.pnl };
 }
 
 function advanceMarket(state, now = Date.now(), pick = randomInt) {
@@ -86,38 +103,57 @@ function advanceMarket(state, now = Date.now(), pick = randomInt) {
       news_history: [], event_cooldown: 0, event_effect: null, major_event_ticks: null,
     };
     pricing.normalizeMarket(state.fx.market);
+    ensurePairs(state.fx.market);
     return true;
   }
   const market = state.fx.market;
   if (now - market.updated_at < RULES.tick_ms) return false;
   // 停服期间行情暂停，不补造玩家无法观察的历史行情。
-  let move = pricing.nextMove(market, pick);
+  const effect = market.event_effect;
+  const moves = { kappa: pricing.nextMove(market, pick, { aftershock: (effect?.volatility || 0) * Math.abs(instruments.exposure('kappa', effect?.currency)) }) };
   if (market.event_effect && --market.event_effect.remaining_ticks <= 0) market.event_effect = null;
   const event = events.nextEvent(market, pick);
-  if (event) move += event.shock_bps / 10000;
-  applyMove(state, move, event, now);
+  for (const currency of CURRENCIES.slice(1)) {
+    moves[currency.id] = pricing.nextMove(marketFor(market, `${currency.id}_human`), pick, {
+      shared: market.last_noise, regime: market.regime, beta: currency.beta, volatility: currency.volatility,
+      reference: currency.initial, aftershock: (effect?.volatility || 0) * Math.abs(instruments.exposure(currency.id, effect?.currency)),
+    });
+  }
+  applyMove(state, moves, event, now);
   return true;
 }
 
-function applyMove(state, move, event, now) {
+function applyMove(state, moves, event, now) {
   const market = state.fx.market;
-  market.previous = market.price;
-  market.price = priceRound(Math.max(20, Math.min(500, market.price * (1 + move))));
+  const changes = {};
+  for (const pair of PAIRS) marketFor(market, pair.id).previous = marketFor(market, pair.id).price;
+  for (const currency of CURRENCIES) {
+    const current = marketFor(market, `${currency.id}_human`);
+    const shock = event ? event.shock_bps / 10000 * instruments.exposure(currency.id, event.currency) : 0;
+    current.price = priceRound(Math.max(currency.initial * .2, Math.min(currency.initial * 5, current.price * Math.exp(moves[currency.id] || 0) * (1 + shock))));
+    if (event) current.anchor *= 1 + shock * .7; // 新闻部分改变重心，部分在后续波动中消化。
+  }
+  market.pairs.kappa_moon.price = instruments.round(market.price / market.pairs.moon_human.price, 6);
+  for (const pair of PAIRS) {
+    const current = marketFor(market, pair.id);
+    changes[pair.id] = Math.round((current.price / current.previous - 1) * 10000) || 0;
+    current.updated_at = now;
+    current.history.push({ at: now, price: current.price });
+    current.history = current.history.slice(-180);
+    pricing.recordCandle(current, now, current.price, current.previous);
+  }
   if (event) {
     market.news = {
       id: `fx-news-${market.seq + 1}`, event_id: event.id, tier: event.tier,
       headline: event.headline, text: event.text, at: now,
       source: event.source || '文文日报',
-      change_bps: Math.round((market.price / market.previous - 1) * 10000),
+      currency: event.currency || 'kappa', changes, change_bps: changes[DEFAULT_PAIR],
     };
     market.news_history.unshift(market.news);
     market.news_history = market.news_history.slice(0, events.HISTORY_LIMIT);
   }
   market.updated_at = now;
   market.seq += 1;
-  market.history.push({ at: now, price: market.price });
-  market.history = market.history.slice(-180);
-  pricing.recordCandle(market, now, market.price, market.previous);
   for (const account of Object.values(state.fx.players)) {
     const exposed = account.positions.length > 0;
     let liquidated = false;
@@ -139,14 +175,15 @@ function triggerEvent(state, eventId, now = Date.now(), pick = randomInt) {
   normalize(state);
   if (!state.fx.market) advanceMarket(state, now, pick);
   const market = state.fx.market;
-  if ((market.price <= 25 && item.direction < 0) || (market.price >= 420 && item.direction > 0)) return fail('汇率接近边界，请选择向区间内冲击的事件。');
+  const relativePrice = events.relativePrice(market, item);
+  if ((relativePrice <= 25 && item.direction < 0) || (relativePrice >= 420 && item.direction > 0)) return fail('目标货币汇率接近边界，请选择向区间内冲击的事件。');
   const tier = events.TIERS[item.tier];
   const event = { ...item, shock_bps: item.direction * pick(tier.min_bps, tier.max_bps + 1) };
   market.event_cooldown = events.COOLDOWN_TICKS;
-  market.event_effect = tier.aftershock_ticks ? { tier: item.tier, headline: item.headline, remaining_ticks: tier.aftershock_ticks, volatility: tier.volatility } : null;
+  market.event_effect = tier.aftershock_ticks ? { tier: item.tier, currency: item.currency, headline: item.headline, remaining_ticks: tier.aftershock_ticks, volatility: tier.volatility } : null;
   if (item.tier !== 'rumor') market.major_event_ticks = pick(events.MAJOR_EVENT_MIN_TICKS, events.MAJOR_EVENT_MAX_TICKS + 1);
   for (const account of Object.values(state.fx.players)) credit.accrue(account, now);
-  applyMove(state, event.shock_bps / 10000, event, Math.floor(now / RULES.tick_ms) * RULES.tick_ms);
+  applyMove(state, {}, event, Math.floor(now / RULES.tick_ms) * RULES.tick_ms);
   return { ok: true, event: market.news };
 }
 
@@ -160,14 +197,29 @@ function rankings(state) {
     .map((row, index) => ({ ...row, rank: index + 1 })));
 }
 
-function view(state, user) {
+function pairSummaries(market) {
+  return market ? PAIRS.map(pair => {
+    const current = marketFor(market, pair.id);
+    return { ...pair, price: current.price, previous: current.previous, ...quotes(market, pair.id) };
+  }) : [];
+}
+
+function view(state, user, pairId = DEFAULT_PAIR) {
   const market = state.fx?.market;
-  // 不向客户端预告下一场大事件的时间；重启仍从持久化计时继续。
-  const { major_event_ticks, momentum, variance, ...publicMarket } = market || {};
+  const selected = market && marketFor(market, pairId);
+  const newsView = news => news && ({ ...news, change_bps: news.changes?.[pairId] ?? (pairId === DEFAULT_PAIR ? news.change_bps : null) });
+  // 只发送当前品种的完整图表；其他货币只发报价，不公开趋势/波动状态或事件倒计时。
+  const publicMarket = selected ? {
+    pair_id: pairId, name: instruments.pair(pairId).name, precision: instruments.pair(pairId).precision,
+    seq: market.seq, updated_at: market.updated_at, price: selected.price, previous: selected.previous,
+    history: selected.history, candles: selected.candles, tick_candles: selected.tick_candles,
+    news: newsView(market.news), news_history: market.news_history.map(newsView), event_effect: market.event_effect,
+    ...quotes(market, pairId),
+  } : null;
   const board = rankings(state);
   const publicRow = ({ rank, display_name, equity, user_id, title }) => ({ rank, display_name, equity, title, is_me: user_id === user?.id });
   return {
-    rules: RULES, server_time: Date.now(), market: market ? { ...publicMarket, ...quotes(market) } : null,
+    rules: RULES, server_time: Date.now(), market: publicMarket, pairs: pairSummaries(market),
     achievements: profile.CATALOG, news_total: events.CATALOG.length,
     authenticated: Boolean(user), can_trade: Boolean(user && !user.banned),
     account: user && !user.banned && market ? accountView(state.fx.players[user.id], market) : null,
@@ -185,9 +237,12 @@ function trade(state, user, action, body, now = Date.now()) {
   let account = state.fx.players[user.id];
   const fields = [action, body.expected_revision, body.side, body.margin, body.leverage, body.quote_seq, body.position_id];
   if (body.amount !== undefined || body.minutes !== undefined || body.title !== undefined) fields.push(body.amount, body.minutes, body.title);
+  if (body.pair_id !== undefined) fields.push(['pair', body.pair_id]);
   const signature = JSON.stringify(fields);
   const duplicate = account?.requests.find(item => item.id === body.request_id);
   if (duplicate) return duplicate.signature === signature ? { ok: true, repeated: true, receipt: duplicate.receipt } : fail('重复的请求编号对应不同交易。', 'CONFLICT');
+  const pairId = body.pair_id === undefined ? DEFAULT_PAIR : body.pair_id;
+  if (!instruments.pair(pairId)) return fail('请选择有效的货币对。');
   if (!Number.isSafeInteger(body.expected_revision) || body.expected_revision !== (account?.revision || 0)) {
     return fail('账户已更新，请查看最新持仓后重试。', 'CONFLICT');
   }
@@ -209,17 +264,18 @@ function trade(state, user, action, body, now = Date.now()) {
       if (account.positions.length >= RULES.max_positions) return fail('最多同时持有 12 笔仓位，请先平仓。');
       const fee = Math.ceil(body.margin * body.leverage * RULES.fee_rate);
       if (account.cash < body.margin + fee) return fail('可用余额不足以支付保证金和手续费。');
-      const quote = quotes(market);
+      const quote = quotes(market, pairId);
       profile.opened(account, body.side);
       account.cash -= body.margin + fee;
       account.positions.push({
-        id: newId('fx'), side: body.side, margin: body.margin, leverage: body.leverage, fee,
+        id: newId('fx'), pair_id: pairId, side: body.side, margin: body.margin, leverage: body.leverage, fee,
         entry_price: body.side === 'long' ? quote.ask : quote.bid, opened_at: now,
       });
-      receipt = { action: 'open', price: body.side === 'long' ? quote.ask : quote.bid, margin: body.margin, fee, amount: body.margin + fee };
+      receipt = { action: 'open', pair_id: pairId, price: body.side === 'long' ? quote.ask : quote.bid, margin: body.margin, fee, amount: body.margin + fee };
     } else if (action === 'close') {
       const position = account.positions.find(item => item.id === body.position_id);
       if (!position) return fail('这笔持仓已平仓或不存在。', 'CONFLICT');
+      if (body.pair_id !== undefined && body.pair_id !== (position.pair_id || DEFAULT_PAIR)) return fail('平仓货币对与持仓不符。', 'CONFLICT');
       receipt = settle(account, position, market, now, 'manual');
     } else if (action === 'borrow') {
       if (!needsRescue(account)) return fail('先平掉持仓；余额不足最低下单额时才能借应急贷款。');
@@ -260,4 +316,4 @@ function trade(state, user, action, body, now = Date.now()) {
   return { ok: true, ...(receipt ? { receipt } : {}) };
 }
 
-module.exports = { RULES, normalize, quotes, accountView, markedPosition, advanceMarket, triggerEvent, rankings, view, trade };
+module.exports = { RULES, normalize, quotes, accountView, markedPosition, advanceMarket, triggerEvent, rankings, view, trade, pairSummaries };

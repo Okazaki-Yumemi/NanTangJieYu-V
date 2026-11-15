@@ -7,9 +7,11 @@ const events = require('../../server/domain/fx-events');
 function setup() {
   const state = { users: { long: { id: 'long', display_name: '多头' }, short: { id: 'short', display_name: '空头' } } };
   fx.advanceMarket(state, 10000);
+  state.fx.market.regime.ticks = Number.MAX_SAFE_INTEGER; // isolate news timing from regime changes
   return state;
 }
 function sequence(...values) {
+  values.push(10000, 10000, 10000); // independent moon, tengu and nether innovations
   return (min, max) => {
     const value = values.shift();
     assert.ok(Number.isInteger(value) && value >= min && value < max, `random ${value} outside [${min}, ${max})`);
@@ -23,11 +25,11 @@ function trigger(state, tier = 'quake', index = 0, bps = events.TIERS[tier].min_
     : sequence(10000, tier === 'surge' ? 0 : 99, index, bps, 450));
 }
 
-test('36 distinct fictional events have both directions in every severity tier', () => {
-  assert.equal(events.CATALOG.length, 36);
-  assert.equal(new Set(events.CATALOG.map(event => event.id)).size, 36);
-  for (const tier of Object.keys(events.TIERS)) {
-    assert.deepEqual([...new Set(events.CATALOG.filter(event => event.tier === tier).map(event => event.direction))].sort(), [-1, 1]);
+test('54 distinct fictional events cover both directions and every tier for each currency', () => {
+  assert.equal(events.CATALOG.length, 54);
+  assert.equal(new Set(events.CATALOG.map(event => event.id)).size, 54);
+  for (const currency of ['kappa', 'moon', 'tengu', 'nether']) for (const tier of Object.keys(events.TIERS)) {
+    assert.deepEqual([...new Set(events.CATALOG.filter(event => event.tier === tier && event.currency === currency).map(event => event.direction))].sort(), [-1, 1]);
   }
 });
 

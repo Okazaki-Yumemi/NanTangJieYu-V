@@ -160,7 +160,7 @@ test('admin credits and events are validated, idempotent, audited and settle liq
 test('delayed close cannot change cash; exact-price receipts and retries survive new quotes', () => {
   const { state, act, account } = fixture();
   const opened = act('open', { side: 'long', margin: 10000, leverage: 1 });
-  assert.deepEqual(opened.receipt, { action: 'open', price: 100.04, margin: 10000, fee: 5, amount: 10005 });
+  assert.deepEqual(opened.receipt, { action: 'open', pair_id: 'kappa_human', price: 100.04, margin: 10000, fee: 5, amount: 10005 });
   const position = account.positions[0];
   state.fx.market.price = 101; state.fx.market.seq++;
   const before = account.cash;

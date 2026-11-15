@@ -95,7 +95,7 @@ test('market ticks are server-random, bounded, and liquidate offline positions w
   act('a', 'open', { side: 'long', margin: 100000, leverage: 100 });
   const cash = state.fx.players.a.cash;
   state.fx.market.major_event_ticks = 1;
-  const sequence = [10000, 99, 0, 1800, 450]; // 金融地震：天子踩塌交易所，瞬跌 18%。
+  const sequence = [10000, 99, 0, 1800, 450, 10000, 10000, 10000]; // 金融地震：天子踩塌交易所，瞬跌 18%。
   assert.equal(fx.advanceMarket(state, 11999, () => { throw new Error('too soon'); }), false);
   assert.equal(fx.advanceMarket(state, 12000, () => sequence.shift()), true);
   assert.equal(state.fx.players.a.positions.length, 0);

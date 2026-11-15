@@ -52,9 +52,14 @@ async function main() {
     const now = Date.now();
     // 固定的较重账户：12 笔持仓、30 笔历史。行情及随机新闻不计入性能差异。
     fx.advanceMarket(f.state, now);
-    f.state.fx.market.history = Array.from({ length: 180 }, (_, i) => ({ at: now - (179 - i) * 2000, price: 100 }));
-    f.state.fx.market.candles = Array.from({ length: 360 }, (_, i) => ({ at: Math.floor(now / 10000) * 10000 - (359 - i) * 10000, open: 100, high: 101, low: 99, close: 100 }));
-    f.state.fx.market.tick_candles = Array.from({ length: 180 }, (_, i) => ({ at: Math.floor(now / 2000) * 2000 - (179 - i) * 2000, open: 100, high: 101, low: 99, close: 100 }));
+    const pairs = fx.view(f.state, null).pairs || [{ id: 'kappa_human' }];
+    for (const pair of pairs) {
+      const current = pair.id === 'kappa_human' ? f.state.fx.market : f.state.fx.market.pairs[pair.id];
+      const price = current.price;
+      current.history = Array.from({ length: 180 }, (_, i) => ({ at: now - (179 - i) * 2000, price }));
+      current.candles = Array.from({ length: 360 }, (_, i) => ({ at: Math.floor(now / 10000) * 10000 - (359 - i) * 10000, open: price, high: price * 1.01, low: price * .99, close: price }));
+      current.tick_candles = Array.from({ length: 180 }, (_, i) => ({ at: Math.floor(now / 2000) * 2000 - (179 - i) * 2000, open: price, high: price * 1.01, low: price * .99, close: price }));
+    }
     f.state.fx.market.major_event_ticks = 900;
     f.state.fx.market.updated_at = now + (seconds + 120) * 1000; // 此场景固定报价，另有混合压测覆盖实时行情。
     let seq = 0;
@@ -64,8 +69,8 @@ async function main() {
         if (result.error) throw new Error(result.message);
       };
       trade('join');
-      for (let i = 0; i < 30; i++) { trade('open', { side: 'long', margin: 10000, leverage: 1 }); trade('close', { position_id: f.state.fx.players[user.id].positions[0].id }); }
-      for (let i = 0; i < 12; i++) trade('open', { side: 'long', margin: 10000, leverage: 1 });
+      for (let i = 0; i < 30; i++) { trade('open', { pair_id: pairs[i % pairs.length].id, side: 'long', margin: 10000, leverage: 1 }); trade('close', { position_id: f.state.fx.players[user.id].positions[0].id }); }
+      for (let i = 0; i < 12; i++) trade('open', { pair_id: pairs[i % pairs.length].id, side: 'long', margin: 10000, leverage: 1 });
     }
     const { SESSION_COOKIE } = require(path.join(root, 'shared/constants'));
     const cookies = Object.keys(f.state.sessions).map(id => `${SESSION_COOKIE}=${id}`);
@@ -78,11 +83,11 @@ async function main() {
       const tradeNumber = kind === 'burst' ? 0 : 1 + Math.floor(index / users);
       const account = f.state.fx.players[f.registered[index % users].id];
       const body = write ? JSON.stringify(writeKind === 'fx'
-        ? { request_id: `load-${kind}-${index}`, expected_revision: account.revision + tradeNumber, quote_seq: 1, position_id: account.positions[tradeNumber].id }
+        ? { request_id: `load-${kind}-${index}`, expected_revision: account.revision + tradeNumber, quote_seq: 1, position_id: account.positions[tradeNumber].id, pair_id: account.positions[tradeNumber].pair_id }
         : { game: 'puzzle', mode: 'spring', score: kind === 'burst' ? index + 1 : users + index + 1 }) : null;
       return new Promise(resolve => {
         const req = http.request({ host: '127.0.0.1', port: ready.port, agent, method: write ? 'POST' : 'GET',
-          path: write ? writeKind === 'fx' ? '/api/fx/close' : '/api/arcade/score' : index % 4 ? '/api/fx/state' : '/api/player/state',
+          path: write ? writeKind === 'fx' ? `/api/fx/close?pair=${pairs[index % pairs.length].id}` : '/api/arcade/score' : index % 4 ? `/api/fx/state?pair=${pairs[index % pairs.length].id}` : '/api/player/state',
           headers: { Cookie: cookies[index % users], 'Accept-Encoding': 'gzip', ...(body ? { 'Content-Type': 'application/json' } : {}) }
         }, res => {
           res.on('data', chunk => { wireBytes += chunk.length; });
@@ -110,7 +115,7 @@ async function main() {
     const finalMessage = once(child, 'message'); child.send('stop'); const [metrics] = await finalMessage;
     await once(child, 'exit');
     const summary = values => { values.sort((a, b) => a - b); return { count: values.length, p50ms: Math.round(values[Math.floor(values.length * .5)] || 0), p95ms: Math.round(values[Math.floor(values.length * .95)] || 0), p99ms: Math.round(values[Math.floor(values.length * .99)] || 0) }; };
-    console.log(JSON.stringify({ users, seconds, writeKind, targetReadRps: 100, targetWriteRps: 15, errors, burstMs: Math.round(burstMs), mixedElapsedMs: Math.round(elapsedMs), wireMB: +(wireBytes / 1e6).toFixed(2), ...Object.fromEntries(Object.entries(timings).map(([k, v]) => [k, summary(v)])), ...metrics }, null, 2));
+    console.log(JSON.stringify({ users, seconds, writeKind, pairs: pairs.map(pair => pair.id), targetReadRps: 100, targetWriteRps: 15, errors, burstMs: Math.round(burstMs), mixedElapsedMs: Math.round(elapsedMs), wireMB: +(wireBytes / 1e6).toFixed(2), ...Object.fromEntries(Object.entries(timings).map(([k, v]) => [k, summary(v)])), ...metrics }, null, 2));
     if (errors) process.exitCode = 1;
   } finally {
     if (child && child.exitCode === null) { const exited = once(child, 'exit'); child.kill(); await exited; }
